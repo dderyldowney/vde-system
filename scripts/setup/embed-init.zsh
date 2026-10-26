@@ -49,10 +49,21 @@ apt-get install -y ${=vde_embed_pkgs}
 sudo -u devuser zsh -c '
     set -e
     if ! command -v rustc >/dev/null; then
+        # Mandate C (ZSH ONLY): fetch rustup'"'"'s NATIVE installer binary and run
+        # it directly, instead of executing the vendor shell script under `sh`.
+        case "$(uname -m)" in
+            x86_64)        triple="x86_64-unknown-linux-gnu" ;;
+            aarch64|arm64) triple="aarch64-unknown-linux-gnu" ;;
+            armv7l)        triple="armv7-unknown-linux-gnueabihf" ;;
+            i686|i386)     triple="i686-unknown-linux-gnu" ;;
+            *) print -u2 "VDE-EMBED: unsupported architecture $(uname -m)"; exit 1 ;;
+        esac
         _installer=$(mktemp)
-        curl --proto "=https" --tlsv1.2 -sSfL https://sh.rustup.rs -o "${_installer}"
-        [[ -s "${_installer}" ]] || { print -u2 "rustup installer download failed or empty"; exit 1; }
-        sh "${_installer}" -y --no-modify-path
+        curl --proto "=https" --tlsv1.2 -sSfL \
+            "https://static.rust-lang.org/rustup/dist/${triple}/rustup-init" -o "${_installer}"
+        [[ -s "${_installer}" ]] || { print -u2 "rustup-init download failed or empty"; exit 1; }
+        chmod +x "${_installer}"
+        "${_installer}" -y --no-modify-path
         rm -f "${_installer}"
     fi
 '
@@ -116,6 +127,11 @@ sudo -u devuser zsh -c '
             https://github.com/probe-rs/probe-rs/releases/latest/download/probe-rs-tools-installer.sh \
             -o "${_installer}"
         [[ -s "${_installer}" ]] || { print -u2 "probe-rs installer download failed or empty"; exit 1; }
+        # Mandate C exception: probe-rs ships ONLY a cargo-dist installer.sh
+        # (POSIX shell). There is no native-binary installer, and `cargo install
+        # probe-rs-tools` would trigger the ~15-minute source build this step
+        # deliberately avoids. Running the vendor installer under sh is the
+        # unavoidable third-party path (Signet #551).
         sh "${_installer}"
         rm -f "${_installer}"
         command -v probe-rs >/dev/null || { print -u2 "probe-rs did not install"; exit 1; }

@@ -21,7 +21,12 @@ mkdir -p "${dev_home}"
 
 if [[ ! -d "${dev_home}/.sdkman" ]]; then
     echo "[VDE-KOTLIN] Installing SDKMAN..."
-    # Install SDKMAN as devuser
+    # Mandate C exception (Signet #551): SDKMAN is implemented in Bash — its
+    # installer AND the sdkman-init.sh it generates are Bash scripts, and SDKMAN
+    # requires Bash at runtime. There is no zsh/native install path, so piping
+    # the vendor installer to bash is the unavoidable third-party path. (A direct
+    # Kotlin-compiler download was considered but would drop SDKMAN's multi-SDK
+    # version management.)
     sudo -u devuser curl -s "https://get.sdkman.io" | sudo -u devuser bash
 fi
 
