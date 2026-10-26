@@ -39,9 +39,10 @@ EOF
 
 chmod +x "${INSTALL_SCRIPT}"
 # Mandate C (ZSH ONLY): run the (zsh) installer explicitly under zsh as devuser,
-# not via su's ambiguous login shell. Matches the python/rust spokes'
-# `sudo -u devuser zsh` pattern; $HOME resolves to devuser's home as there.
-sudo -u devuser zsh "${INSTALL_SCRIPT}"
+# not via su's ambiguous login shell. -H sets HOME to devuser's home so the
+# installer's ~/.asdf clone target is /home/devuser/.asdf (su - set HOME via the
+# login env; sudo needs -H to reproduce that).
+sudo -H -u devuser zsh "${INSTALL_SCRIPT}"
 
 # 3. PERSISTENCE ANCHOR
 typeset _zshenv="${dev_home}/.zshenv"
