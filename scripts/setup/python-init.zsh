@@ -32,10 +32,16 @@ typeset -a vde_python_pkgs=(
 apt-get update
 apt-get install -y ${vde_python_pkgs[@]}
 
-# 3. INSTALL pyenv as devuser. The pyenv installer is third-party and runs under
-#    bash (we only invoke it, exactly as upstream documents); it lands entirely
-#    in ${DEVHOME}/.pyenv.
-sudo -u "${DEVUSER}" bash -c 'curl -fsSL https://pyenv.run | bash'
+# 3. INSTALL pyenv as devuser, zsh-native (Mandate C: no bash). We clone the
+#    pyenv repo directly -- which is all the pyenv.run installer actually does --
+#    so there is no piped remote shell script. The bundled python-build plugin
+#    provides `pyenv install`. Shallow clone to keep bandwidth down. Idempotent.
+sudo -u "${DEVUSER}" zsh -c '
+    set -e
+    if [[ ! -d "$HOME/.pyenv" ]]; then
+        git clone --depth 1 https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
+    fi
+'
 
 # 4. WIRE pyenv INTO devuser's zsh login (the tribe speaks zsh — Mandate C).
 #    Idempotent: only append if not already present. This is the zsh form of the
