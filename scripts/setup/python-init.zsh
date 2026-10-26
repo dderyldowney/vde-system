@@ -24,6 +24,7 @@ typeset -a vde_python_pkgs=(
     make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev
     libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils tk-dev
     libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev git
+    libgdbm-dev libgdbm-compat-dev
     postgresql-client redis-tools docker.io
 )
 
