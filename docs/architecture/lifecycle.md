@@ -23,7 +23,7 @@ The lifecycle follows a strictly enforced path: **Init → Create → Start → 
 
 ### **3. Maintenance and Re-Forging**
 
-*   **Re-smelting (`vde rebuild <alias>`)**: If a Spoke requires updates or becomes unstable, it is re-forged. This rebuilds the Spoke's Docker image (defaulting to `--no-cache`) to restore the factory baseline while preserving the `$HOME/workspace/` data.
+*   **Re-smelting (`vde rebuild <alias>`)**: If a Spoke requires updates or becomes unstable, it is re-forged. This rebuilds the Spoke's Docker image (reusing Docker's cache by default; pass `--no-cache` for a from-scratch rebuild) to restore the factory baseline while preserving the `$HOME/workspace/` data.
 *   **Re-anchoring the Base (`vde set-projects-dir <new-path>`)**: The projects base can be relocated after onboarding without a rebuild. This ritual safely **MOVES** existing alias folders to the new base (skipping collisions, never overwriting or deleting), updates the `VDE_PROJECTS_DIR` key in `.env`, and regenerates the Spoke configs. The new base takes effect on the next Spoke start.
 
 ### **4. Decommissioning: The Quench and Dissolution**

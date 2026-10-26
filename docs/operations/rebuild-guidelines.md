@@ -16,6 +16,7 @@ When and how to rebuild containers in the **Sovereign Baseline (1.5.6)**.
 | SSH keys change | `vde rebuild <vm>` | New keys need to be baked in |
 | Environment variables change | `vde rebuild <vm>` | env-files are read at build time |
 | Base images update | `vde rebuild --no-cache <vm>` | Ensure fresh base image |
+| Advance Python interpreter (pyenv) | `vde rebuild --no-cache python` | Re-resolves & recompiles the latest stable CPython; a plain rebuild keeps the pinned version while build inputs are unchanged |
 | Installing system packages | `vde rebuild <vm>` | Packages install during build |
 
 ---
@@ -112,6 +113,32 @@ Ensure you are using the standard ritual:
 ```zsh
 vde rebuild <vm>
 ```
+
+#### Python interpreter does not advance (pyenv)
+
+`vde-python`'s CPython is compiled from source by pyenv when the image's hydration
+layer is built. The version installed is whatever pyenv resolves as the newest
+stable CPython **at the moment that layer actually builds** — there is no pinned
+version file.
+
+A plain `vde rebuild python` normally keeps the CPython you already have, because
+Docker reuses the cached hydration layer. That reuse is not guaranteed: it holds
+only while the build inputs are unchanged (the `python-init.zsh` hydration script,
+anything under `lib/`, and the `vde-base` image) **and** the cached layer is still
+present. Editing those inputs, updating `vde-base`, pruning the Docker build cache,
+or building on a fresh host re-runs the hydration layer, and pyenv then resolves the
+newest stable CPython — so a plain rebuild can advance the interpreter as a side
+effect. To see what you actually have, run `python --version` inside the Spoke.
+
+To advance `vde-python` to the latest stable CPython deliberately, force a clean
+build so the resolver always re-runs:
+
+```zsh
+vde rebuild --no-cache python
+```
+
+This recompiles CPython from source (slower). Use it when you intend to move the
+interpreter forward.
 
 ### Container Won't Start After Rebuild
 

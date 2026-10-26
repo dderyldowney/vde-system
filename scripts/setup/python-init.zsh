@@ -8,9 +8,11 @@ typeset _ZSH_PURE=${(%):-%x}
 # Forged in Beskar
 #
 # Python is provided by pyenv (compiled from source), NOT the distro's apt
-# python3. At image-build time we install the LATEST STABLE CPython available
-# and set it as the global interpreter, so vde-python tracks upstream Python
-# instead of being frozen at whatever the base image happens to ship.
+# python3. At image-build time we resolve and install the LATEST STABLE CPython
+# available and set it as the global interpreter, instead of using whatever the
+# base image happens to ship. Which CPython a later rebuild ends up with depends
+# on Docker's layer cache; `vde rebuild --no-cache python` always re-resolves to
+# the newest. See docs/operations/rebuild-guidelines.md for the full semantics.
 set -e
 
 export DEBIAN_FRONTEND=noninteractive

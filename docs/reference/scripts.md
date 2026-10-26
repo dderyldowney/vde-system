@@ -18,7 +18,7 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution**. 
 | `vde init` | **The Initialization Ritual**: Hydrate infrastructure, SSH keys, networks, and build vde-base. | `vde init` |
 | `vde create <vm>` | Create a new VM Spoke from the Beskar Registry. | `vde create python` |
 | `vde path-of-the-foundling` | **The Path of the Foundling**: Interactive onboarding ritual for new students. | `vde path-of-the-foundling` |
-| `vde rebuild <vm>` | Re-forge a Spoke's Docker image (defaults to no-cache). | `vde rebuild python` |
+| `vde rebuild <vm>` | Re-forge a Spoke's Docker image (uses Docker cache by default; pass `--no-cache` for a clean rebuild). | `vde rebuild python` |
 | `vde start <vm>` | Ignite a VM Spoke. Performs "System Breath" resource check. | `vde start python` |
 | `vde stop <vm>` | Quench (stop) a running VM. | `vde stop postgres` |
 | `vde restart <vm>` | Restart one or more active Spokes. | `vde restart rust` |
