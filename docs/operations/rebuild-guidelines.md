@@ -15,7 +15,7 @@ When and how to rebuild containers in the **Sovereign Baseline (1.5.6)**.
 | Dockerfiles change | `vde rebuild <vm>` | Rebuild images with new Dockerfile |
 | SSH keys change | `vde rebuild <vm>` | New keys need to be baked in |
 | Environment variables change | `vde rebuild <vm>` | env-files are read at build time |
-| Base images update | `vde rebuild --no-cache <vm>` | Ensure fresh base image |
+| Base images update | `vde rebuild --no-cache base <vm>` | A named-Spoke rebuild reuses vde-base; include `base` to re-forge it first, then the Spoke |
 | Advance Python interpreter (pyenv) | `vde rebuild --no-cache python` | Re-resolves & recompiles the latest stable CPython; a plain rebuild keeps the pinned version while build inputs are unchanged |
 | Installing system packages | `vde rebuild <vm>` | Packages install during build |
 

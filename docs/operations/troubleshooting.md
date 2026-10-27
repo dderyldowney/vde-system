@@ -79,8 +79,12 @@ vde dns-check python postgres
 # 1. Check the logs
 vde logs python
 
-# 2. Re-smelt the image to factory baseline
+# 2. Re-smelt the Spoke image. A normal rebuild (reusing cache) often clears
+#    transient breakage cheaply:
 vde rebuild python
+# If the image itself is suspect, force a clean, cache-free rebuild (slower —
+# recompiles from source):
+vde rebuild --no-cache python
 
 # 3. Verify the Tetrad health
 vde health
