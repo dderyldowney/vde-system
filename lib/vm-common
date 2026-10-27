@@ -631,12 +631,17 @@ get_vm_mounts() {
     local src_path dst_path
     # Base mounts for all VMs
     local mounts=".:/vde:ro"
+
+    # Projects source honors the configured base (#566). With no override the
+    # in-tree default is kept as the historical relative "projects".
+    local proj_base; proj_base="$(vde_projects_dir)"
+    [[ "${proj_base}" == "${VDE_ROOT_DIR}/projects" ]] && proj_base="projects"
     
     if [[ "${raw_name}" == "jupyterlab" ]]; then
-        src_path="projects/python/jupyterlabs"
+        src_path="${proj_base}/python/jupyterlabs"
         dst_path="/home/devuser/workspace"
     elif [[ "${category}" == "languages" ]]; then
-        src_path="projects/${raw_name}"
+        src_path="${proj_base}/${raw_name}"
         dst_path="/home/devuser/workspace"
     elif [[ "${category}" == "services" ]]; then
         src_path="data/${raw_name}"
@@ -644,7 +649,7 @@ get_vm_mounts() {
         # Spoke override for postgres
         [[ "${raw_name}" == *"postgres"* ]] && dst_path="/var/lib/postgresql/data"
     else
-        src_path="projects/${raw_name}"
+        src_path="${proj_base}/${raw_name}"
         dst_path="/home/devuser/workspace"
     fi
     
