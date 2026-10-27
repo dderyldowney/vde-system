@@ -557,14 +557,21 @@ offer_relocate_before_nuke() {
     local dest
     printf "  New location (created if needed): "
     read -r dest
+    if [[ -z "${dest}" ]]; then
+        print_info "No location given — continuing without moving."
+        return 0
+    fi
     # Shared resolver: ~ and $NAME only; refuses command substitution and ':'.
     if ! vde_resolve_projects_base "${dest}"; then
         print_warning "${VDE_PB_ERROR} Continuing without moving."
         return 0
     fi
     dest="${VDE_PB_RESULT}"
-    if [[ -z "${dest}" ]]; then
-        print_info "No location given — continuing without moving."
+    # The relocate rescues work BEFORE the VDE folder is removed. A destination
+    # inside it would be deleted along with it, so refuse (before creating it).
+    if vde_path_is_within "${dest}" "${VDE_ROOT_DIR}"; then
+        print_warning "${dest} is inside the VDE folder (${VDE_ROOT_DIR}) and would be deleted with it."
+        print_warning "Choose a location OUTSIDE the VDE folder. Continuing without moving."
         return 0
     fi
     if ! mkdir -p "${dest}" 2>/dev/null || [[ ! -w "${dest}" ]]; then

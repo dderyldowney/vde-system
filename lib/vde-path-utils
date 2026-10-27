@@ -243,6 +243,16 @@ vde_resolve_projects_base() {
     return 0
 }
 
+# vde_path_is_within - true when <path> is <root> itself or nested inside it.
+# Both sides are absolutized and symlink-resolved first, so "..", "." and a
+# symlink pointing into <root> cannot sneak past, and a sibling that merely
+# shares a name prefix (e.g. /x/vde-other vs /x/vde) is not "within".
+# Usage: vde_path_is_within <path> <root>
+vde_path_is_within() {
+    local p="${1:A}" r="${2:A}"
+    [[ "${p}" == "${r}" || "${p}" == "${r}/"* ]]
+}
+
 # _vde_pb_has_substitution - true when the string carries command/process/
 # arithmetic substitution syntax.
 _vde_pb_has_substitution() {
