@@ -42,6 +42,7 @@ typeset -r SPD_SRC="${REPO_ROOT}/bin/vde-set-projects-dir"
 source "${REPO_ROOT}/lib/vde-shell-compat" &>/dev/null
 source "${REPO_ROOT}/lib/vde-constants"    &>/dev/null
 source "${REPO_ROOT}/lib/vde-errors"       &>/dev/null
+source "${REPO_ROOT}/lib/vde-path-utils"   &>/dev/null
 
 typeset TESTS_PASSED=0
 typeset TESTS_FAILED=0
@@ -316,6 +317,72 @@ test_spd_repoint_rewrites_existing_spoke_mount() {
     assert_false "stale literal projects/python mount is gone" "grep -qE '^[[:space:]]*- [.][.]/[.][.]/[.][.]/[.][.]/projects/python:' '${pyc}'"
 }
 
+
+# --- #564 hardening (shared resolver) ---------------------------------------
+test_init_var_value_injection_refused() {
+    test_start "vde-init resolver: a variable whose VALUE holds \$(...) never executes (#545 item 2)"
+    local root; root="$(mktemp -d "${SANDBOX_ROOT}/initvar.XXXXXX")"
+    : > "${root}/.env"
+    local marker="${SANDBOX_ROOT}/INJECTED_INIT_VAR"
+    typeset -x VDE_T_EVIL='$(touch '"${marker}"')'
+    local resolved; resolved="$(_run_init_resolver "${root}" '$VDE_T_EVIL/x')"
+    unset VDE_T_EVIL
+    local expected="${root}/projects"; expected="${expected:A}"
+    assert_false "no marker created (payload not executed)" "[[ -e '${marker}' ]]"
+    assert_eq    "falls back to the default base"           "${expected}" "${resolved}"
+}
+
+test_init_colon_base_refused() {
+    test_start "vde-init resolver: a ':' base falls back to default and is NOT persisted (#545 item 4)"
+    local root; root="$(mktemp -d "${SANDBOX_ROOT}/initcolon.XXXXXX")"
+    print -r -- "VDE_PROJECTS_DIR=/keep/me" > "${root}/.env"
+    local resolved; resolved="$(_run_init_resolver "${root}" "${SANDBOX_ROOT}/a:b")"
+    local expected="${root}/projects"; expected="${expected:A}"
+    assert_eq "falls back to the default base" "${expected}" "${resolved}"
+    assert_eq ".env base left unchanged"       "/keep/me"    "$(_env_val "${root}")"
+}
+
+test_init_empty_flag_errors() {
+    test_start "vde-init --projects-dir= / --projects-dir '' => usage error, not silent default (#545 item 3)"
+    local out rc
+    out="$(_run_argparse --projects-dir= 2>&1)"; rc=$?
+    assert_eq   "equals form: VDE_ERR_INVALID_INPUT" "${VDE_ERR_INVALID_INPUT}" "${rc}"
+    assert_true "equals form: message says empty"   "[[ '${out}' == *'empty'* ]]"
+    out="$(_run_argparse --projects-dir '' 2>&1)"; rc=$?
+    assert_eq   "space form: VDE_ERR_INVALID_INPUT" "${VDE_ERR_INVALID_INPUT}" "${rc}"
+}
+
+test_spd_colon_base_refused() {
+    test_start "vde-set-projects-dir refuses a ':' base (#545 item 4)"
+    local old; old="$(mktemp -d "${SANDBOX_ROOT}/spdcolon.XXXXXX")"
+    local forge; forge="$(_make_spd_forge "${old}")"
+    typeset SPD_OUT SPD_RC
+    _run_spd "${forge}" "${SANDBOX_ROOT}/a:b"
+    assert_eq   "exit code is VDE_ERR_INVALID_INPUT" "${VDE_ERR_INVALID_INPUT}" "${SPD_RC}"
+    assert_true "error mentions ':'"                 "[[ '${SPD_OUT}' == *':'* ]]"
+    assert_eq   ".env left unchanged" "${old}" "$(_env_val "${forge}")"
+}
+
+test_spd_var_value_injection_refused() {
+    test_start "vde-set-projects-dir: a variable whose VALUE holds \$(...) never executes (#545 item 2)"
+    local old; old="$(mktemp -d "${SANDBOX_ROOT}/spdvar.XXXXXX")"
+    local forge; forge="$(_make_spd_forge "${old}")"
+    local marker="${SANDBOX_ROOT}/INJECTED_SPD_VAR"
+    typeset SPD_OUT SPD_RC
+    VDE_T_EVIL='$(touch '"${marker}"')' _run_spd "${forge}" '$VDE_T_EVIL/x'
+    assert_false "no marker created (payload not executed)" "[[ -e '${marker}' ]]"
+    assert_eq    "exit code is VDE_ERR_INVALID_INPUT" "${VDE_ERR_INVALID_INPUT}" "${SPD_RC}"
+    assert_eq    ".env left unchanged" "${old}" "$(_env_val "${forge}")"
+}
+
+test_no_eval_expansion_in_scripts() {
+    test_start "no \${(e)...} expansion remains in vde-init / vde-set-projects-dir / nuke-vde (#545 item 2)"
+    local f
+    for f in bin/vde-init bin/vde-set-projects-dir bin/nuke-vde; do
+        assert_false "${f} has no \${(e)} expansion" "grep -qF '\${(e)' '${REPO_ROOT}/${f}'"
+    done
+}
+
 # =============================================================================
 # Run
 # =============================================================================
@@ -332,6 +399,12 @@ test_spd_moves_only_known_vms
 test_spd_env_rewrite_preserves_special_chars
 test_init_env_rewrite_preserves_special_chars
 test_spd_repoint_rewrites_existing_spoke_mount
+test_init_var_value_injection_refused
+test_init_colon_base_refused
+test_init_empty_flag_errors
+test_spd_colon_base_refused
+test_spd_var_value_injection_refused
+test_no_eval_expansion_in_scripts
 
 echo ""
 echo "=============================================="

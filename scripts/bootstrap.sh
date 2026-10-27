@@ -61,10 +61,18 @@ while [ "$#" -gt 0 ]; do
                 exit 1
             fi
             PROJECTS_DIR_FLAG="$2"
+            if [ -z "$PROJECTS_DIR_FLAG" ]; then
+                echo "Error: --projects-dir requires a path argument; got an empty value (it would silently use the default)." >&2
+                exit 1
+            fi
             shift 2
             ;;
         --projects-dir=*)
             PROJECTS_DIR_FLAG="${1#*=}"
+            if [ -z "$PROJECTS_DIR_FLAG" ]; then
+                echo "Error: --projects-dir requires a path argument; got an empty value (it would silently use the default)." >&2
+                exit 1
+            fi
             shift
             ;;
         -h|--help)

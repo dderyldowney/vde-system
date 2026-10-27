@@ -47,6 +47,7 @@ if [[ -z "${_fn_text}" ]]; then
     echo "FATAL: could not extract vde_init_resolve_projects_dir from ${INIT_SRC}"
     exit 1
 fi
+source "${VDE_ROOT_DIR}/lib/vde-path-utils" &>/dev/null   # resolver dependency (#564)
 eval "${_fn_text}"
 
 # Harness scratch area (all temp; removed at the end).
