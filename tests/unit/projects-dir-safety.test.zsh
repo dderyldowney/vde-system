@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @forge (Governance Sentinel)
+# @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
 #
