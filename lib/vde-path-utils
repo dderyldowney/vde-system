@@ -161,7 +161,97 @@ vde_get_project_name() {
     echo "${VDE_ROOT_DIR:t}"
 }
 
-# Get the effective projects base directory (absolute)
+# vde_resolve_projects_base - Validate and absolutize a Projects base (the one
+# shared implementation; vde-init, vde-set-projects-dir, nuke-vde and
+# vde_projects_dir all go through it).
+#
+# Accepts a leading ~ and $NAME / ${NAME} references -- nothing else. It does NOT
+# use ${(e)...}: values are substituted literally and never re-scanned, so a
+# variable whose VALUE contains $(...) cannot execute anything. Refuses an empty
+# value, command/process/arithmetic substitution syntax, an unset variable, and
+# any ':' (it would corrupt the short-form Compose mount "<base>/<vm>:<target>").
+# Relative results are anchored at <relative_to> (default: $PWD) and normalized.
+#
+# Usage: vde_resolve_projects_base <raw> [<relative_to>]
+# Sets (no subshell needed):
+#   VDE_PB_RESULT  the absolute base on success
+#   VDE_PB_ERROR   a human-readable reason on failure
+# Returns: 0, or VDE_ERR_INVALID_INPUT (2)
+vde_resolve_projects_base() {
+    emulate -L zsh
+    local raw="${1-}" rel="${2:-${PWD}}"
+    local rc_invalid="${VDE_ERR_INVALID_INPUT:-2}"
+    typeset -g VDE_PB_RESULT="" VDE_PB_ERROR=""
+
+    if [[ -z "${raw}" ]]; then
+        VDE_PB_ERROR="Projects base is empty. Give a folder path (e.g. ~/Projects)."
+        return ${rc_invalid}
+    fi
+
+    local subst_msg='Projects base may not contain command substitution ( $(...), backticks, $[...], <(...), >(...), =(...) ).'
+    if _vde_pb_has_substitution "${raw}"; then
+        VDE_PB_ERROR="${subst_msg}"
+        return ${rc_invalid}
+    fi
+
+    # Only "~" and "~/..." are expanded; "~user" is unsupported (it would otherwise
+    # become a literal "~user" directory under the working directory).
+    if [[ "${raw}" == "~" || "${raw}" == "~/"* ]]; then
+        raw="${HOME}${raw#\~}"
+    elif [[ "${raw}" == "~"* ]]; then
+        VDE_PB_ERROR="'~user' paths are not supported. Use ~/... or an absolute path."
+        return ${rc_invalid}
+    fi
+
+    # Left-to-right $NAME / ${NAME} substitution. Each value is appended to the
+    # output and never scanned again.
+    local out="" rest="${raw}" name
+    while [[ "${rest}" == *'$'* ]]; do
+        out+="${rest%%\$*}"
+        rest="${rest#*\$}"
+        if [[ "${rest}" =~ '^\{([A-Za-z_][A-Za-z0-9_]*)\}(.*)$' ]]; then
+            name="${match[1]}"; rest="${match[2]}"
+        elif [[ "${rest}" =~ '^([A-Za-z_][A-Za-z0-9_]*)(.*)$' ]]; then
+            name="${match[1]}"; rest="${match[2]}"
+        else
+            VDE_PB_ERROR="Unsupported expansion in Projects base. Only \$NAME and \${NAME} are allowed."
+            return ${rc_invalid}
+        fi
+        if [[ -z "${(P)name}" ]]; then
+            VDE_PB_ERROR="Projects base references \$${name}, which is unset or empty."
+            return ${rc_invalid}
+        fi
+        out+="${(P)name}"
+    done
+    out+="${rest}"
+
+    if _vde_pb_has_substitution "${out}" || [[ "${out}" == *'$'* ]]; then
+        VDE_PB_ERROR="${subst_msg}"
+        return ${rc_invalid}
+    fi
+    if [[ "${out}" == *$'\n'* ]]; then
+        VDE_PB_ERROR="Projects base may not contain a newline."
+        return ${rc_invalid}
+    fi
+    if [[ "${out}" == *':'* ]]; then
+        VDE_PB_ERROR="Projects base may not contain ':' (it breaks the Compose volume mount). Choose a path without a colon."
+        return ${rc_invalid}
+    fi
+
+    [[ "${out}" == /* ]] || out="${rel}/${out}"
+    VDE_PB_RESULT="${out:A}"
+    return 0
+}
+
+# _vde_pb_has_substitution - true when the string carries command/process/
+# arithmetic substitution syntax.
+_vde_pb_has_substitution() {
+    [[ "${1}" == *'$('* || "${1}" == *'`'* || "${1}" == *'$['* \
+       || "${1}" == *'<('* || "${1}" == *'>('* || "${1}" == *'=('* ]]
+}
+
+# vde_projects_dir_raw - The configured Projects base EXACTLY as stored (not
+# validated or expanded); empty when nothing is configured.
 # Resolution order:
 #   1. VDE_PROJECTS_DIR in the environment (exported or a plain shell var)
 #   2. The VDE_PROJECTS_DIR key persisted in ${VDE_ROOT_DIR}/.env -- the source
@@ -169,10 +259,7 @@ vde_get_project_name() {
 #      not otherwise load .env into the environment, so callers that run in a
 #      fresh shell (bin/vde, lib/vm-common, bin/vde-set-projects-dir) would
 #      otherwise resolve the default while Docker mounts the configured base.
-#   3. The in-tree default ${VDE_ROOT_DIR}/projects
-# Usage: vde_projects_dir
-# Output: /path/to/projects (or the student-controlled override)
-vde_projects_dir() {
+vde_projects_dir_raw() {
     if [[ -n "${VDE_PROJECTS_DIR}" ]]; then
         print -r -- "${VDE_PROJECTS_DIR}"
         return 0
@@ -185,13 +272,35 @@ vde_projects_dir() {
         line=$(grep -E '^VDE_PROJECTS_DIR=' "${env_file}" 2>/dev/null | tail -1)
         val="${line#VDE_PROJECTS_DIR=}"
         val="${val%$'\r'}"   # tolerate CRLF-edited .env
-        if [[ -n "${val}" ]]; then
-            print -r -- "${val}"
-            return 0
-        fi
+        [[ -n "${val}" ]] && print -r -- "${val}"
+    fi
+    return 0
+}
+
+# Get the effective projects base directory (absolute)
+# The configured value (see vde_projects_dir_raw) is validated and absolutized
+# via vde_resolve_projects_base (relative values anchor at VDE_ROOT_DIR, matching
+# bin/vde's working directory), so mkdir and Compose agree. An invalid stored
+# value is reported on stderr and the in-tree default ${VDE_ROOT_DIR}/projects is
+# used instead of failing the caller.
+# Usage: vde_projects_dir
+# Output: /path/to/projects (or the student-controlled override)
+vde_projects_dir() {
+    local default_base="${VDE_ROOT_DIR}/projects"
+    local raw; raw="$(vde_projects_dir_raw)"
+
+    if [[ -z "${raw}" ]]; then
+        print -r -- "${default_base}"
+        return 0
     fi
 
-    print -r -- "${VDE_ROOT_DIR}/projects"
+    if vde_resolve_projects_base "${raw}" "${VDE_ROOT_DIR}"; then
+        print -r -- "${VDE_PB_RESULT}"
+    else
+        print -u2 -r -- "[WARN] Configured Projects base '${raw}' is invalid: ${VDE_PB_ERROR} Using ${default_base}."
+        print -r -- "${default_base}"
+    fi
+    return 0
 }
 
 # Check if a path is under HOME directory

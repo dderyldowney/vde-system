@@ -604,6 +604,23 @@ test_projects_dir_env_propagates() {
 }
 
 # =============================================================================
+# TEST 16: an EMPTY --projects-dir value is an error, not a silent default (#564)
+# =============================================================================
+test_projects_dir_empty_flag_errors() {
+    test_start "projects base: empty --projects-dir= / --projects-dir '' exit 1 with a message"
+
+    local out1 rc1 out2 rc2
+    out1="$(bash "${BOOTSTRAP}" --projects-dir= 2>&1)"; rc1=$?
+    out2="$(bash "${BOOTSTRAP}" --projects-dir '' 2>&1)"; rc2=$?
+
+    if [[ "${rc1}" -eq 1 && "${rc2}" -eq 1 && "${out1}" == *"requires a path"* && "${out2}" == *"requires a path"* ]]; then
+        test_pass "projects base: empty --projects-dir exits 1 with a message"
+    else
+        test_fail "empty --projects-dir" "rc1=${rc1} rc2=${rc2} out1='${out1[1,120]}' out2='${out2[1,120]}'"
+    fi
+}
+
+# =============================================================================
 # Main
 # =============================================================================
 main() {
@@ -627,6 +644,7 @@ main() {
     test_fresh_install_clones_stable
     test_projects_dir_flag_propagates
     test_projects_dir_env_propagates
+    test_projects_dir_empty_flag_errors
 
     # Print summary
     echo ""

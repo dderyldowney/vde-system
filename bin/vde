@@ -29,6 +29,21 @@ source "${VDE_ROOT_DIR}/lib/vde-cluster-utils"
 source "${VDE_ROOT_DIR}/lib/vm-common"
 unset VDE_SKIP_AUTO_LOAD
 
+# Compose reads VDE_PROJECTS_DIR from the process environment (it outranks .env).
+# A hand-edited ~ or relative value would otherwise reach Compose raw while we
+# mkdir the resolved path; export the resolved form when they differ.
+_vde_pd_raw="$(vde_projects_dir_raw)"
+if [[ -n "${_vde_pd_raw}" ]]; then
+    if vde_resolve_projects_base "${_vde_pd_raw}" "${VDE_ROOT_DIR}"; then
+        _vde_pd_res="${VDE_PB_RESULT}"
+    else
+        print -u2 -r -- "[WARN] Configured Projects base '${_vde_pd_raw}' is invalid: ${VDE_PB_ERROR} Using ${VDE_ROOT_DIR}/projects."
+        _vde_pd_res="${VDE_ROOT_DIR}/projects"
+    fi
+    [[ "${_vde_pd_raw}" != "${_vde_pd_res}" ]] && export VDE_PROJECTS_DIR="${_vde_pd_res}"
+fi
+unset _vde_pd_raw _vde_pd_res
+
 # Global SSH Agent Discovery
 # Ensures all orchestrated commands inherit the isolated VDE agent,
 # even if launched from a clean shell without ~/.zshrc integration.

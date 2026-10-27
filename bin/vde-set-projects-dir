@@ -67,25 +67,6 @@ Examples:
 EOF
 }
 
-# vde_set_projects_dir_resolve - Expand ~ and env vars, resolve to absolute
-# Args: ${1} = raw path
-# Output: absolute path on stdout
-vde_set_projects_dir_resolve() {
-    local raw="${1}"
-
-    # Expand leading ~ and any embedded environment variables (zsh-native)
-    raw="${raw/#\~/${HOME}}"
-    raw="${(e)raw}"
-
-    # Resolve to absolute. Relative paths hang off the current directory.
-    if [[ "${raw}" != /* ]]; then
-        raw="${PWD}/${raw}"
-    fi
-
-    # Normalise (collapse . and .. and trailing slashes) via zsh modifier
-    print -r -- "${raw:A}"
-}
-
 # vde_set_projects_dir_update_env - Set the VDE_PROJECTS_DIR key in .env
 # Args: ${1} = new absolute base
 vde_set_projects_dir_update_env() {
@@ -146,21 +127,14 @@ if [[ -z "${TARGET_RAW}" ]]; then
     exit ${VDE_ERR_INVALID_INPUT}
 fi
 
-# A path is a directory name, never a command. Only ~ and $VAR expansion are
-# intended, so refuse command/process/arithmetic substitution before any
-# expansion runs -- otherwise a value like "$(...)", backticks or <(...) would
-# execute when the student merely meant to name a folder. (Checked here in the
-# main shell, not inside the resolver's command substitution, so the refusal
-# actually halts the script.)
-if [[ "${TARGET_RAW}" == *'$('* ]] || [[ "${TARGET_RAW}" == *'`'* ]] \
-   || [[ "${TARGET_RAW}" == *'$['* ]] || [[ "${TARGET_RAW}" == *'<('* ]] \
-   || [[ "${TARGET_RAW}" == *'>('* ]] || [[ "${TARGET_RAW}" == *'=('* ]]; then
-    vde_error_simple "Projects base may not contain command substitution ( \$(...), \`...\`, \$[...], <(...), >(...), =(...) )."
+# Validate and absolutize via the shared resolver (lib/vde-path-utils): expands
+# ~ and $NAME only (no command substitution can run), refuses empty values and
+# ':'. Relative paths hang off the current directory.
+if ! vde_resolve_projects_base "${TARGET_RAW}"; then
+    vde_error_simple "${VDE_PB_ERROR}"
     exit ${VDE_ERR_INVALID_INPUT}
 fi
-
-# Resolve to an absolute, normalised path
-NEW_BASE="$(vde_set_projects_dir_resolve "${TARGET_RAW}")"
+NEW_BASE="${VDE_PB_RESULT}"
 
 # No-op when the base is unchanged
 if [[ "${NEW_BASE}" == "${OLD_BASE}" ]]; then
