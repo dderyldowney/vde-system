@@ -37,7 +37,7 @@ services:
 
     volumes:
       - ../../../../:/vde:ro
-      - ../../../../projects/couchdb:/home/devuser/workspace
+      - ${VDE_PROJECTS_DIR:-../../../../projects}/couchdb:/home/devuser/workspace
       - ../../../../logs/couchdb:/logs
       - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
       - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
