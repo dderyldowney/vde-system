@@ -81,7 +81,7 @@ To access services on your host computer (the Hub) or the internet bridge, use `
 | :--- | :--- |
 | `vde list` | Audit all registered and active Spokes. |
 | `vde info <alias>` | Inspect the configuration of a specific Spoke. |
-| `vde rebuild <alias>` | Re-smelt a Spoke image (updates packages). |
+| `vde rebuild <alias>` | Re-smelt a Spoke image from its Dockerfile (reuses Docker cache; pass `--no-cache` for a clean rebuild). |
 | `vde set-projects-dir <path>` | Re-point your Projects base; moves existing alias folders to the new base (skips collisions, never deletes). |
 | `vde health` | Run System Spine health checks (Spine Check). |
 | `vde dns-check` | Verify cross-Spoke DNS resolution. |
