@@ -57,7 +57,11 @@ run_test_suite() {
 
     for test_func in "$@"; do
         echo "  Running: $test_func"
-        $test_func || true
+        # A failing test must fail the suite (a bare "|| true" hid real failures).
+        local failed_before=${TESTS_FAILED}
+        if ! $test_func; then
+            (( TESTS_FAILED == failed_before )) && ((TESTS_FAILED++))
+        fi
     done
 
     echo ""
@@ -133,12 +137,13 @@ print('PASS')
 
 test_language_vms_have_null_port() {
     python3 -c "
-import json, sys
+import json, re, sys
 with open('$VM_TYPES_JSON') as f:
     data = json.load(f)
 for idx, vm in enumerate(data['vms']['language']):
     assert 'service_ports' in vm, f'language[{idx}] ({vm.get(\"name\", \"?\")}): missing service_ports field'
-    assert vm['service_ports'] is None or vm['service_ports'] == '', f'language[{idx}] ({vm[\"name\"]}): service_ports must be null or empty, got {vm[\"service_ports\"]}'
+    sp = vm['service_ports']
+    assert sp is None or sp == '' or re.fullmatch(r'[0-9]+(,[0-9]+)*', sp), f'language[{idx}] ({vm[\"name\"]}): service_ports must be null, empty, or a port list (hybrid VMs such as jupyterlab), got {sp}'
 print('PASS')
 " || return 1
 }
@@ -205,7 +210,7 @@ test_service_vms_name_pattern() {
 
 test_schema_validates_current_config() {
     python3 -c "
-import json, sys
+import json, re, sys
 with open('$VM_TYPES_SCHEMA') as f:
     schema = json.load(f)
 with open('$VM_TYPES_JSON') as f:
@@ -219,7 +224,8 @@ assert 'language' in data['vms'] and 'service' in data['vms'], 'Missing VM type 
 for vm in data['vms']['language']:
     assert 'name' in vm and 'display' in vm, f'Language VM missing required fields: {vm.get(\"name\", \"?\")}'
     assert 'pkgs' in vm or 'custom_cmd' in vm, f'Language VM missing installation fields: {vm.get(\"name\", \"?\")}'
-    assert vm.get('service_ports') is None or vm.get('service_ports') == '', f'Language VM must have null or empty service_ports: {vm[\"name\"]}'
+    sp = vm.get('service_ports')
+    assert sp is None or sp == '' or re.fullmatch(r'[0-9]+(,[0-9]+)*', sp), f'Language VM service_ports must be null, empty, or a port list: {vm[\"name\"]}'
 
 # Service VM validation
 for vm in data['vms']['service']:

@@ -1,6 +1,8 @@
 # VDE Design Spec: JupyterLab Data Science Suite
 <!-- @shared-law (Sovereign Law) -->
 
+> **Superseded (#572):** JupyterLab is now a hybrid **language** VM (Python workspace + Jupyter Lab on 8888) with SSH port **2225**. References below to a service VM and SSH port 2407/2401 are historical; see `data/vm-types.conf` and `docs/reference/vm-types.md`.
+
 **Date:** 2026-04-08
 **Status:** Approved (Brainstorming Phase Complete)
 **Version:** 1.0.0
