@@ -65,6 +65,21 @@ else
     test_fail "dynamic-vm compose uses the interpolation" "interpolated volume line not found"
 fi
 
+test_start "no registered service VM is filed under configs/docker/languages/"
+typeset -a misfiled
+typeset svc
+for svc in ${(f)"$(awk -F'|' '$1=="service"{sub(/^vde-/,"",$2); print $2}' data/vm-types.conf)"}; do
+    # jupyterlab is a hybrid LANGUAGE VM mislabeled a service in the registry;
+    # its reclassification is tracked in #572, so its languages/ compose is exempt.
+    [[ "${svc}" == "jupyterlab" ]] && continue
+    [[ -n "$(git ls-files "configs/docker/languages/${svc}")" ]] && misfiled+=("${svc}")
+done
+if (( ${#misfiled} == 0 )); then
+    test_pass "no registered service VM is filed under configs/docker/languages/"
+else
+    test_fail "services misfiled under languages/" "${(j:, :)misfiled}"
+fi
+
 echo ""
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"
 (( TESTS_FAILED == 0 ))
