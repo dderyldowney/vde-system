@@ -71,12 +71,14 @@ typeset -a input_targets=()
 typeset -a ACTION_ARGS=()
 typeset -a targets=()
 typeset force=false
+typeset nocache=false
 
 # 1. Parse flags and initial targets
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -f|--force) force=true; shift ;;
         -q|--quiet) export VDE_QUIET=1; shift ;;
+        --no-cache) nocache=true; shift ;;
         *)
             # For commands that take a target and then a command (exec, enter, ssh),
             # we only take the first non-flag argument as the target and the rest as ACTION_ARGS.
@@ -140,7 +142,10 @@ case ${ACTION} in
         vde_run "foundling" "${VDE_ROOT_DIR}/bin/vde-path-of-the-foundling" "${input_targets[@]}"
         ;;
     rebuild|create)
-        vde_run "${ACTION}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${targets[@]}"
+        # --no-cache is a build flag, never a target: forward it explicitly (#556).
+        typeset -a rebuild_flags=()
+        [[ "${nocache}" == "true" ]] && rebuild_flags+=(--no-cache)
+        vde_run "${ACTION}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${rebuild_flags[@]}" "${targets[@]}"
         ;;
     start)
         vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
