@@ -19,6 +19,10 @@ services:
     container_name: vde-displaytest
     hostname: vde-displaytest
     restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=displaytest"
 
     # Docker Socket Sovereignty, cont'd (Issue #457): grant devuser access to
     # the bind-mounted host docker.sock via a launch-time supplementary GID
@@ -27,17 +31,13 @@ services:
     # into the image itself.
     group_add:
       - "${VDE_DOCKER_SOCK_GID:-1000}"
-    labels:
-      - "vde.managed=true"
-      - "vde.type=lang"
-      - "vde.name=displaytest"
 
     ports:
       - "2205:2205"
 
     volumes:
       - ../../../../:/vde:ro
-      - ../../../../projects/displaytest:/home/devuser/workspace
+      - ${VDE_PROJECTS_DIR:-../../../../projects}/displaytest:/home/devuser/workspace
       - ../../../../logs/displaytest:/logs
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock

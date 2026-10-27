@@ -39,4 +39,21 @@ if grep -rq "/Users/" . "${_grep_excludes[@]}"; then
 fi
 echo "[SECURITY] Privacy Leak Audit: PASS"
 
+# 4. Build-Arg Secret Guard (Issue #560): a secret passed as a Docker build arg
+#    bakes into image layers (Docker Scout violation). Secrets belong in
+#    env_file at runtime, never in build.args. Scan compose templates and
+#    generated compose files for the known offender appearing as a build-arg key.
+echo "[SECURITY] Scanning for secrets in Docker build args..."
+# Anchor the scan to the repo root (this script's grandparent dir), not the
+# caller's cwd, so the guard cannot fail open when run from elsewhere.
+typeset _audit_root="${0:A:h:h}"
+typeset -a _buildarg_scan=("${_audit_root}/templates" "${_audit_root}/configs/docker")
+if grep -rqE '^[[:space:]]*POSTGRES_DEV_PASSWORD:' "${_buildarg_scan[@]}"; then
+    echo -e "\033[0;31m[CRITICAL] POSTGRES_DEV_PASSWORD present as a Docker build arg (secret baked into image layers)!\033[0m"
+    grep -rnE '^[[:space:]]*POSTGRES_DEV_PASSWORD:' "${_buildarg_scan[@]}" | head -n 5
+    echo "Secrets belong in env_file at runtime, not build.args. See Issue #560."
+    exit 1
+fi
+echo "[SECURITY] Build-Arg Secret Audit: PASS"
+
 exit 0

@@ -37,7 +37,7 @@ services:
 
     volumes:
       - ../../../../:/vde:ro
-      - ../../../../projects/embed:/home/devuser/workspace
+      - ${VDE_PROJECTS_DIR:-../../../../projects}/embed:/home/devuser/workspace
       - ../../../../logs/embed:/logs
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
