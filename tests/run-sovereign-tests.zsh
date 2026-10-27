@@ -71,6 +71,7 @@ UNIT_TESTS=(
     "${VDE_ROOT_DIR}/tests/unit/vm-types-schema.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vde-no-cache-parse.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vde-projects-base-resolver.test.zsh"
+    "${VDE_ROOT_DIR}/tests/unit/vm-mounts-projects-base.test.zsh"
 )
 
 for test in "${UNIT_TESTS[@]}"; do
