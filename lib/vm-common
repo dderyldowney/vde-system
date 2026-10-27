@@ -618,6 +618,17 @@ get_vm_image() {
     echo "vde-${raw_name}:latest"
 }
 
+# vde_workspace_subpath - Workspace directory under the projects base (#572)
+# Args: <raw_name>. Hybrid jupyterlab keeps its notebooks with the Python work;
+# every other language VM uses its own name. Shared by get_vm_mounts and the
+# compose generator so the two cannot drift.
+vde_workspace_subpath() {
+    case "${1}" in
+        jupyterlab) echo "python/jupyterlabs" ;;
+        *)          echo "${1}" ;;
+    esac
+}
+
 # get_vm_mounts - Derives volume mounts from Hub name/category
 # Args: <vm_name>
 # Returns: format: src:dst|src:dst
@@ -637,11 +648,8 @@ get_vm_mounts() {
     local proj_base; proj_base="$(vde_projects_dir)"
     [[ "${proj_base}" == "${VDE_ROOT_DIR}/projects" ]] && proj_base="projects"
     
-    if [[ "${raw_name}" == "jupyterlab" ]]; then
-        src_path="${proj_base}/python/jupyterlabs"
-        dst_path="/home/devuser/workspace"
-    elif [[ "${category}" == "languages" ]]; then
-        src_path="${proj_base}/${raw_name}"
+    if [[ "${category}" == "languages" ]]; then
+        src_path="${proj_base}/$(vde_workspace_subpath "${raw_name}")"
         dst_path="/home/devuser/workspace"
     elif [[ "${category}" == "services" ]]; then
         src_path="data/${raw_name}"

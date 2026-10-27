@@ -33,11 +33,11 @@ services:
       - "${VDE_DOCKER_SOCK_GID:-1000}"
 
     ports:
-      - "{{SSH_PORT}}:{{SSH_PORT}}"
+      - "{{SSH_PORT}}:{{SSH_PORT}}"{{EXTRA_PORTS}}
 
     volumes:
       - ../../../../:/vde:ro
-      - ${VDE_PROJECTS_DIR:-../../../../projects}/{{NAME}}:/home/devuser/workspace
+      - ${VDE_PROJECTS_DIR:-../../../../projects}/{{WORKSPACE}}:/home/devuser/workspace
       - ../../../../logs/{{NAME}}:/logs
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock

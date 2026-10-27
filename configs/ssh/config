@@ -352,11 +352,11 @@ Host vde-testport2
     IdentityAgent ~/.ssh/vde/agent.sock
     IdentitiesOnly yes
     RequestTTY yes
-# VDE VM: vde-couchdb
+# VDE VM: vde-jupyterlab
 # @shared-law (Sovereign Law)
-Host vde-couchdb
+Host vde-jupyterlab
     HostName localhost
-    Port 2400
+    Port 2225
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts
@@ -366,11 +366,11 @@ Host vde-couchdb
     IdentityAgent ~/.ssh/vde/agent.sock
     IdentitiesOnly yes
     RequestTTY yes
-# VDE VM: vde-jupyterlab
+# VDE VM: vde-couchdb
 # @shared-law (Sovereign Law)
-Host vde-jupyterlab
+Host vde-couchdb
     HostName localhost
-    Port 2401
+    Port 2400
     User devuser
     IdentityFile ~/.ssh/vde/vde_student
     UserKnownHostsFile ~/.ssh/vde/known_hosts

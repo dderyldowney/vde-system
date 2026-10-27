@@ -132,7 +132,7 @@ vde_init_create_directory_structure() {
     done
     
     # Data subdirectories for core services
-    local service_dirs=(couchdb mongodb mysql nginx postgres redis rabbitmq jupyterlab)
+    local service_dirs=(couchdb mongodb mysql nginx postgres redis rabbitmq)
     for d in "${service_dirs[@]}"; do
         mkdir -p "${VDE_ROOT_DIR}/data/${d}" 2>/dev/null || true
     done
