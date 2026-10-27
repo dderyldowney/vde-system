@@ -375,6 +375,22 @@ test_spd_var_value_injection_refused() {
     assert_eq    ".env left unchanged" "${old}" "$(_env_val "${forge}")"
 }
 
+test_init_creates_env_when_absent() {
+    test_start "vde-init resolver creates .env (mode 600) before persisting when absent (#545 item 5)"
+    local root; root="$(mktemp -d "${SANDBOX_ROOT}/initnoenv.XXXXXX")"
+    local base="${SANDBOX_ROOT}/noenv-base.${RANDOM}"
+    _run_init_resolver "${root}" "${base}" >/dev/null
+    assert_eq "base persisted to a freshly created .env" "${base:A}" "$(_env_val "${root}")"
+    assert_eq ".env mode is 600" "600" "$(stat -c %a "${root}/.env" 2>/dev/null)"
+    assert_eq "no stray blank first line" "VDE_PROJECTS_DIR=${base:A}" "$(head -n1 "${root}/.env")"
+}
+
+test_nuke_relocate_wires_inside_guard() {
+    test_start "nuke-vde relocate refuses a destination inside VDE_ROOT_DIR (#545 item 1)"
+    local body; body="$(awk '/vde_path_is_within/' "${REPO_ROOT}/bin/nuke-vde")"
+    assert_true "nuke-vde calls vde_path_is_within on the destination" "[[ -n '${body}' && '${body}' == *'dest'* && '${body}' == *'VDE_ROOT_DIR'* ]]"
+}
+
 test_no_eval_expansion_in_scripts() {
     test_start "no \${(e)...} expansion remains in vde-init / vde-set-projects-dir / nuke-vde (#545 item 2)"
     local f
@@ -404,6 +420,8 @@ test_init_colon_base_refused
 test_init_empty_flag_errors
 test_spd_colon_base_refused
 test_spd_var_value_injection_refused
+test_init_creates_env_when_absent
+test_nuke_relocate_wires_inside_guard
 test_no_eval_expansion_in_scripts
 
 echo ""

@@ -278,9 +278,14 @@ vde_init_resolve_projects_dir() {
     # Persist the resolved absolute base to .env (runtime source of truth).
     # persist=0 when we fell back to the default (bad input or a transiently
     # unreachable configured base): never clobber the saved base in that case.
-    if [[ "${persist}" = "1" && -f "${env_file}" ]] ; then
+    if [[ "${persist}" = "1" ]] ; then
+        if [[ ! -f "${env_file}" ]] ; then
+            : > "${env_file}"
+            chmod 600 "${env_file}" 2>/dev/null || true
+        fi
         local -a lines
         lines=("${(@f)$(<"${env_file}")}")
+        (( ${#lines} == 1 )) && [[ -z "${lines[1]}" ]] && lines=()   # empty file: no stray blank line
         local -i i found=0
         for (( i = ${#lines}; i >= 1; i-- )); do
             if [[ "${lines[$i]}" == VDE_PROJECTS_DIR=* ]]; then

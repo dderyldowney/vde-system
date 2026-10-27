@@ -214,7 +214,20 @@ test_projects_dir_invalid_falls_back_loudly() {
     [[ -n "${err}" ]] && test_pass "warning emitted on stderr" || test_fail "warning emitted on stderr" "stderr empty"
 }
 
+test_path_is_within() {
+    test_start "vde_path_is_within: equal or nested => true; sibling/prefix-lookalike/outside => false (#565)"
+    local r="${SANDBOX}/vde"; mkdir -p "${r}/projects" "${SANDBOX}/vde-other"
+    vde_path_is_within "${r}" "${r}";                   assert_eq "equal"              "0" "$?"
+    vde_path_is_within "${r}/projects/x" "${r}";        assert_eq "nested"             "0" "$?"
+    vde_path_is_within "${r}/../vde/./y" "${r}";        assert_eq "dot-dot normalized" "0" "$?"
+    vde_path_is_within "${SANDBOX}/vde-other" "${r}";   assert_eq "prefix lookalike"   "1" "$?"
+    vde_path_is_within "${SANDBOX}/elsewhere" "${r}";   assert_eq "outside"            "1" "$?"
+    ln -s "${r}" "${SANDBOX}/link"
+    vde_path_is_within "${SANDBOX}/link/z" "${r}";      assert_eq "symlink into root"  "0" "$?"
+}
+
 test_accepts_absolute
+test_path_is_within
 test_expands_tilde
 test_expands_plain_and_braced_vars
 test_relative_is_absolutized
