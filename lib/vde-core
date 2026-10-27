@@ -101,6 +101,36 @@ export VDE_CORE_VM_TYPES_CONF
 VDE_CORE_VM_TYPES_CACHE="${VDE_CORE_VM_TYPES_CACHE:-${VDE_CORE_CACHE_DIR}/vm-core.cache}"
 export VDE_CORE_VM_TYPES_CACHE
 
+# vde_split_rebuild_args - Separate vde-rebuild flags from VM targets (#556)
+# `vde rebuild`/`create` forward these flags to bin/vde-rebuild untouched; they
+# must never reach target resolution (alias/cluster/"all" expansion).
+# `--vm <name>` is a synonym for a positional target, so its value is treated as
+# a target and resolved like any other.
+# Args: <rebuild args...>
+# Sets: VDE_REBUILD_FLAGS (forwarded flags), VDE_REBUILD_REST (everything else)
+# Returns: 0, or 2 (VDE_ERR_INVALID_INPUT) when --vm has no value
+vde_split_rebuild_args() {
+    typeset -ga VDE_REBUILD_FLAGS=()
+    typeset -ga VDE_REBUILD_REST=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --no-cache|--pull|--regenerate-keys|-h|--help)
+                VDE_REBUILD_FLAGS+=("$1")
+                ;;
+            --vm)
+                [[ $# -ge 2 && "$2" != -* ]] || return 2
+                VDE_REBUILD_REST+=("$2")
+                shift
+                ;;
+            *)
+                VDE_REBUILD_REST+=("$1")
+                ;;
+        esac
+        shift
+    done
+    return 0
+}
+
 # vde_run - The Deterministic Execution Wrapper (Phase 26)
 # Wraps commands, captures exit codes, and triggers the Error Engine.
 # Args: <info_context> <command...>

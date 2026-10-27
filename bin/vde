@@ -72,6 +72,15 @@ typeset -a ACTION_ARGS=()
 typeset -a targets=()
 typeset force=false
 
+# rebuild/create: peel vde-rebuild's own flags (--no-cache, --pull, ...) off the
+# argument list so they are forwarded as flags rather than resolved as targets.
+if [[ "${ACTION}" == "rebuild" || "${ACTION}" == "create" ]]; then
+    if ! vde_split_rebuild_args "$@"; then
+        vde_log_error "--vm requires a VM name" && exit ${VDE_ERR_INVALID_INPUT}
+    fi
+    set -- "${VDE_REBUILD_REST[@]}"
+fi
+
 # 1. Parse flags and initial targets
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -140,7 +149,8 @@ case ${ACTION} in
         vde_run "foundling" "${VDE_ROOT_DIR}/bin/vde-path-of-the-foundling" "${input_targets[@]}"
         ;;
     rebuild|create)
-        vde_run "${ACTION}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${targets[@]}"
+        # Build flags are forwarded as flags, never resolved as targets (#556).
+        vde_run "${ACTION}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${VDE_REBUILD_FLAGS[@]}" "${targets[@]}"
         ;;
     start)
         vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
