@@ -509,8 +509,10 @@ case ${ACTION} in
         vde_run "inspect" "${VDE_ROOT_DIR}/bin/vde-inspect" "${targets[@]}"
         ;;
     dns-check)
-        shift
-        "${VDE_ROOT_DIR}/bin/vde-dns-check.zsh" "$@"
+        # The flag loop above already consumed "$@" into input_targets, so a
+        # `shift` here always failed ("shift count must be <= $#"). Forward its
+        # words (-f/-q already stripped), unresolved: the optional port is a number.
+        vde_run "dns-check" "${VDE_ROOT_DIR}/bin/vde-dns-check.zsh" "${input_targets[@]}"
         ;;
     usb-map)
         # Resolved targets, so "all", "default" and cluster names expand the

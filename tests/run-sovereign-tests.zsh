@@ -75,6 +75,7 @@ UNIT_TESTS=(
     "${VDE_ROOT_DIR}/tests/unit/tracked-compose-baseline.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/jupyterlab-language-vm.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/sudo-home-parity.test.zsh"
+    "${VDE_ROOT_DIR}/tests/unit/dns-check-dispatch.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/compose-template-drift.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vm-types-source-parity.test.zsh"
 )
