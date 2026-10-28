@@ -113,7 +113,7 @@ smelt_vm_configs() {
 
         local manifest
         if [[ "${category}" == "languages" ]]; then
-            manifest=$(render_language_template "${short_name}" "${ssh_port}" "${custom_cmd}")
+            manifest=$(render_language_template "${short_name}" "${ssh_port}" "${custom_cmd}" "${svc_ports}" "$(vde_workspace_subpath "${short_name}")")
             manifest="${manifest//\{\{PKGS\}\}/${pkgs}}"
         else
             manifest=$(render_service_template "${short_name}" "${ssh_port}" "${svc_ports}" "${custom_cmd}")
@@ -133,7 +133,7 @@ smelt_vm_configs() {
             echo "REDIS_PORT=6379"
             echo "VDE_HOST=vde-host"
             
-            if [[ "${category}" == "services" && -n "${svc_ports}" ]]; then
+            if [[ -n "${svc_ports}" && "${svc_ports}" != "-" && "${svc_ports}" != "null" ]]; then
                 local upper_name="${(U)short_name}"
                 for p in ${(s:,:)svc_ports}; do
                     p="${p// /}" # Zsh-native space removal

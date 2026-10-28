@@ -43,14 +43,14 @@ test_fail() {
 # 1. REGISTRY AUDIT
 # =============================================================================
 test_registry_presence() {
-    test_start "jupyterlab is registered as a service"
+    test_start "jupyterlab is registered as a language"
     load_vm_types >/dev/null 2>&1
     
     local type=$(get_vm_type "vde-jupyterlab")
-    if [[ "$type" == "service" ]]; then
+    if [[ "$type" == "lang" ]]; then
         test_pass
     else
-        test_fail "Expected service, got $type"
+        test_fail "Expected language, got $type"
     fi
 }
 
@@ -59,10 +59,10 @@ test_identity_assignment() {
     local ssh_port=$(get_vm_info ssh_port "vde-jupyterlab")
     local svc_ports=$(get_vm_info svc_ports "vde-jupyterlab")
     
-    if [[ "$ssh_port" == "2401" && "$svc_ports" == "8888" ]]; then
+    if [[ "$ssh_port" == "2225" && "$svc_ports" == "8888" ]]; then
         test_pass
     else
-        test_fail "Ports incorrect: SSH=$ssh_port (expected 2401), SVC=$svc_ports (expected 8888)"
+        test_fail "Ports incorrect: SSH=$ssh_port (expected 2225), SVC=$svc_ports (expected 8888)"
     fi
 }
 

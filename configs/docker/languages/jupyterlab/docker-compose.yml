@@ -1,7 +1,7 @@
 # VDE ARCHITECTURAL RECORD
-# @shared-law (Forge Component)
+# @shared-law (Sovereign Law)
 # Template for language VMs
-# Variables: jupyterlab, 2407, python3-pip python3-venv tini, zsh /vde/scripts/setup/jupyterlab-init.zsh
+# Variables: jupyterlab, 2225, python3-pip python3-venv tini, zsh /vde/scripts/setup/jupyterlab-init.zsh
 name: vde-jupyterlab
 services:
   vde-jupyterlab:
@@ -19,6 +19,10 @@ services:
     container_name: vde-jupyterlab
     hostname: vde-jupyterlab
     restart: unless-stopped
+    labels:
+      - "vde.managed=true"
+      - "vde.type=lang"
+      - "vde.name=jupyterlab"
 
     # Docker Socket Sovereignty, cont'd (Issue #457): grant devuser access to
     # the bind-mounted host docker.sock via a launch-time supplementary GID
@@ -27,20 +31,15 @@ services:
     # into the image itself.
     group_add:
       - "${VDE_DOCKER_SOCK_GID:-1000}"
-    labels:
-      - "vde.managed=true"
-      - "vde.type=lang"
-      - "vde.name=jupyterlab"
 
     ports:
-      - "2407:2407"
+      - "2225:2225"
+      - "8888:8888"
 
     volumes:
       - ../../../../:/vde:ro
-      - ${VDE_PROJECTS_DIR:-../../../../projects}/jupyterlab:/home/devuser/workspace
+      - ${VDE_PROJECTS_DIR:-../../../../projects}/python/jupyterlabs:/home/devuser/workspace
       - ../../../../logs/jupyterlab:/logs
-      - ~/.ssh/vde/vde_student.pub:/home/devuser/.ssh/vde/authorized_keys:ro
-      - ~/.ssh/vde/vde_student:/home/devuser/.ssh/vde/vde_student:ro
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
@@ -49,13 +48,21 @@ services:
       - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/vde-ssh.sock
 
     environment:
-      - SSH_AUTH_SOCK=/home/devuser/.ssh/vde/agent.sock
+      - SSH_AUTH_SOCK=/run/vde-ssh.sock
 
     env_file:
+      - ../../../../.env
       - ../../../../env-files/jupyterlab.env
 
     networks:
-      - vde-net
+      vde-net:
+        aliases:
+          - "jupyterlab"
+          - "vde-jupyterlab"
+
+    extra_hosts:
+      - "vde-host:host-gateway"
+      - "host:host-gateway"
 
 networks:
   vde-net:

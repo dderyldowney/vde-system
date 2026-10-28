@@ -7,7 +7,7 @@ All available programming languages and services in the **Sovereign Baseline (1.
 
 ---
 
-## Language VMs (25 total, SSH ports 2200–2299)
+## Language VMs (26 total, SSH ports 2200–2299)
 
 | Name | Aliases | Display Name | SSH Port |
 |------|---------|--------------|----------|
@@ -36,15 +36,15 @@ All available programming languages and services in the **Sovereign Baseline (1.
 | vde-swift | swift | Swift | 2221 |
 | vde-testport1 | testport1 | Test Port 1 | 2222 |
 | vde-testport2 | testport2 | Test Port 2 | 2223 |
+| vde-jupyterlab | jupyterlab, notebook | JupyterLab (hybrid: also serves Jupyter Lab on 8888) | 2225 |
 
 ---
 
-## Service VMs (8 total, SSH ports 2400–2407)
+## Service VMs (7 total, SSH ports 2400–2407; 2401 is retired)
 
 | Name | Aliases | Display Name | Service Port | SSH Port |
 |------|---------|--------------|--------------|----------|
 | vde-couchdb | couchdb | CouchDB | 5984 | 2400 |
-| vde-jupyterlab | jupyterlab, notebook | JupyterLab | 8888 | 2401 |
 | vde-mongodb | mongodb, mongo | MongoDB | 27017 | 2402 |
 | vde-mysql | mysql | MySQL | 3306 | 2403 |
 | vde-nginx | nginx | Nginx | 80,443 | 2404 |

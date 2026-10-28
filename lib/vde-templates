@@ -48,12 +48,20 @@ render_template() {
     echo "${content}"
 }
 
-# render_language_template NAME SSH_PORT INSTALL_CMD
-# Render docker-compose.yml for language VM
+# render_language_template NAME SSH_PORT INSTALL_CMD [SERVICE_PORTS] [WORKSPACE]
+# Render docker-compose.yml for language VM. SERVICE_PORTS ("-"/empty for none)
+# is a comma list published beside SSH (hybrid VMs such as jupyterlab, #572);
+# WORKSPACE is the subpath under the projects base (default: NAME).
 render_language_template() {
-    local name="${1}" ssh_port="${2}" custom_cmd="${3:-}"
+    local name="${1}" ssh_port="${2}" custom_cmd="${3:-}" svc_ports="${4:-}" workspace="${5:-}"
+    local extra="" p
+    [[ "${svc_ports}" == "-" || "${svc_ports}" == "null" ]] && svc_ports=""
+    for p in ${(s:,:)svc_ports// /}; do
+        extra+=$'\n'"      - \"${p}:${p}\""
+    done
     render_template "${TEMPLATES_DIR}/compose-language.yml" \
-        NAME "${name}" SSH_PORT "${ssh_port}" CUSTOM_CMD "${custom_cmd}"
+        NAME "${name}" SSH_PORT "${ssh_port}" CUSTOM_CMD "${custom_cmd}" \
+        EXTRA_PORTS "${extra}" WORKSPACE "${workspace:-${name}}"
 }
 
 # render_usb_template NAME

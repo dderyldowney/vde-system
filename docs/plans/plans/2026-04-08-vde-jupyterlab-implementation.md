@@ -1,6 +1,8 @@
 # vde-jupyterlab Implementation Plan
 <!-- @shared-law (Sovereign Law) -->
 
+> **Superseded (#572):** JupyterLab is now a hybrid **language** VM (Python workspace + Jupyter Lab on 8888) with SSH port **2225**. References below to a service VM and SSH port 2407/2401 are historical; see `data/vm-types.conf` and `docs/reference/vm-types.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implement the `vde-jupyterlab` VM type with a full Data Science stack and persistent workspace mounting.
