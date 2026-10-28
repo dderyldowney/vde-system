@@ -12,8 +12,8 @@
 # fixture, is not registered, and is intentionally outside this check.
 #
 # Renders in memory with the generator's own calls; no Docker, no writes. The
-# baseline is the one the primary (JSON) registry path produces: a "-" pkgs
-# field means no packages, i.e. an empty string. Files are compared byte for
+# registry "-" fields mean "none" and load as empty strings from both sources
+# (guarded by vm-types-source-parity.test.zsh). Files are compared byte for
 # byte, including the single trailing newline the generator's echo writes.
 
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
