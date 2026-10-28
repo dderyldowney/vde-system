@@ -406,6 +406,11 @@ load_vm_types() {
                         [[ "${_v_cat}" == "lang" ]] && lang_vms_array+=("${_v_name}")
                         [[ "${_v_cat}" == "service" ]] && service_vms_array+=("${_v_name}")
                         
+                        # A registry "-" means "none"; the JSON path loads that as
+                        # empty, so normalise here for source parity (#576).
+                        [[ "${_v_pkgs}" == "-" ]] && _v_pkgs=""
+                        [[ "${_v_env}" == "-" ]] && _v_env=""
+
                         VM_ALIASES[${_v_name}]="${_v_aliases}"
                         VM_DISPLAY[${_v_name}]="${_v_disp}"
                         VM_INSTALL[${_v_name}]="${_v_pkgs}"
