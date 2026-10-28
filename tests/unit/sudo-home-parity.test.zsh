@@ -25,20 +25,77 @@ test_start() { echo -e "${YELLOW}[TEST]${RESET} $1"; }
 test_pass()  { echo -e "${GREEN}[PASS]${RESET} $1"; ((TESTS_PASSED++)); return 0; }
 test_fail()  { echo -e "${RED}[FAIL]${RESET} $1: $2"; ((TESTS_FAILED++)); return 0; }
 
+# sudo_lacks_home SEGMENT: succeeds when SEGMENT (one sudo command, no pipes)
+# runs as devuser without -H / --set-home. Walks sudo's own options only, so
+# -H is recognised in any position and bundled (-Hu), and -u/--user in any form.
+sudo_lacks_home() {
+    local -a words=(${(z)1})
+    local w target=0 home=0 expect_arg=0 seen=0
+    for w in "${words[@]}"; do
+        w="${(Q)w}"
+        if (( ! seen )); then [[ "${w}" == sudo ]] && seen=1; continue; fi
+        if (( expect_arg )); then
+            expect_arg=0
+            [[ "${w}" == (devuser|\$\{DEVUSER\}) ]] && target=1
+            continue
+        fi
+        case "${w}" in
+            --set-home) home=1 ;;
+            --user=*)   [[ "${w#--user=}" == (devuser|\$\{DEVUSER\}) ]] && target=1 ;;
+            --user)     expect_arg=1 ;;
+            --*)        ;;
+            -u?*)       [[ "${w#-u}" == (devuser|\$\{DEVUSER\}) ]] && target=1 ;;
+            -[a-zA-Z]*)
+                [[ "${w}" == *H* ]] && home=1
+                # an arg-taking option last in a bundle (-Hu devuser) consumes the next word
+                [[ "${w}" == -*u ]] && expect_arg=1 ;;
+            *) break ;;
+        esac
+    done
+    (( target && ! home ))
+}
+
+test_start "matcher: option forms (fixtures)"
+typeset -a must_flag=(
+    'sudo -u devuser zsh -c x'
+    'sudo --user devuser zsh -c x'
+    'sudo --user=devuser zsh -c x'
+    'sudo -u "${DEVUSER}" zsh -c x'
+)
+typeset -a must_pass=(
+    'sudo -H -u devuser zsh -c x'
+    'sudo -u devuser -H zsh -c x'
+    'sudo -Hu devuser zsh -c x'
+    'sudo --set-home --user=devuser zsh -c x'
+    'sudo apt-get install -y x'
+    'sudo service nginx start'
+)
+typeset fx fixture_bad=()
+for fx in "${must_flag[@]}"; do sudo_lacks_home "${fx}" || fixture_bad+=("should flag: ${fx}"); done
+for fx in "${must_pass[@]}"; do sudo_lacks_home "${fx}" && fixture_bad+=("should pass: ${fx}"); done
+if (( ${#fixture_bad} == 0 )); then
+    test_pass "matcher handles ${#must_flag} flagged + ${#must_pass} compliant forms"
+else
+    test_fail "matcher fixtures" "${(j:; :)fixture_bad}"
+fi
+
 test_start "every devuser sudo in scripts/setup/*.zsh passes -H"
 typeset -a offenders
-typeset f line n
+typeset f line logical seg n start
 for f in scripts/setup/*.zsh; do
-    n=0
+    n=0 start=0 logical=""
     while IFS= read -r line; do
         (( n++ ))
-        [[ "${line}" =~ '^[[:space:]]*#' ]] && continue
-        # a sudo invocation that targets devuser (literal or ${DEVUSER}) ...
-        # (strip the compliant "sudo -H -u" forms first so a second, piped
-        # sudo on the same line is still caught)
-        if [[ "${line//sudo -H -u/ok}" =~ 'sudo[^|;&]*-u[[:space:]]+"?(devuser|\$\{DEVUSER\})' ]]; then
-            offenders+=("${f}:${n}")
-        fi
+        [[ -z "${logical}" ]] && start=${n}
+        [[ "${line}" =~ '^[[:space:]]*#' && -z "${logical}" ]] && continue
+        # join backslash-continued physical lines into one logical line
+        if [[ "${line}" == *\\ ]]; then logical+="${line%\\} "; continue; fi
+        logical+="${line}"
+        # split on pipes / separators so each sudo is judged on its own
+        for seg in "${(@s:|:)${logical//&&/|}}"; do
+            [[ "${seg}" == *sudo* ]] && sudo_lacks_home "${seg}" && offenders+=("${f}:${start}")
+        done
+        logical=""
     done < "${f}"
 done
 if (( ${#offenders} == 0 )); then
