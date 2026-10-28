@@ -65,6 +65,8 @@ UNIT_TESTS=(
     "${VDE_ROOT_DIR}/tests/unit/vde-path-utils.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vde-docker.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vde-parser.test.zsh"
+    "${VDE_ROOT_DIR}/tests/unit/vde-parser-validation.test.zsh"
+    "${VDE_ROOT_DIR}/tests/unit/vm-lock.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vde-ssh.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vde-security.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vde-schema-validation.test.zsh"
