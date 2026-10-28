@@ -165,7 +165,28 @@ vde cluster stop mean-stack
 ```zsh
 # Verify cross-Spoke DNS resolution within vde-net
 vde dns-check python postgres
+
+# Optional third argument: TCP port to probe (default 22)
+vde dns-check python postgres 5432
 ```
+
+Exit status: 0 when every probe passes, 1 when a probe fails, 2 when `<source_vm>` or `<target_vm>` is missing
+(usage is printed).
+
+---
+
+## Usage Errors and Exit Status
+
+```zsh
+vde                # prints the usage text, exit 2
+vde help           # prints the usage text, exit 0
+vde frobnicate     # "Unknown command 'frobnicate'. Run 'vde help' for usage." on stderr, exit 2
+```
+
+Put flags after the command: `vde start -q python` works, `vde -q start python` is reported as an unknown
+command `-q`. `vde stop`, `restart` and `remove` exit 0 when every target was handled or is already stopped/absent,
+and 1 on any unknown alias or failed docker operation. Full table:
+[Router and action handlers](../development/router-handlers.md#4-exit-status-of-vde).
 
 ---
 

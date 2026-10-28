@@ -413,6 +413,22 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
+### vde-actions (@armor) (Router Action Handlers)
+**Purpose**: The bodies of the multi-line `bin/vde` commands, extracted from the router's `case` so they can be read, traced and tested as named units
+**Key Functions**:
+- `vde_action_start()` - `vde start <alias...|default|all> [-f]`
+- `vde_action_stop()` - `vde stop <alias...|default|all>`
+- `vde_action_restart()` - `vde restart <alias...|default|all>`
+- `vde_action_remove()` - `vde remove|delete|rm <alias...|default|all>`
+- `vde_action_exec()` - `vde exec <vm> <command>`
+- `vde_action_enter()` - `vde enter|ssh <vm> [command]`
+- `vde_action_port()` - `vde port <vm>`
+- `vde_action_help()` - usage text
+
+**Contract**: called only from `bin/vde` after argument handling; takes no positional parameters; reads the router globals `ACTION`, `ACTION_ARGS`, `input_targets`, `targets`, `force`, `_vde_help_status`; ends with an explicit `exit`. `stop`, `restart` and `remove` exit 0 when every target was handled or already stopped/absent, and 1 on any unknown alias or failed docker operation (see [router-handlers](../development/router-handlers.md), section 3). Guarded by `_VDE_ACTIONS_LOADED`. `vde_trace_install` does not wrap `vde_action_*`, so they add no frame to `function-trace` output.
+
+---
+
 ### vde-parser (@armor) (Command Parsing)
 **Purpose**: Natural language command parsing  
 **Size**: 39.1 KB  
@@ -665,6 +681,7 @@ vde-system/
 │   ├── vde-constants          # Engine Constants
 │   ├── vde-core               # Engine Core Intelligence
 │   ├── vde-docker             # Docker Operations
+│   ├── vde-actions            # Router Action Handlers
 │   ├── vde-docker-state       # Runtime State Management
 │   ├── vde-errors             # Error Handling
 │   ├── vde-function-trace     # Function Execution Tracing
