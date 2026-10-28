@@ -11,7 +11,10 @@
 # surfacing later as a 30-file --force churn. dynamic-vm is the Proof of Life
 # fixture, is not registered, and is intentionally outside this check.
 #
-# Renders in memory with the generator's own calls; no Docker, no writes.
+# Renders in memory with the generator's own calls; no Docker, no writes. The
+# baseline is the one the primary (JSON) registry path produces: a "-" pkgs
+# field means no packages, i.e. an empty string. Files are compared byte for
+# byte, including the single trailing newline the generator's echo writes.
 
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -49,12 +52,13 @@ first_diff() {
     for (( i = 1; i <= ${#a} || i <= ${#b}; i++ )); do
         [[ "${a[i]}" == "${b[i]}" ]] || { print -r -- "line ${i}: [${a[i]}] vs [${b[i]}]"; return; }
     done
+    print -r -- "same lines; trailing newline/whitespace differs"
 }
 
 test_start "drift detector: an altered render is reported (fixture)"
 typeset base alt
 base="$(render_registered go '-' 'zsh x' 2208 '-')"
-alt="${base/restart: unless-stopped/restart: always}"
+alt="${base}"$'\n'"# altered"
 if [[ "${base}" != "${alt}" && -n "$(first_diff "${base}" "${alt}")" ]]; then
     test_pass "first_diff reports the changed line"
 else
@@ -62,19 +66,30 @@ else
 fi
 
 test_start "every registered language compose equals a fresh render"
-typeset -a drifted
-typeset type vm vmaliases display pkgs cmd svc ssh name tracked fresh
-while IFS='|' read -r type vm vmaliases display pkgs cmd svc ssh; do
-    [[ "${type}" == lang ]] || continue
-    name="${vm#vde-}"
+typeset -a drifted rows
+typeset row_line vm_name pkgs cmd svc ssh name tracked fresh raw
+typeset -i checked=0
+[[ -r data/vm-types.conf ]] || test_fail "registry readable" "data/vm-types.conf missing or unreadable"
+rows=("${(@f)$(grep '^lang|' data/vm-types.conf)}")
+rows=(${rows:#})
+if (( ${#rows} == 0 )); then
+    test_fail "registry has language rows" "no lang| rows found; refusing to report success on an empty check"
+fi
+for row_line in "${rows[@]}"; do
+    local -a f=("${(@s:|:)row_line}")
+    vm_name="${f[2]}" pkgs="${f[5]}" cmd="${f[6]}" svc="${f[7]}" ssh="${f[8]}"
+    name="${vm_name#vde-}"
     tracked="configs/docker/languages/${name}/docker-compose.yml"
+    (( checked++ ))
     if [[ ! -f "${tracked}" ]]; then drifted+=("${name}: compose missing"); continue; fi
-    fresh="$(render_registered "${name}" "${pkgs}" "${cmd}" "${ssh}" "${svc}")"
-    [[ "$(<${tracked})" == "${fresh}" ]] || drifted+=("${name} ($(first_diff "$(<${tracked})" "${fresh}"))")
-done < <(grep '^lang|' data/vm-types.conf)
-if (( ${#drifted} == 0 )); then
-    test_pass "no language compose has drifted from the template"
-else
+    # exact bytes: the trailing x protects the final newlines from $(...) stripping
+    raw="$(cat "${tracked}"; print -n x)"; raw="${raw%x}"
+    fresh="$(render_registered "${name}" "${pkgs}" "${cmd}" "${ssh}" "${svc}")"$'\n'
+    [[ "${raw}" == "${fresh}" ]] || drifted+=("${name} ($(first_diff "${raw}" "${fresh}"))")
+done
+if (( ${#rows} > 0 && ${#drifted} == 0 )); then
+    test_pass "no language compose has drifted from the template (${checked} checked)"
+elif (( ${#drifted} > 0 )); then
     test_fail "drifted from template (${#drifted})" "${(j:; :)drifted}"
 fi
 
