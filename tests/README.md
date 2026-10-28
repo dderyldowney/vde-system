@@ -77,7 +77,10 @@ tests/
 ├── unit/                                # Unit tests per library
 │   ├── vm-common.test.sh               # Core VM management functions
 │   ├── .test.sh        # Shell compatibility layer
-│   └── vde-parser.test.sh              # Natural language parser
+│   ├── vde-parser.test.sh              # Natural language parser
+│   ├── vde-actions.test.zsh            # bin/vde action handlers (stub docker, Docker-free)
+│   ├── vde-router-exit-status.test.zsh # Unknown command / bare vde exit statuses
+│   └── vde-router-delegate-args.test.zsh # Typed args reach audit/check-tetrad/heal/dns-check
 └── integration/                         # Integration tests
     └── vm-lifecycle-integration.test.sh # End-to-end VM workflows
 ```

@@ -81,5 +81,18 @@ behave --tags @system-spine
 - **Auto-Cleanup**: The `after_scenario` hook in `environment.py` ensures 100% removal of test containers (labeled `vde.test=true`).
 - **USP Compliance**: Every hydration script in `scripts/setup/` must pass the `usp-validation` suite before it is considered production Beskar.
 
+## 6. ROUTER UNIT TESTS
+
+`bin/vde` and `lib/vde-actions` are covered by Docker-free unit tests (run one with `zsh tests/unit/<name>.test.zsh`):
+
+| File | Covers |
+|------|--------|
+| `vde-actions.test.zsh` | The eight action handlers in a sandbox with a stub `docker`: usage errors, unknown aliases, absent/present containers, failing docker operations, exit statuses, `function-trace` transparency. |
+| `vde-router-exit-status.test.zsh` | Unknown command and bare `vde` exit 2; `vde help` exits 0. |
+| `vde-router-delegate-args.test.zsh` | Typed arguments reach `audit`, `check-tetrad`/`spine-check`, `heal` and `dns-check`. |
+
+How to verify a router change (characterization against a stub `docker`, trace comparison, mutation checks):
+[router-handlers](router-handlers.md#8-verifying-a-change-to-the-router).
+
 ---
 **Status:** SYSTEM CERTIFIED (1.5.6)

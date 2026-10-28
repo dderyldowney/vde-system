@@ -33,6 +33,7 @@ VDE Root Directory
 │   ├── vde-path-utils      # Cross-platform path handling
 │   ├── vde-progress        # Progress indicators
 │   ├── vde-parser          # Natural language command parsing
+│   ├── vde-actions         # Action handlers for bin/vde (start, stop, restart, remove, exec, enter, port, help)
 │   ├── vde-templates       # Template rendering
 │   ├── vde-health          # Container health checks
 │   ├── vde-metrics         # Performance metrics
@@ -73,6 +74,21 @@ The main entry point for all VDE operations. Supervised by `vde-enforce-uap.zsh`
 ```zsh
 vde <command> [options] [args]
 ```
+
+Flags go after the command (`vde start -q python`). `-f/--force` and `-q/--quiet` are consumed by the router.
+
+**Exit status:**
+
+| Situation | Exit |
+|-----------|------|
+| Command succeeded; `vde help` | 0 |
+| `vde` with no command (prints usage) | 2 |
+| Unknown command (message on stderr) | 2 |
+| Missing/invalid arguments to `dns-check` (prints usage) | 2 |
+| `stop`/`restart`/`remove`: every target handled, or already stopped/absent | 0 |
+| `stop`/`restart`/`remove`: any unknown alias, or a failed `docker stop`/`rm -f` | 1 |
+
+Details: [Router and action handlers](../development/router-handlers.md).
 
 #### Lifecycle Commands
 
@@ -135,7 +151,7 @@ vde <command> [options] [args]
 | Command | Aliases | Description |
 |---------|---------|-------------|
 | `cluster <cmd>` | — | Orchestrate multi-VM tech stacks (save, list, start, stop, remove) |
-| `dns-check <src> <tgt>` | — | **The Handshake Ritual**: Verify cross-Spoke DNS resolution |
+| `dns-check <src> <tgt> [port]` | — | **The Handshake Ritual**: Verify cross-Spoke DNS resolution (port defaults to 22) |
 
 #### SSH Management
 
