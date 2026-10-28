@@ -26,13 +26,20 @@ if [[ ! -d "${dev_home}/.sdkman" ]]; then
     # requires Bash at runtime. There is no zsh/native install path, so piping
     # the vendor installer to bash is the unavoidable third-party path. (A direct
     # Kotlin-compiler download was considered but would drop SDKMAN's multi-SDK
-    # version management.)
-    sudo -H -u devuser curl -s "https://get.sdkman.io" | sudo -H -u devuser bash
+    # version management.) Listed in docs/governance/bash-exceptions.md.
+    # Downloaded to a file and verified first so an HTTP error cannot ship a
+    # broken image with exit 0 (a curl|bash pipe would mask it).
+    typeset _sdkman_installer=$(mktemp)
+    curl -fsSL --connect-timeout 15 --max-time 120 "https://get.sdkman.io" -o "${_sdkman_installer}"
+    [[ -s "${_sdkman_installer}" ]] || { echo "CRITICAL: SDKMAN installer download failed or empty" >&2; exit 1; }
+    chmod 755 "${_sdkman_installer}"
+    sudo -H -u devuser bash "${_sdkman_installer}"
+    rm -f "${_sdkman_installer}"
 fi
 
 # 4. PERSISTENCE ANCHOR
 typeset _zshenv="${dev_home}/.zshenv"
-{
+grep -qs 'sdkman-init.sh' "${_zshenv}" || {
     echo 'export SDKMAN_DIR="${HOME}/.sdkman"'
     echo '[[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"'
 } >> "${_zshenv}"
