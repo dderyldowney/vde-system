@@ -147,6 +147,8 @@ Before it removes anything, `vde nuke` offers to **move your `projects/` and `da
 
 **Problem:** `core.bare` in `.git/config` was flipped to `true` by something other than you.
 
+**Known cause (fixed in Signet #493):** the spine check's Pillar II probe ran `git init` with the `GIT_DIR` that git exports to a hook launched from a linked worktree, so it re-initialised the worktree's gitdir and wrote `core.bare = true` into the shared config. The probe now scrubs git's repository-selecting environment. If you still see the flip on a build that has this fix, use the audit watch below to find the real writer.
+
 **Immediate fix:**
 
 ```zsh

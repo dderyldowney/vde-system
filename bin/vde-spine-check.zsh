@@ -124,7 +124,11 @@ main() {
         return 1
     fi
     local git_test_dir=$(mktemp -d)
-    (cd "${git_test_dir}" && git init --quiet --template='' && rm -rf .git) || { echo "[CRITICAL] Pillar II (Git) failed: git init failed."; return 1; }
+    # A hook launched from a linked worktree exports GIT_DIR (Signet #493); left in
+    # place, `git init` would re-initialise that gitdir and flip core.bare in the
+    # shared config. Scrub every variable that selects a repository so the probe
+    # can only ever touch the temp directory.
+    (cd "${git_test_dir}" && env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR -u GIT_PREFIX -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES -u GIT_NAMESPACE git init --quiet --template='' && rm -rf .git) || { echo "[CRITICAL] Pillar II (Git) failed: git init failed."; return 1; }
     rmdir "${git_test_dir}"
     [[ $quiet -eq 0 ]] && echo "[OK] Pillar II: Git is operational."
 
