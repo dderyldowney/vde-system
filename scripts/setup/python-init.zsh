@@ -38,7 +38,7 @@ apt-get install -y ${vde_python_pkgs[@]}
 #    pyenv repo directly -- which is all the pyenv.run installer actually does --
 #    so there is no piped remote shell script. The bundled python-build plugin
 #    provides `pyenv install`. Shallow clone to keep bandwidth down. Idempotent.
-sudo -u "${DEVUSER}" zsh -c '
+sudo -H -u "${DEVUSER}" zsh -c '
     set -e
     if [[ ! -d "$HOME/.pyenv" ]]; then
         git clone --depth 1 https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
@@ -64,7 +64,7 @@ fi
 #    as devuser. "Latest stable" = the highest pure X.Y.Z in pyenv's known list;
 #    the regex drops pre-releases (rc/dev/a/b) and non-CPython variants (pypy,
 #    graalpy, …), and `tail -1` takes the newest since the list is ascending.
-sudo -u "${DEVUSER}" zsh -c '
+sudo -H -u "${DEVUSER}" zsh -c '
     set -e
     export PYENV_ROOT="$HOME/.pyenv"
     export PATH="$PYENV_ROOT/bin:$PATH"

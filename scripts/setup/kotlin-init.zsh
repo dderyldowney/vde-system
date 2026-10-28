@@ -27,7 +27,7 @@ if [[ ! -d "${dev_home}/.sdkman" ]]; then
     # the vendor installer to bash is the unavoidable third-party path. (A direct
     # Kotlin-compiler download was considered but would drop SDKMAN's multi-SDK
     # version management.)
-    sudo -u devuser curl -s "https://get.sdkman.io" | sudo -u devuser bash
+    sudo -H -u devuser curl -s "https://get.sdkman.io" | sudo -H -u devuser bash
 fi
 
 # 4. PERSISTENCE ANCHOR

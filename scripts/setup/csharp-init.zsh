@@ -28,7 +28,7 @@ chmod +x /tmp/dotnet-install.sh
 # running it under sh triggers pipefail errors. Invoking it under bash is the
 # unavoidable third-party path. (A direct SDK-tarball install was considered but
 # kept on the vendor installer so channel 8.0 patch releases track automatically.)
-sudo -u devuser bash /tmp/dotnet-install.sh --channel 8.0 --install-dir "${dev_home}/.dotnet"
+sudo -H -u devuser bash /tmp/dotnet-install.sh --channel 8.0 --install-dir "${dev_home}/.dotnet"
 
 # 4. PERSISTENCE ANCHOR
 typeset _zshenv="${dev_home}/.zshenv"
