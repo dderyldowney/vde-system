@@ -60,6 +60,7 @@ Feature: The Proof of Life - The Contract
     Then the command should succeed
     And the VM "vde-dynamic-vm" must be registered as a "language"
     And the setup script for "dynamic-vm" must exist
+    And the setup script for "dynamic-vm" must execute successfully
     When I execute "bin/vde uninstall dynamic-vm --skip-confirm"
     Then the command should succeed
     And the VM "dynamic-vm" should no longer be registered

@@ -597,3 +597,31 @@ def step_ritual_executes(context, name):
         f"the forged ritual never reached its work section: the marker "
         f"{marker!r} was not emitted. Exit {result.returncode}.\n{combined}"
     )
+
+
+@then('the setup script for "{name}" must execute successfully')
+def step_setup_script_executes(context, name):
+    """
+    The Proof of Life registers dynamic-vm on every run but never builds it, so
+    asserting the setup script EXISTS certified a file, not a working ritual
+    (Signet #537). Run it the way the image build does, in a throwaway container
+    from the base image, and require a clean exit.
+    """
+    root = str(get_vde_root())
+    result = subprocess.run(
+        [
+            "docker", "run", "--rm", "--user", "root",
+            "-v", f"{root}:/vde",
+            "--entrypoint", "zsh",
+            "vde-base:latest",
+            f"/vde/scripts/setup/{name}-init.zsh",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    combined = result.stdout + result.stderr
+    assert result.returncode == 0, (
+        f"the setup script for {name!r} exited {result.returncode} when run, so "
+        f"building this Spoke would fail:\n{combined}"
+    )
