@@ -27,6 +27,7 @@ test_pass()  { echo -e "${GREEN}[PASS]${RESET} $1"; ((TESTS_PASSED++)); return 0
 test_fail()  { echo -e "${RED}[FAIL]${RESET} $1: $2"; ((TESTS_FAILED++)); return 0; }
 
 typeset -a scripts=(bin/vde-gospel-audit.zsh bin/vde-heal-docs.zsh)
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 typeset s
 for s in ${scripts}; do
     test_start "${s} targets docs/reference/scripts.md, not the stale path"
