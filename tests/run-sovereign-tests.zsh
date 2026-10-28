@@ -78,6 +78,7 @@ UNIT_TESTS=(
     "${VDE_ROOT_DIR}/tests/unit/dns-check-dispatch.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/compose-template-drift.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vm-types-source-parity.test.zsh"
+    "${VDE_ROOT_DIR}/tests/unit/gospel-audit-script-doc.test.zsh"
 )
 
 for test in "${UNIT_TESTS[@]}"; do
