@@ -279,8 +279,11 @@ vde_purge_ghosts() {
 }
 
 # VDE_CURL_BOUNDS - bounded-download flags for build-time fetches (Signet #598).
-# A stalled connection must fail the image build, not hang it: cap connect and
-# total time and retry transient errors. Pass as "${VDE_CURL_BOUNDS[@]}".
+# A stalled connection must fail the image build, not hang it: cap connect time,
+# cap each attempt's total time and retry transient errors. --max-time applies
+# per attempt, so the worst case is (retries + 1) attempts plus retry delays.
+# Bounds curl only, not a vendor installer's own downloads.
+# Pass as "${VDE_CURL_BOUNDS[@]}".
 typeset -ga VDE_CURL_BOUNDS=(--connect-timeout 30 --max-time 600 --retry 3 --retry-delay 2)
 
 # vde_install_rustup USER LABEL - install rustup for USER unless rustc exists.

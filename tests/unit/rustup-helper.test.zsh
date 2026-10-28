@@ -55,10 +55,12 @@ else test_fail "VDE_CURL_BOUNDS" "got '${b}', want '${want[*]}'"; fi
 
 test_start "vde_install_rustup downloads the native binary with the bounds"
 PATH="${stub}" vde_install_rustup nobody VDE-T >/dev/null 2>&1
+typeset rc=$?
 typeset got="$(<"${CURL_LOG}")"
-if [[ "${got}" == *"--connect-timeout 30"* && "${got}" == *"static.rust-lang.org/rustup/dist/"*"/rustup-init"* ]]; then
+if (( rc != 0 )); then test_fail "helper status" "vde_install_rustup returned ${rc}"
+elif [[ "${got}" == *"${want[*]}"* && "${got}" == *"static.rust-lang.org/rustup/dist/"*"/rustup-init"* ]]; then
     test_pass "curl ${got%% -o*}"
-else test_fail "curl args" "got '${got}'"; fi
+else test_fail "curl args" "want '${want[*]}' and the rustup-init URL, got '${got}'"; fi
 
 test_start "installer keeps the name rustup-init (multi-call dispatch)"
 if [[ "$(<"${CURL_LOG}.name")" == "rustup-init" ]]; then test_pass "file name rustup-init"
