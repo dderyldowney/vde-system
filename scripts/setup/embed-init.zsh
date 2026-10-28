@@ -131,7 +131,8 @@ sudo -H -u devuser zsh -c '
         # (POSIX shell). There is no native-binary installer, and `cargo install
         # probe-rs-tools` would trigger the ~15-minute source build this step
         # deliberately avoids. Running the vendor installer under sh is the
-        # unavoidable third-party path (Signet #551).
+        # unavoidable third-party path (Signet #551). Listed in
+        # docs/governance/bash-exceptions.md.
         sh "${_installer}"
         rm -f "${_installer}"
         command -v probe-rs >/dev/null || { print -u2 "probe-rs did not install"; exit 1; }
