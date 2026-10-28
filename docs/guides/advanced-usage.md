@@ -102,12 +102,17 @@ Create composite VMs by adding aliases:
 
 ```zsh
 # In vm-types.conf
-lang|js|node,nodejs,typescript|JavaScript|apt-get update && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs && npm install -g typescript|
+lang|vde-js|js,javascript,node|JavaScript|-|zsh /vde/scripts/setup/js-init.zsh|-|2211
 
-# Now both create the same VM:
+# Every alias resolves to the same VM:
 vde create js
-vde create typescript
+vde create node
 ```
+
+The install steps live in the VM's setup script (`scripts/setup/js-init.zsh`, which
+configures the signed NodeSource apt repository in zsh), not inline in the
+registry row. Setup scripts must stay zsh-only; the few unavoidable vendor
+installers are listed in [bash-exceptions.md](../governance/bash-exceptions.md).
 
 ---
 
