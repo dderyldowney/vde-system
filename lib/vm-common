@@ -196,6 +196,9 @@ export VM_TYPES_CONF
 VM_TYPES_JSON="${VM_TYPES_JSON:-${DATA_DIR}/vm-types.json}"
 export VM_TYPES_JSON
 VM_TYPES_CACHE="${VM_TYPES_CACHE:-${VDE_CACHE_DIR}/vm-types.cache}"
+# This file is itself a cache input: a cache built by an older loader may hold
+# values this loader would now normalise differently (#576).
+_VM_COMMON_SOURCE="${(%):-%x}"
 export VM_TYPES_CACHE
 VM_DOCKER_CONFIG="${VM_DOCKER_CONFIG:-${DATA_DIR}/vm-docker-config.json}"
 export VM_DOCKER_CONFIG
@@ -310,7 +313,7 @@ load_vm_types() {
 
     # 1. Try cache FIRST for maximum performance (unless --no-cache requested)
     local use_cache=0
-    if [[ "${no_cache}" -eq 0 ]] && _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}"; then
+    if [[ "${no_cache}" -eq 0 ]] && _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}" "${_VM_COMMON_SOURCE}"; then
         # Verify cache file has no syntax errors before sourcing
         if zsh -n "${VM_TYPES_CACHE}" 2>/dev/null; then
             # Load from cache - suppress output unless debugging
@@ -337,7 +340,7 @@ load_vm_types() {
         
         {
             # Double-check if another process just finished smelting the cache while we waited
-            if [[ "${no_cache}" -eq 0 ]] && _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}"; then
+            if [[ "${no_cache}" -eq 0 ]] && _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}" "${_VM_COMMON_SOURCE}"; then
                 if zsh -n "${VM_TYPES_CACHE}" 2>/dev/null; then
                     . "${VM_TYPES_CACHE}" >/dev/null 2>&1 && {
                         use_cache=1
@@ -378,8 +381,8 @@ load_vm_types() {
                     _info "Parsing VM types from JSON via JQ: ${VM_TYPES_JSON}"
                     local _v_p_configs
                     _v_p_configs=$(vde_query_json -r '
-                        (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
-                        (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
+                        (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\((.pkgs//"")|if .=="-" then "" else . end|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\((.service_ports//"")|if .=="-" then "" else . end|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
+                        (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\((.pkgs//"")|if .=="-" then "" else . end|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\((.service_ports//"")|if .=="-" then "" else . end|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
                     ' "${VM_TYPES_JSON}" 2>/dev/null)
 
                     if [[ -n "${_v_p_configs}" ]]; then
