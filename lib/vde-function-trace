@@ -67,6 +67,9 @@ vde_trace_install() {
         fi
         [[ "${abs_src}" == "${_vt_root}"/* ]] || continue
         [[ "${fname}" =~ "^(_vde_trace|vde_trace)" ]] && continue
+        # Extracted bin/vde action handlers stay unwrapped: transparent, so their callees keep the
+        # call depth they had when the handler bodies were inline arms.
+        [[ "${fname}" == vde_action_* ]] && continue
         _vde_trace_wrap_function "${fname}" "${abs_src}"
     done
 
