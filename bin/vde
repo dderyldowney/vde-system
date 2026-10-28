@@ -63,8 +63,10 @@ fi
 trap 'vde_error_map 130; exit 130' SIGINT SIGTERM
 
 # Main command router
-ACTION=$1
-shift # past command
+ACTION=${1:-}
+# A bare `shift` with no arguments fails ("shift count must be <= $#") and killed
+# the script before any usage was shown.
+if [[ $# -gt 0 ]]; then shift; fi # past command
 
 # ── FUNCTION TRACE MODE ──────────────────────────────────────────────────
 # Re-parse the real sub-command now so target resolution works correctly.
@@ -73,8 +75,16 @@ shift # past command
 _VDE_FT_PENDING=""
 if [[ "${ACTION}" == "function-trace" ]]; then
     _VDE_FT_PENDING=1
-    ACTION="$1"
-    shift
+    ACTION="${1:-}"
+    if [[ $# -gt 0 ]]; then shift; fi
+fi
+
+# No command given (also `vde function-trace` alone): show usage and report invalid input.
+typeset _vde_help_status=0
+if [[ -z "${ACTION}" ]]; then
+    ACTION=help
+    _VDE_FT_PENDING=""   # nothing to trace: keep trace output out of the usage
+    _vde_help_status=${VDE_ERR_INVALID_INPUT}
 fi
 # ─────────────────────────────────────────────────────────────────────────
 
@@ -595,7 +605,10 @@ Paths:
 Version: $(vde_get_version)
 This is the Way.
 EOF
-        exit 0
+        exit ${_vde_help_status}
         ;;
-    *) echo "Unknown command. Run 'vde help' for usage." ;;
+    *)
+        echo "Unknown command '${ACTION}'. Run 'vde help' for usage." >&2
+        exit ${VDE_ERR_INVALID_INPUT}
+        ;;
 esac
