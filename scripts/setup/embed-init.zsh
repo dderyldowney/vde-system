@@ -46,27 +46,9 @@ apt-get install -y ${=vde_embed_pkgs}
 # Installed via rustup as the rust Spoke does, then given the bare-metal
 # targets. thumbv7em-none-eabihf is the STM32F303 (Cortex-M4F); the others
 # cover Cortex-M3, Cortex-M0 and the RISC-V ESP32-C3.
-sudo -H -u devuser zsh -c '
-    set -e
-    if ! command -v rustc >/dev/null; then
-        # Mandate C (ZSH ONLY): fetch rustup'"'"'s NATIVE installer binary and run
-        # it directly, instead of executing the vendor shell script under `sh`.
-        case "$(uname -m)" in
-            x86_64)        triple="x86_64-unknown-linux-gnu" ;;
-            aarch64|arm64) triple="aarch64-unknown-linux-gnu" ;;
-            armv7l)        triple="armv7-unknown-linux-gnueabihf" ;;
-            i686|i386)     triple="i686-unknown-linux-gnu" ;;
-            *) print -u2 "VDE-EMBED: unsupported architecture $(uname -m)"; exit 1 ;;
-        esac
-        _installer=$(mktemp)
-        curl --proto "=https" --tlsv1.2 -sSfL \
-            "https://static.rust-lang.org/rustup/dist/${triple}/rustup-init" -o "${_installer}"
-        [[ -s "${_installer}" ]] || { print -u2 "rustup-init download failed or empty"; exit 1; }
-        chmod +x "${_installer}"
-        "${_installer}" -y --no-modify-path
-        rm -f "${_installer}"
-    fi
-'
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
+source "${VDE_ROOT_DIR}/lib/vde-core" || { echo "CRITICAL: vde-core library missing" >&2; exit 1; }
+vde_install_rustup devuser VDE-EMBED
 
 # PERSISTENCE ANCHORS: cargo on PATH for login and non-login shells, exactly
 # once, as the rust Spoke mandates.
@@ -123,7 +105,7 @@ sudo -H -u devuser zsh -c '
     export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
     if ! command -v probe-rs >/dev/null; then
         _installer=$(mktemp)
-        curl --proto "=https" --tlsv1.2 -sSfL \
+        curl --proto "=https" --tlsv1.2 -sSfL "$@" \
             https://github.com/probe-rs/probe-rs/releases/latest/download/probe-rs-tools-installer.sh \
             -o "${_installer}"
         [[ -s "${_installer}" ]] || { print -u2 "probe-rs installer download failed or empty"; exit 1; }
@@ -137,9 +119,7 @@ sudo -H -u devuser zsh -c '
         rm -f "${_installer}"
         command -v probe-rs >/dev/null || { print -u2 "probe-rs did not install"; exit 1; }
     fi
-'
+' _ "${VDE_CURL_BOUNDS[@]}"
 
 # 6. PURGING THE GHOSTS (Rule 12.5)
-export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
-source "${VDE_ROOT_DIR}/lib/vde-core" || { echo "CRITICAL: vde-core library missing" >&2; exit 1; }
 vde_purge_ghosts

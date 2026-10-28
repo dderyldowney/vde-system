@@ -27,26 +27,11 @@ apt-get install -y ${=vde_rust_pkgs}
 # Mandate C (ZSH ONLY): run rustup's NATIVE installer binary directly instead
 # of piping the vendor shell script to `sh`. The rustup-init binary does exactly
 # what `sh.rustup.rs | sh` does, so no foreign shell is invoked (parity with the
-# pyenv Spoke). TLS stays hardened.
-sudo -H -u devuser zsh -c '
-    set -e
-    if ! command -v rustc >/dev/null; then
-        case "$(uname -m)" in
-            x86_64)        triple="x86_64-unknown-linux-gnu" ;;
-            aarch64|arm64) triple="aarch64-unknown-linux-gnu" ;;
-            armv7l)        triple="armv7-unknown-linux-gnueabihf" ;;
-            i686|i386)     triple="i686-unknown-linux-gnu" ;;
-            *) print -u2 "VDE-RUST: unsupported architecture $(uname -m)"; exit 1 ;;
-        esac
-        installer="$(mktemp)"
-        curl --proto "=https" --tlsv1.2 -sSfL \
-            "https://static.rust-lang.org/rustup/dist/${triple}/rustup-init" -o "${installer}"
-        [[ -s "${installer}" ]] || { print -u2 "VDE-RUST: rustup-init download failed or empty"; exit 1; }
-        chmod +x "${installer}"
-        "${installer}" -y --no-modify-path
-        rm -f "${installer}"
-    fi
-'
+# pyenv Spoke). TLS stays hardened and downloads are time-bounded; the shared
+# helper lives in lib/vde-core (Signet #598).
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
+source "${VDE_ROOT_DIR}/lib/vde-core" || { echo "CRITICAL: vde-core library missing" >&2; exit 1; }
+vde_install_rustup devuser VDE-RUST
 
 # 3. PERSISTENCE ANCHORS
 # Direct injection as commanded by the Clan Leader.
@@ -76,6 +61,4 @@ sudo -H -u devuser zsh -c '
 
 # 4. PURGING THE GHOSTS (Rule 12.5)
 # Clean up build artifacts to maintain a hardened, immutable baseline.
-export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
-source "${VDE_ROOT_DIR}/lib/vde-core" || { echo "CRITICAL: vde-core library missing" >&2; exit 1; }
 vde_purge_ghosts

@@ -278,6 +278,43 @@ vde_purge_ghosts() {
     fi
 }
 
+# VDE_CURL_BOUNDS - bounded-download flags for build-time fetches (Signet #598).
+# A stalled connection must fail the image build, not hang it: cap connect and
+# total time and retry transient errors. Pass as "${VDE_CURL_BOUNDS[@]}".
+typeset -ga VDE_CURL_BOUNDS=(--connect-timeout 30 --max-time 600 --retry 3 --retry-delay 2)
+
+# vde_install_rustup USER LABEL - install rustup for USER unless rustc exists.
+# Mandate C (ZSH ONLY): fetch rustup's NATIVE installer binary and run it
+# directly instead of piping the vendor shell script to `sh`. Shared by the rust
+# and embed Spokes (Signet #598). Must run as root; LABEL prefixes diagnostics.
+vde_install_rustup() {
+    local user="${1:?vde_install_rustup: user required}" label="${2:-VDE-RUST}"
+    sudo -H -u "${user}" zsh -c '
+        set -e
+        label="$1"; shift
+        if ! command -v rustc >/dev/null; then
+            case "$(uname -m)" in
+                x86_64)        triple="x86_64-unknown-linux-gnu" ;;
+                aarch64|arm64) triple="aarch64-unknown-linux-gnu" ;;
+                armv7l)        triple="armv7-unknown-linux-gnueabihf" ;;
+                i686|i386)     triple="i686-unknown-linux-gnu" ;;
+                *) print -u2 "${label}: unsupported architecture $(uname -m)"; exit 1 ;;
+            esac
+            # rustup-init is a multi-call binary that dispatches on its own file
+            # name: a bare mktemp name (tmp.XXXX) is taken for a proxy called
+            # "tmp". Keep the name and isolate it in a private directory.
+            tmpdir="$(mktemp -d)"
+            trap '"'"'rm -rf "${tmpdir}"'"'"' EXIT
+            installer="${tmpdir}/rustup-init"
+            curl --proto "=https" --tlsv1.2 -sSfL "$@" \
+                "https://static.rust-lang.org/rustup/dist/${triple}/rustup-init" -o "${installer}"
+            [[ -s "${installer}" ]] || { print -u2 "${label}: rustup-init download failed or empty"; exit 1; }
+            chmod +x "${installer}"
+            "${installer}" -y --no-modify-path
+        fi
+    ' _ "${label}" "${VDE_CURL_BOUNDS[@]}"
+}
+
 # vde_script_documented SCRIPT_NAME DOC_FILE: succeed when DOC_FILE documents the
 # bin/ script, either by literal name or by its `vde <subcommand>` form (e.g. a
 # vde-cluster entry is satisfied by `vde cluster`). Shared by the Gospel audit and
