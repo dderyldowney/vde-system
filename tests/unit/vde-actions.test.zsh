@@ -9,9 +9,9 @@
 # is provably behavior-neutral. Runs the real router and lib in a sandbox with a
 # stub `docker` (argv logged) and stub exec/ssh delegates; no daemon needed.
 #
-# Pinned quirk: a false trailing `[[ -n last_x ]] && ...` list makes stop/restart/
-# remove exit 1 when nothing was acted on. The extraction must preserve it
-# (handlers hand the status to bin/vde via _VDE_ACTION_RC).
+# Exit status of stop/restart/remove (Signet #590): 0 when every target was handled
+# or was already in the desired state; 1 if any target is unknown or its docker
+# operation failed. (It used to be the accident of a trailing `[[ ]] &&` list.)
 
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -43,6 +43,7 @@ cat > "${_root}/stubs/docker" <<'STUB'
 #!/usr/bin/env zsh
 print -r -- "docker $*" >> "${STUB_LOG}"
 [[ "$1" == ps ]] && print -rl -- ${=STUB_PS:-}
+[[ -n "${STUB_FAIL:-}" && "$1" == "${STUB_FAIL}" ]] && exit 1
 exit 0
 STUB
 chmod +x "${_root}/stubs/docker"
@@ -81,15 +82,17 @@ expect_no_log() {
 run_vde "" stop;                       expect "stop: no target -> usage, exit 1" 1 "" "Usage: vde stop"
 run_vde "" stop nosuchvm;              expect "stop: unknown alias warns, exit 1" 1 "" "Unknown VM: nosuchvm"
 run_vde "vde-python" stop python;      expect "stop: present container is stopped, exit 0" 0 "vde-python stopped" "" "docker stop vde-python"
-run_vde "" stop python;                expect "stop: absent container, nothing stopped, exit 1" 1 "" "" "docker ps -a"
+run_vde "" stop python;                expect "stop: absent container is already stopped, exit 0" 0 "" "" "docker ps -a"
 expect_no_log "stop: absent container -> no docker stop" "docker stop"
-run_vde "vde-python" stop python nosuch; expect "stop: mixed known+unknown, exit 0" 0 "vde-python stopped" "Unknown VM: nosuch" "docker stop vde-python"
+run_vde "vde-python" stop python nosuch; expect "stop: mixed known+unknown, exit 1" 1 "vde-python stopped" "Unknown VM: nosuch" "docker stop vde-python"
+STUB_FAIL=stop run_vde "vde-python" stop python; expect "stop: docker stop fails, exit 1" 1 "" "" "docker stop vde-python"
 
 # ── remove ───────────────────────────────────────────────────────────────────
 run_vde "" remove;                     expect "remove: no target -> usage, exit 1" 1 "" "Usage: vde remove"
 run_vde "vde-python" rm python;        expect "remove: present container removed, exit 0" 0 "vde-python removed" "" "docker rm -f vde-python"
-run_vde "" rm python;                  expect "remove: absent container, exit 1" 1 "" "" "docker ps -a"
+run_vde "" rm python;                  expect "remove: absent container, nothing to remove, exit 0" 0 "" "" "docker ps -a"
 expect_no_log "remove: absent container -> no docker rm" "docker rm"
+STUB_FAIL=rm run_vde "vde-python" rm python; expect "remove: docker rm fails, exit 1" 1 "" "" "docker rm -f vde-python"
 run_vde "" delete nosuch;              expect "remove: unknown alias warns, exit 1" 1 "" "Unknown VM: nosuch"
 
 # ── restart ──────────────────────────────────────────────────────────────────
@@ -140,11 +143,11 @@ else
 fi
 if [[ -z "${_missing}" ]]; then test_pass "all 8 handlers defined"; else test_fail "handlers" "missing:${_missing}"; fi
 
-test_start "bin/vde hands handler status over via _VDE_ACTION_RC"
-if grep -q '_VDE_ACTION_RC' "${VDE_ROOT_DIR}/bin/vde" && grep -q '_VDE_ACTION_RC=' "${VDE_ROOT_DIR}/lib/vde-actions" 2>/dev/null; then
-    test_pass "rc handed over"
+test_start "handler status is explicit: no _VDE_ACTION_RC handover remains"
+if ! grep -rq '_VDE_ACTION_RC' "${VDE_ROOT_DIR}/bin/vde" "${VDE_ROOT_DIR}/lib/vde-actions"; then
+    test_pass "no accidental-status handover"
 else
-    test_fail "rc handover" "_VDE_ACTION_RC not wired in bin/vde and lib/vde-actions"
+    test_fail "rc handover" "_VDE_ACTION_RC still referenced"
 fi
 
 echo ""
