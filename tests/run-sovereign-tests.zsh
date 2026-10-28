@@ -77,6 +77,7 @@ UNIT_TESTS=(
     "${VDE_ROOT_DIR}/tests/unit/sudo-home-parity.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/dns-check-dispatch.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vde-router-exit-status.test.zsh"
+    "${VDE_ROOT_DIR}/tests/unit/vde-router-delegate-args.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/compose-template-drift.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vm-types-source-parity.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/spine-git-env-isolation.test.zsh"

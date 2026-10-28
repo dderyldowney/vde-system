@@ -495,13 +495,13 @@ case ${ACTION} in
         vde_run "sync-context" "${VDE_ROOT_DIR}/bin/vde-sync-context" "${input_targets[@]}"
         ;;
     audit)
-        vde_run "audit" "${VDE_ROOT_DIR}/bin/vde-gospel-audit.zsh" "$@"
+        vde_run "audit" "${VDE_ROOT_DIR}/bin/vde-gospel-audit.zsh" "${input_targets[@]}"
         ;;
     check-tetrad|spine-check)
-        vde_run "check-tetrad" "${VDE_ROOT_DIR}/bin/vde-check-tetrad.zsh" "$@"
+        vde_run "check-tetrad" "${VDE_ROOT_DIR}/bin/vde-check-tetrad.zsh" "${input_targets[@]}"
         ;;
     heal)
-        vde_run "heal" "${VDE_ROOT_DIR}/bin/vde-heal-docs.zsh" "$@"
+        vde_run "heal" "${VDE_ROOT_DIR}/bin/vde-heal-docs.zsh" "${input_targets[@]}"
         ;;
     port)
         local vm_alias=${targets[1]}
