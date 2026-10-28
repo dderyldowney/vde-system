@@ -39,26 +39,23 @@ printf '#!/usr/bin/env zsh\nexit 0\n' > "${o}"
 print -r -- "${o:t}" > "${CURL_LOG}.name"
 STUB
 chmod +x "${stub}/sudo" "${stub}/curl"
+# Hermetic PATH: the stub dir plus links to the few tools the helper runs, so a
+# host rustc in /usr/bin can never change what these tests exercise.
+typeset t
+for t in zsh env uname mktemp chmod rm; do ln -s "$(command -v ${t})" "${stub}/${t}"; done
 typeset -x CURL_LOG="${stub}/curl.log"
 
 test_start "VDE_CURL_BOUNDS caps connect time, total time and retries"
 source lib/vde-core
 typeset b="${VDE_CURL_BOUNDS[*]}"
-if [[ "${b}" == *--connect-timeout* && "${b}" == *--max-time* && "${b}" == *--retry* ]]; then
+typeset -a want=(--connect-timeout 30 --max-time 600 --retry 3 --retry-delay 2)
+if [[ "${VDE_CURL_BOUNDS[*]}" == "${want[*]}" ]]; then
     test_pass "${b}"
-else test_fail "VDE_CURL_BOUNDS" "got '${b}'"; fi
+else test_fail "VDE_CURL_BOUNDS" "got '${b}', want '${want[*]}'"; fi
 
 test_start "vde_install_rustup downloads the native binary with the bounds"
-typeset got=""
-if PATH="/usr/bin:/bin" command -v rustc >/dev/null; then
-    # A distro rustc in /usr/bin makes the helper (correctly) skip the download.
-    echo "[SKIP] host has rustc in /usr/bin or /bin; download path not exercisable"
-    echo "stub" > "${CURL_LOG}.name"; echo "rustup-init" > "${CURL_LOG}.name"
-    got="--connect-timeout 30 static.rust-lang.org/rustup/dist/x/rustup-init"
-else
-    PATH="${stub}:/usr/bin:/bin" vde_install_rustup nobody VDE-T >/dev/null 2>&1
-    got="$(<"${CURL_LOG}")"
-fi
+PATH="${stub}" vde_install_rustup nobody VDE-T >/dev/null 2>&1
+typeset got="$(<"${CURL_LOG}")"
 if [[ "${got}" == *"--connect-timeout 30"* && "${got}" == *"static.rust-lang.org/rustup/dist/"*"/rustup-init"* ]]; then
     test_pass "curl ${got%% -o*}"
 else test_fail "curl args" "got '${got}'"; fi
@@ -70,7 +67,7 @@ else test_fail "installer name" "got '$(<"${CURL_LOG}.name")'"; fi
 test_start "vde_install_rustup skips the download when rustc exists"
 rm -f "${CURL_LOG}"
 printf '#!/usr/bin/env zsh\nexit 0\n' > "${stub}/rustc"; chmod +x "${stub}/rustc"
-PATH="${stub}:/usr/bin:/bin" vde_install_rustup nobody VDE-T >/dev/null 2>&1
+PATH="${stub}" vde_install_rustup nobody VDE-T >/dev/null 2>&1
 if [[ ! -e "${CURL_LOG}" ]]; then test_pass "no curl call"; else test_fail "idempotency" "curl ran"; fi
 
 test_start "rust and embed Spokes call the shared helper, not an inline copy"
