@@ -74,6 +74,7 @@ UNIT_TESTS=(
     "${VDE_ROOT_DIR}/tests/unit/vm-mounts-projects-base.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/tracked-compose-baseline.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/jupyterlab-language-vm.test.zsh"
+    "${VDE_ROOT_DIR}/tests/unit/sudo-home-parity.test.zsh"
 )
 
 for test in "${UNIT_TESTS[@]}"; do

@@ -46,7 +46,7 @@ apt-get install -y ${=vde_embed_pkgs}
 # Installed via rustup as the rust Spoke does, then given the bare-metal
 # targets. thumbv7em-none-eabihf is the STM32F303 (Cortex-M4F); the others
 # cover Cortex-M3, Cortex-M0 and the RISC-V ESP32-C3.
-sudo -u devuser zsh -c '
+sudo -H -u devuser zsh -c '
     set -e
     if ! command -v rustc >/dev/null; then
         # Mandate C (ZSH ONLY): fetch rustup'"'"'s NATIVE installer binary and run
@@ -70,7 +70,7 @@ sudo -u devuser zsh -c '
 
 # PERSISTENCE ANCHORS: cargo on PATH for login and non-login shells, exactly
 # once, as the rust Spoke mandates.
-sudo -u devuser zsh -c '
+sudo -H -u devuser zsh -c '
     set -e
     touch ~/.zshenv ~/.zshrc
     sed -i "/\.cargo\/bin/d" ~/.zshenv
@@ -79,7 +79,7 @@ sudo -u devuser zsh -c '
     echo "export PATH=\"\$HOME/.cargo/bin:\$PATH\"" >> ~/.zshrc
 '
 
-sudo -u devuser zsh -c '
+sudo -H -u devuser zsh -c '
     set -e
     export PATH="$HOME/.cargo/bin:$PATH"
     rustup component add rust-analyzer rust-src
@@ -99,13 +99,13 @@ sudo -u devuser zsh -c '
 # pipx gives esptool an isolated venv, which satisfies PEP 668 without
 # --break-system-packages and keeps it off the system interpreter.
 # pyserial arrives as python3-serial above, so it is importable system-wide.
-sudo -u devuser zsh -c '
+sudo -H -u devuser zsh -c '
     set -e
     export PATH="$HOME/.local/bin:$PATH"
     pipx install esptool
 '
 
-sudo -u devuser zsh -c '
+sudo -H -u devuser zsh -c '
     set -e
     touch ~/.zshenv ~/.zshrc
     sed -i "/\.local\/bin/d" ~/.zshenv
@@ -118,7 +118,7 @@ sudo -u devuser zsh -c '
 # probe-rs from its official prebuilt release: the same binary the project
 # ships, without a 15-minute source build. Still build-time, so Born Ready
 # holds. probe-rs needs libusb and libudev, installed in step 1.
-sudo -u devuser zsh -c '
+sudo -H -u devuser zsh -c '
     set -e
     export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
     if ! command -v probe-rs >/dev/null; then

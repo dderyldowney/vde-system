@@ -28,7 +28,7 @@ apt-get install -y ${=vde_rust_pkgs}
 # of piping the vendor shell script to `sh`. The rustup-init binary does exactly
 # what `sh.rustup.rs | sh` does, so no foreign shell is invoked (parity with the
 # pyenv Spoke). TLS stays hardened.
-sudo -u devuser zsh -c '
+sudo -H -u devuser zsh -c '
     set -e
     if ! command -v rustc >/dev/null; then
         case "$(uname -m)" in
@@ -52,7 +52,7 @@ sudo -u devuser zsh -c '
 # Direct injection as commanded by the Clan Leader.
 # Ensures the cargo path is the UNIQUE and VERY LAST LINE of $HOME/.zshrc and $HOME/.zshenv.
 
-sudo -u devuser zsh -c '
+sudo -H -u devuser zsh -c '
     # Ensure configuration files exist
     touch ~/.zshenv ~/.zshrc
 
@@ -68,7 +68,7 @@ sudo -u devuser zsh -c '
 # 3.5. COMPONENT HYDRATION
 # Install rust-analyzer as devuser, with cargo/bin already on PATH from the
 # persistence anchors above. Must run after .zshrc/.zshenv are written.
-sudo -u devuser zsh -c '
+sudo -H -u devuser zsh -c '
     export PATH="$HOME/.cargo/bin:$PATH"
     rustup component add rust-analyzer
     rustup component add rust-src
