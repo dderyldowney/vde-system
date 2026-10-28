@@ -102,11 +102,11 @@ Create composite VMs by adding aliases:
 
 ```zsh
 # In vm-types.conf
-lang|vde-js|js,javascript,node,nodejs,typescript|JavaScript|-|zsh /vde/scripts/setup/js-init.zsh|-|2211
+lang|vde-js|js,javascript,node|JavaScript|-|zsh /vde/scripts/setup/js-init.zsh|-|2211
 
-# Now both create the same VM:
+# Every alias resolves to the same VM:
 vde create js
-vde create typescript
+vde create node
 ```
 
 The install steps live in the VM's setup script (`scripts/setup/js-init.zsh`, which

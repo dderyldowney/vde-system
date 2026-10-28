@@ -39,11 +39,12 @@ fi
 
 # 4. PERSISTENCE ANCHOR
 typeset _zshenv="${dev_home}/.zshenv"
-# Skip only when BOTH active lines exist (a comment or partial block must not suppress it).
-if ! { grep -qs '^export SDKMAN_DIR=' "${_zshenv}" && grep -qs '^\[\[ -s .*sdkman-init\.sh' "${_zshenv}"; }; then
+# Idempotent via a marker line: a re-run/re-smelt never appends a second block.
+if ! grep -qsF '# VDE SDKMAN anchor' "${_zshenv}"; then
     {
-    echo 'export SDKMAN_DIR="${HOME}/.sdkman"'
-    echo '[[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"'
+        echo '# VDE SDKMAN anchor'
+        echo 'export SDKMAN_DIR="${HOME}/.sdkman"'
+        echo '[[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"'
     } >> "${_zshenv}"
 fi
 

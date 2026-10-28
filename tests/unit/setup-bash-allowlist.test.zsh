@@ -45,13 +45,15 @@ else test_fail "allowlist" "no entries parsed"; fi
 # or a backslash; the hit text runs from the token to the end of the line.
 typeset -a hits
 typeset f n rest tok
-typeset BOUND_RE='(^|[[:space:];|&(/"'"'"'\\])((ba)?sh)([[:space:];|&)"'"'"'\\]|$)'
+typeset BOUND_RE='(^|[[:space:];|&(/"'"'"'`\\<>])((ba)?sh)([[:space:];|&)"'"'"'`\\<>]|$)'
 for f in scripts/setup/*.zsh; do
     n=0
     while IFS= read -r line; do
         (( n++ ))
         [[ "${line}" =~ '^[[:space:]]*#' ]] && continue
         rest="${line}"
+        # Fold shell-quoting obfuscation (b\ash, ba\sh) back to the word the shell runs.
+        while [[ "${rest}" =~ '([A-Za-z])\\([A-Za-z])' ]]; do rest="${rest/${MATCH}/${match[1]}${match[2]}}"; done
         while [[ "${rest}" =~ ${BOUND_RE} ]]; do
             tok=$(( MBEGIN + ${#match[1]} ))
             hits+=("${f:t}:${n}:${rest[tok,-1]}")
