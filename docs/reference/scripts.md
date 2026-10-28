@@ -57,6 +57,7 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution**. 
 | `vde-spine-check.zsh` | **The Tetrad Check**: Verify Zsh, Git, Docker, and SSH pillars. | `bin/vde-spine-check.zsh` |
 | `vde-gospel-audit.zsh` | **The Gospel Auditor**: Verify structural integrity of the Sovereign Artifact Set. | `bin/vde-gospel-audit.zsh` |
 | `vde-heal-docs.zsh` | **The Self-Healer**: Autonomously synchronize Gospel documentation with the physical Forge. | `bin/vde-heal-docs.zsh` |
+| `vde-release.zsh` | **The Release Forger**: Drive a version bump (Gospel first, sync, bulk-update references) through the release chain. | `bin/vde-release.zsh <NEW_VERSION>` |
 
 ---
 

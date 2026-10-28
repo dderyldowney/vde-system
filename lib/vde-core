@@ -278,6 +278,16 @@ vde_purge_ghosts() {
     fi
 }
 
+# vde_script_documented SCRIPT_NAME DOC_FILE: succeed when DOC_FILE documents the
+# bin/ script, either by literal name or by its `vde <subcommand>` form (e.g. a
+# vde-cluster entry is satisfied by `vde cluster`). Shared by the Gospel audit and
+# the self-healer so both agree on what "documented" means.
+vde_script_documented() {
+    local script_name="$1" doc="$2"
+    local sub_cmd="${${script_name#vde-}%.zsh}"
+    grep -qE "(\`${script_name}\`|\`vde ${sub_cmd}([[:space:]]|\`))" "${doc}"
+}
+
 # vde_query_json - Zero-Host-Dependency JQ Wrapper (The Scavenger's Ban)
 # Adheres to Rule G: Prevents host dependency by falling back to Docker
 # Args: <jq_args> (variable)

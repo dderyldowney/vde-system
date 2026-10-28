@@ -6,7 +6,7 @@
 # Detects drift between the physical implementation and the Gospel.
 # 1. Verifies existence of the 9 Sovereign Artifacts.
 # 2. Verifies version consistency across the ecosystem.
-# 3. Cross-references bin/ with docs/available-scripts.md.
+# 3. Cross-references bin/ with docs/reference/scripts.md.
 #===============================================================================
 
 # 1. Initialize the Spine
@@ -62,20 +62,19 @@ if [[ -f "./data/vm-types.json" ]]; then
 fi
 
 # 4. Script Documentation Check
-echo -e "${GREEN}[AUDIT]${NC} Cross-referencing bin/ with docs/available-scripts.md..."
-AVAILABLE_SCRIPTS_DOC="./docs/available-scripts.md"
-if [[ -f "${AVAILABLE_SCRIPTS_DOC}" ]]; then
+echo -e "${GREEN}[AUDIT]${NC} Cross-referencing bin/ with docs/reference/scripts.md..."
+AVAILABLE_SCRIPTS_DOC="./docs/reference/scripts.md"
+if [[ ! -f "${AVAILABLE_SCRIPTS_DOC}" ]]; then
+    echo -e "${RED}[CRITICAL FAILURE]${NC} Script documentation missing: ${AVAILABLE_SCRIPTS_DOC}"
+    errors=$((errors + 1))
+else
     for script_path in "./bin"/*(N.); do
         script_name="${script_path:t}"
         # Skip internal/hidden files
         [[ "${script_name}" == "."* ]] && continue
         [[ "${script_name}" == "archive" ]] && continue
         
-        # Check for literal name, or subcommand name (e.g. vde cluster for vde-cluster)
-        local base_name="${script_name#vde-}"
-        # Strip .zsh for subcommand checks (e.g. vde dns-check for vde-dns-check.zsh)
-        local sub_cmd="${base_name%.zsh}"
-        if ! grep -qE "(\`${script_name}\`|\`vde ${sub_cmd}([[:space:]]|\`))" "${AVAILABLE_SCRIPTS_DOC}"; then
+        if ! vde_script_documented "${script_name}" "${AVAILABLE_SCRIPTS_DOC}"; then
             echo -e "${RED}[CRITICAL FAILURE]${NC} Undocumented scripts detected: bin/${script_name}"
             errors=$((errors + 1))
         fi

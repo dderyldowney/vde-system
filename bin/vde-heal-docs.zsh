@@ -6,7 +6,7 @@
 # Autonomously synchronizes and updates the entire Sovereign Artifact Set.
 # 1. Triggers bin/vde-sync-version for version consistency.
 # 2. Updates "Date" and "Last Updated" fields across artifacts.
-# 3. Synchronizes docs/available-scripts.md with bin/ contents.
+# 3. Synchronizes docs/reference/scripts.md with bin/ contents.
 #===============================================================================
 
 # 1. Initialize the Spine
@@ -26,6 +26,13 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}[HEAL]${NC} Initiating Sovereign Self-Healing Ritual..."
+
+# Fail before any write: a missing script doc must not leave the tree half-healed.
+AVAILABLE_SCRIPTS_DOC="./docs/reference/scripts.md"
+if [[ ! -f "${AVAILABLE_SCRIPTS_DOC}" ]]; then
+    echo -e "${RED}[CRITICAL FAILURE]${NC} Script documentation missing: ${AVAILABLE_SCRIPTS_DOC}"
+    exit 1
+fi
 
 # 2. Validate and restore data/vm-types.json from data/vm-types.conf if corrupted
 echo -e "${GREEN}[HEAL]${NC} Validating Registry JSON integrity..."
@@ -76,44 +83,40 @@ for file in "${SOVEREIGN_ARTIFACTS[@]}"; do
     fi
 done
 
-# 5. Synchronize bin/ with available-scripts.md
+# 5. Synchronize bin/ with docs/reference/scripts.md
 echo -e "${GREEN}[HEAL]${NC} Synchronizing Script Documentation..."
-AVAILABLE_SCRIPTS_DOC="./docs/available-scripts.md"
+# We will identify undocumented scripts and append them to a "New/Unclassified" section
+# to maintain visibility until the Armorer manually classifies them.
+UNDOCUMENTED=()
+for script_path in "./bin"/*(N.); do
+    script_name="${script_path:t}"
+    [[ "${script_name}" == "."* ]] && continue
+    [[ "${script_name}" == "archive" ]] && continue
+    
+    if ! vde_script_documented "${script_name}" "${AVAILABLE_SCRIPTS_DOC}"; then
+        UNDOCUMENTED+=("${script_name}")
+    fi
+done
 
-if [[ -f "${AVAILABLE_SCRIPTS_DOC}" ]]; then
-    # We will identify undocumented scripts and append them to a "New/Unclassified" section
-    # to maintain visibility until the Armorer manually classifies them.
-    UNDOCUMENTED=()
-    for script_path in "./bin"/*(N.); do
-        script_name="${script_path:t}"
-        [[ "${script_name}" == "."* ]] && continue
-        [[ "${script_name}" == "archive" ]] && continue
+if [[ ${#UNDOCUMENTED[@]} -gt 0 ]]; then
+    echo -e "${YELLOW}[WARN]${NC} Found ${#UNDOCUMENTED[@]} undocumented scripts. Healing..."
+    
+    # Ensure the section exists
+    if ! grep -q "## Undocumented Scripts (Pending Classification)" "${AVAILABLE_SCRIPTS_DOC}"; then
+        echo -e "\n---\n\n## Undocumented Scripts (Pending Classification)\n\n| Script | Purpose |\n|--------|---------|" >> "${AVAILABLE_SCRIPTS_DOC}"
+    fi
+    
+    for script in "${UNDOCUMENTED[@]}"; do
+        # Extract first comment line as purpose
+        purpose=$(grep -m1 -E "^# [^@]" "./bin/${script}" | sed 's/^# //' | tr -d '\r' | xargs)
+        [[ -z "${purpose}" ]] && purpose="Automatically discovered - documentation pending."
         
-        if ! grep -q "\`${script_name}\`" "${AVAILABLE_SCRIPTS_DOC}"; then
-            UNDOCUMENTED+=("${script_name}")
+        # Avoid duplicate appends if script was added but grep missed it due to markdown format
+        if ! grep -q "| \`${script}\` |" "${AVAILABLE_SCRIPTS_DOC}"; then
+            echo "| \`${script}\` | ${purpose} |" >> "${AVAILABLE_SCRIPTS_DOC}"
+            echo -e "${GREEN}[INFO]${NC} Healed entry for ${script}"
         fi
     done
-
-    if [[ ${#UNDOCUMENTED} -gt 0 ]]; then
-        echo -e "${YELLOW}[WARN]${NC} Found ${#UNDOCUMENTED} undocumented scripts. Healing..."
-        
-        # Ensure the section exists
-        if ! grep -q "## Undocumented Scripts (Pending Classification)" "${AVAILABLE_SCRIPTS_DOC}"; then
-            echo -e "\n---\n\n## Undocumented Scripts (Pending Classification)\n\n| Script | Purpose |\n|--------|---------|" >> "${AVAILABLE_SCRIPTS_DOC}"
-        fi
-        
-        for script in "${UNDOCUMENTED[@]}"; do
-            # Extract first comment line as purpose
-            purpose=$(grep -m1 "^# " "./bin/${script}" | sed 's/^# //' | sed 's/^@.*//' | tr -d '\r' | xargs)
-            [[ -z "${purpose}" ]] && purpose="Automatically discovered - documentation pending."
-            
-            # Avoid duplicate appends if script was added but grep missed it due to markdown format
-            if ! grep -q "| \`${script}\` |" "${AVAILABLE_SCRIPTS_DOC}"; then
-                echo "| \`${script}\` | ${purpose} |" >> "${AVAILABLE_SCRIPTS_DOC}"
-                echo -e "${GREEN}[INFO]${NC} Healed entry for ${script}"
-            fi
-        done
-    fi
 fi
 
 echo -e "\n${GREEN}[HEAL-SUCCESS]${NC} Gospel has been synchronized with the physical implementation."
