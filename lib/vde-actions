@@ -9,9 +9,9 @@
 # parameters, read the router's globals (ACTION, ACTION_ARGS, input_targets, targets,
 # force, _vde_help_status) and may `exit`, as the inline arms did.
 #
-# Handlers that ended an arm with a `[[ ]] && ...` list (stop, restart, remove) hand that
-# list's status to bin/vde through _VDE_ACTION_RC and `return 0`: a function returning
-# non-zero would make the caller exit immediately under `set -e`, skipping the EXIT trace.
+# Handlers that act on several Spokes (stop, restart, remove) exit 0 when every target was
+# handled or already in the desired state, and 1 if any target was unknown or its docker
+# operation failed (Signet #590).
 # Source this library with: source "${VDE_ROOT_DIR}/lib/vde-actions"
 
 # ZSH-native logic demonstration (UAP Mandate 1)
@@ -215,10 +215,12 @@ vde_action_stop() {
     [[ -z "${targets}" ]] && vde_log_error "Usage: vde stop [-f] <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
 
     local last_stopped=""
+    local action_rc=0
     for vm_alias in "${targets[@]}"; do
         local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
         if [[ -z "${CANONICAL_NAME}" ]]; then
             vde_log_warn "Unknown VM: ${vm_alias}"
+            action_rc=1
             continue
         fi
 
@@ -229,16 +231,16 @@ vde_action_stop() {
                 last_stopped="${CANONICAL_NAME}"
             else
                 vde_progress_spinner_stop "" "Failed to stop ${CANONICAL_NAME}" 1
+                action_rc=1
             fi
         else
             vde_log_info "${CANONICAL_NAME} is not running." "vde"
         fi
     done
-    [[ -n "${last_stopped}" ]] && vde_print_next_steps "stop" "${last_stopped}"
-    # Preserve the inline arm's semantics: a false `[[ ]] &&` list is not an errexit failure;
-    # hand its status to bin/vde via _VDE_ACTION_RC (see header) and return 0.
-    _VDE_ACTION_RC=$?
-    return 0
+    if [[ -n "${last_stopped}" ]]; then
+        vde_print_next_steps "stop" "${last_stopped}"
+    fi
+    exit ${action_rc}
 }
 
 # vde_action_restart - vde restart <alias...|default|all>  - stop then start Spokes
@@ -246,10 +248,12 @@ vde_action_restart() {
     [[ -z "${targets}" ]] && vde_log_error "Usage: vde restart <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
     
     local last_restarted=""
+    local action_rc=0
     for vm_alias in "${targets[@]}"; do
         local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
         if [[ -z "${CANONICAL_NAME}" ]]; then
             vde_log_warn "Unknown VM: ${vm_alias}"
+            action_rc=1
             continue
         fi
 
@@ -262,13 +266,13 @@ vde_action_restart() {
             last_restarted="${CANONICAL_NAME}"
         else
             vde_progress_spinner_stop "" "Failed to restart ${CANONICAL_NAME}" 1
+            action_rc=1
         fi
     done
-    [[ -n "${last_restarted}" ]] && vde_print_next_steps "restart" "${last_restarted}"
-    # Preserve the inline arm's semantics: a false `[[ ]] &&` list is not an errexit failure;
-    # hand its status to bin/vde via _VDE_ACTION_RC (see header) and return 0.
-    _VDE_ACTION_RC=$?
-    return 0
+    if [[ -n "${last_restarted}" ]]; then
+        vde_print_next_steps "restart" "${last_restarted}"
+    fi
+    exit ${action_rc}
 }
 
 # vde_action_remove - vde remove <alias...|default|all>  - remove Spoke containers
@@ -276,10 +280,12 @@ vde_action_remove() {
     [[ -z "${targets}" ]] && vde_log_error "Usage: vde remove <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
 
     local last_removed=""
+    local action_rc=0
     for vm_alias in "${targets[@]}"; do
         local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
         if [[ -z "${CANONICAL_NAME}" ]]; then
             vde_log_warn "Unknown VM: ${vm_alias}"
+            action_rc=1
             continue
         fi
 
@@ -290,16 +296,16 @@ vde_action_remove() {
                 last_removed="${CANONICAL_NAME}"
             else
                 vde_progress_spinner_stop "" "Failed to remove ${CANONICAL_NAME}" 1
+                action_rc=1
             fi
         else
             vde_log_info "No container found for ${CANONICAL_NAME}." "vde"
         fi
     done
-    [[ -n "${last_removed}" ]] && vde_print_next_steps "rm" "${last_removed}"
-    # Preserve the inline arm's semantics: a false `[[ ]] &&` list is not an errexit failure;
-    # hand its status to bin/vde via _VDE_ACTION_RC (see header) and return 0.
-    _VDE_ACTION_RC=$?
-    return 0
+    if [[ -n "${last_removed}" ]]; then
+        vde_print_next_steps "rm" "${last_removed}"
+    fi
+    exit ${action_rc}
 }
 
 # vde_action_exec - vde exec <vm> <command>  - run a command in a Spoke without an interactive shell

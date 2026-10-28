@@ -184,17 +184,14 @@ case ${ACTION} in
 
     stop)
         vde_action_stop
-        exit ${_VDE_ACTION_RC:-0}
         ;;
 
     restart)
         vde_action_restart
-        exit ${_VDE_ACTION_RC:-0}
         ;;
 
     remove|delete|rm)
         vde_action_remove
-        exit ${_VDE_ACTION_RC:-0}
         ;;
 
     nuke)
