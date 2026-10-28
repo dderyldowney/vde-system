@@ -40,49 +40,66 @@ test_start "allowlist parses from ${DOC}"
 if (( ${#al_script} > 0 )); then test_pass "found ${#al_script} entries (${(j:, :)al_script})"
 else test_fail "allowlist" "no entries parsed"; fi
 
-# Collect real invocations: non-comment lines with a bare bash/sh word.
+# Collect real invocations, one hit per bash/sh token (a line may hold several).
+# A token is bash/sh at a command boundary: start, whitespace, ; | & ( / " ' \
+# or a backslash; the hit text runs from the token to the end of the line.
 typeset -a hits
-typeset f n
+typeset f n rest tok
+typeset BOUND_RE='(^|[[:space:];|&(/"'"'"'\\])((ba)?sh)([[:space:];|&)"'"'"'\\]|$)'
 for f in scripts/setup/*.zsh; do
     n=0
     while IFS= read -r line; do
         (( n++ ))
         [[ "${line}" =~ '^[[:space:]]*#' ]] && continue
-        if [[ "${line}" =~ '(^|[[:space:];|&(/"'"'"'])(ba)?sh([[:space:])"'"'"']|$)' ]]; then
-            hits+=("${f:t}:${n}:${line}")
-        fi
+        rest="${line}"
+        while [[ "${rest}" =~ ${BOUND_RE} ]]; do
+            tok=$(( MBEGIN + ${#match[1]} ))
+            hits+=("${f:t}:${n}:${rest[tok,-1]}")
+            rest="${rest[tok+${#match[2]},-1]}"
+        done
     done < "${f}"
 done
 
-test_start "every bash/sh invocation in scripts/setup is allowlisted"
-typeset hit file text i ok bad=0
-for hit in "${hits[@]}"; do
-    file="${hit%%:*}"; text="${hit#*:*:}"; ok=0
-    for (( i = 1; i <= ${#al_script}; i++ )); do
-        [[ "${al_script[i]}" == "${file}" && "${text}" == *"${al_match[i]}"* ]] && ok=1
+# Index of the first allowlist entry whose script and prefix match HIT (0 if none).
+entry_for() {
+    local h="$1" file="${1%%:*}" text="${1#*:*:}" k
+    for (( k = 1; k <= ${#al_script}; k++ )); do
+        [[ "${al_script[k]}" == "${file}" && "${text}" == "${al_match[k]}"* ]] && { echo ${k}; return; }
     done
-    (( ok )) || { test_fail "non-allowlisted shell" "${hit}"; bad=1; }
+    echo 0
+}
+
+test_start "every bash/sh invocation in scripts/setup is allowlisted"
+typeset hit bad=0 i
+typeset -a counts
+for (( i = 1; i <= ${#al_script}; i++ )); do counts[i]=0; done
+for hit in "${hits[@]}"; do
+    i=$(entry_for "${hit}")
+    if (( i )); then (( counts[i]++ )); else test_fail "non-allowlisted shell" "${hit}"; bad=1; fi
 done
 (( bad )) || test_pass "${#hits} invocation(s), all allowlisted"
 
-test_start "no stale allowlist entries"
-typeset stale=0 found
+test_start "no stale or ambiguous allowlist entries"
+typeset stale=0
 for (( i = 1; i <= ${#al_script}; i++ )); do
-    found=0
-    for hit in "${hits[@]}"; do
-        [[ "${hit%%:*}" == "${al_script[i]}" && "${hit}" == *"${al_match[i]}"* ]] && (( found++ ))
-    done
-    (( found == 1 )) || { test_fail "stale or ambiguous entry (matches ${found} lines)" "${al_script[i]} :: ${al_match[i]}"; stale=1; }
+    (( counts[i] == 1 )) || { test_fail "stale or ambiguous entry (matches ${counts[i]} invocations)" "${al_script[i]} :: ${al_match[i]}"; stale=1; }
 done
-(( stale )) || test_pass "all entries match a live line"
+(( stale )) || test_pass "every entry matches exactly one live invocation"
 
 test_start "every allowlisted call site references the governance doc"
-typeset miss=0
-for (( i = 1; i <= ${#al_script}; i++ )); do
-    grep -q 'docs/governance/bash-exceptions.md' "scripts/setup/${al_script[i]}" \
-        || { test_fail "missing call-site comment" "${al_script[i]}"; miss=1; }
+typeset miss=0 ln lo k found
+typeset -a src
+for hit in "${hits[@]}"; do
+    (( $(entry_for "${hit}") )) || continue
+    f="scripts/setup/${hit%%:*}"; ln="${${hit#*:}%%:*}"
+    src=("${(@f)$(<${f})}")
+    found=0; lo=$(( ln > 12 ? ln - 12 : 1 ))
+    for (( k = lo; k <= ln; k++ )); do
+        [[ "${src[k]}" == *"docs/governance/bash-exceptions.md"* ]] && found=1
+    done
+    (( found )) || { test_fail "no governance reference within 12 lines above the call" "${hit%%:*}:${ln}"; miss=1; }
 done
-(( miss )) || test_pass "call-site comments present"
+(( miss )) || test_pass "each call site references the governance doc"
 
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"
 (( TESTS_FAILED == 0 ))

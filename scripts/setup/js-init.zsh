@@ -26,6 +26,8 @@ curl -fsSL --connect-timeout 15 --max-time 120 \
     https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o "${_node_key}"
 [[ -s "${_node_key}" ]] || { print -u2 "NodeSource key download failed or empty"; exit 1; }
 gpg --dearmor --yes -o /etc/apt/keyrings/nodesource.gpg "${_node_key}"
+# apt reads the keyring as the unprivileged _apt user; make it world-readable.
+chmod 644 /etc/apt/keyrings/nodesource.gpg
 echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${_node_major}.x nodistro main" \
     > /etc/apt/sources.list.d/nodesource.list
 apt-get update

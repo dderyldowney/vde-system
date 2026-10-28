@@ -39,10 +39,13 @@ fi
 
 # 4. PERSISTENCE ANCHOR
 typeset _zshenv="${dev_home}/.zshenv"
-grep -qs 'sdkman-init.sh' "${_zshenv}" || {
+# Skip only when BOTH active lines exist (a comment or partial block must not suppress it).
+if ! { grep -qs '^export SDKMAN_DIR=' "${_zshenv}" && grep -qs '^\[\[ -s .*sdkman-init\.sh' "${_zshenv}"; }; then
+    {
     echo 'export SDKMAN_DIR="${HOME}/.sdkman"'
     echo '[[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"'
-} >> "${_zshenv}"
+    } >> "${_zshenv}"
+fi
 
 # Set ownership
 chown -R devuser:devuser "${dev_home}"
