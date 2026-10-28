@@ -33,10 +33,9 @@ printf '#!/usr/bin/env zsh\nshift 3\nexec "$@"\n' > "${stub}/sudo"
 # curl stub records its arguments and writes a no-op installer to -o.
 cat > "${stub}/curl" <<'STUB'
 #!/usr/bin/env zsh
-print -r -- "$*" > "${CURL_LOG}"
+printf '%s\n' "$@" > "${CURL_LOG}"
 o=; while (( $# )); do [[ $1 == -o ]] && o=$2; shift; done
-printf '#!/usr/bin/env zsh\nexit 0\n' > "${o}"
-print -r -- "${o:t}" > "${CURL_LOG}.name"
+printf '#!/usr/bin/env zsh\nprint -r -- "${0:t}" > "${CURL_LOG}.ran"\n' > "${o}"
 STUB
 chmod +x "${stub}/sudo" "${stub}/curl"
 # Hermetic PATH: the stub dir plus links to the few tools the helper runs, so a
@@ -49,6 +48,9 @@ test_start "VDE_CURL_BOUNDS caps connect time, total time and retries"
 source lib/vde-core
 typeset b="${VDE_CURL_BOUNDS[*]}"
 typeset -a want=(--connect-timeout 30 --max-time 600 --retry 3 --retry-delay 2)
+# The curl stub logs one argument per line, so a bound passed as a single
+# combined argument cannot match this newline-joined expectation.
+typeset want_lines="${(F)want}"
 if [[ "${VDE_CURL_BOUNDS[*]}" == "${want[*]}" ]]; then
     test_pass "${b}"
 else test_fail "VDE_CURL_BOUNDS" "got '${b}', want '${want[*]}'"; fi
@@ -58,19 +60,23 @@ PATH="${stub}" vde_install_rustup nobody VDE-T >/dev/null 2>&1
 typeset rc=$?
 typeset got="$(<"${CURL_LOG}")"
 if (( rc != 0 )); then test_fail "helper status" "vde_install_rustup returned ${rc}"
-elif [[ "${got}" == *"${want[*]}"* && "${got}" == *"static.rust-lang.org/rustup/dist/"*"/rustup-init"* ]]; then
-    test_pass "curl ${got%% -o*}"
-else test_fail "curl args" "want '${want[*]}' and the rustup-init URL, got '${got}'"; fi
+elif [[ "${got}" == *"${want_lines}"* && "${got}" == *"static.rust-lang.org/rustup/dist/"*"/rustup-init"* ]]; then
+    test_pass "curl got each bound as its own argument: ${want[*]}"
+else test_fail "curl args" "want separate '${want[*]}' and the rustup-init URL, got '${(j: :)${(f)got}}'"; fi
 
 test_start "installer keeps the name rustup-init (multi-call dispatch)"
-if [[ "$(<"${CURL_LOG}.name")" == "rustup-init" ]]; then test_pass "file name rustup-init"
-else test_fail "installer name" "got '$(<"${CURL_LOG}.name")'"; fi
+typeset ran="$(<"${CURL_LOG}.ran" 2>/dev/null)"
+if [[ "${ran}" == "rustup-init" ]]; then test_pass "installer ran as rustup-init"
+else test_fail "installer name" "ran as '${ran}'"; fi
 
 test_start "vde_install_rustup skips the download when rustc exists"
 rm -f "${CURL_LOG}"
 printf '#!/usr/bin/env zsh\nexit 0\n' > "${stub}/rustc"; chmod +x "${stub}/rustc"
 PATH="${stub}" vde_install_rustup nobody VDE-T >/dev/null 2>&1
-if [[ ! -e "${CURL_LOG}" ]]; then test_pass "no curl call"; else test_fail "idempotency" "curl ran"; fi
+rc=$?
+if (( rc != 0 )); then test_fail "skip status" "vde_install_rustup returned ${rc}"
+elif [[ ! -e "${CURL_LOG}" ]]; then test_pass "no curl call, status 0"
+else test_fail "idempotency" "curl ran"; fi
 
 test_start "rust and embed Spokes call the shared helper, not an inline copy"
 typeset s ok=1
