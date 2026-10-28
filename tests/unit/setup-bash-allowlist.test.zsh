@@ -44,19 +44,27 @@ else test_fail "allowlist" "no entries parsed"; fi
 # A token is bash/sh at a command boundary: start, whitespace, ; | & ( / " ' \
 # or a backslash; the hit text runs from the token to the end of the line.
 typeset -a hits
-typeset f n rest tok
+typeset f n rest tok pending pn
 typeset BOUND_RE='(^|[[:space:];|&(/"'"'"'`\\<>])((ba)?sh)([[:space:];|&)"'"'"'`\\<>]|$)'
 for f in scripts/setup/*.zsh; do
     n=0
+    pending=""; pn=0
     while IFS= read -r line; do
         (( n++ ))
-        [[ "${line}" =~ '^[[:space:]]*#' ]] && continue
+        if [[ -z "${pending}" ]]; then
+            [[ "${line}" =~ '^[[:space:]]*#' ]] && continue
+            pn=${n}
+        fi
+        # Backslash-newline is removed by the shell: join continued lines so a
+        # command split as b\<newline>ash is scanned as one logical line.
+        if [[ "${line}" == *'\' ]]; then pending+="${line%\\}"; continue; fi
+        line="${pending}${line}"; pending=""
         rest="${line}"
         # Fold shell-quoting obfuscation (b\ash, ba\sh) back to the word the shell runs.
         while [[ "${rest}" =~ '([A-Za-z])\\([A-Za-z])' ]]; do rest="${rest/${MATCH}/${match[1]}${match[2]}}"; done
         while [[ "${rest}" =~ ${BOUND_RE} ]]; do
             tok=$(( MBEGIN + ${#match[1]} ))
-            hits+=("${f:t}:${n}:${rest[tok,-1]}")
+            hits+=("${f:t}:${pn}:${rest[tok,-1]}")
             rest="${rest[tok+${#match[2]},-1]}"
         done
     done < "${f}"
@@ -64,9 +72,13 @@ done
 
 # Index of the first allowlist entry whose script and prefix match HIT (0 if none).
 entry_for() {
-    local h="$1" file="${1%%:*}" text="${1#*:*:}" k
+    local h="$1" file="${1%%:*}" text="${1#*:*:}" k after
     for (( k = 1; k <= ${#al_script}; k++ )); do
-        [[ "${al_script[k]}" == "${file}" && "${text}" == "${al_match[k]}"* ]] && { echo ${k}; return; }
+        [[ "${al_script[k]}" == "${file}" && "${text}" == "${al_match[k]}"* ]] || continue
+        # The fragment must end at a word boundary, so a longer path that merely
+        # starts with it (".../dotnet-install.sh.evil") is not approved.
+        after="${text:${#al_match[k]}}"
+        [[ -z "${after}" || "${after}" =~ '^[[:space:];|&)"'"'"'`<>]' ]] && { echo ${k}; return; }
     done
     echo 0
 }
