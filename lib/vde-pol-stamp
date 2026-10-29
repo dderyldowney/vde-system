@@ -5,10 +5,14 @@ typeset _ZSH_PURE=${(%):-%x}
 
 # lib/vde-pol-stamp - Proof of Life stamp (Signet #602)
 #
-# A stamp records the git tree hash of a commit that passed Proof of Life. The
-# pre-push hook may skip a rerun only when HEAD has that same tree hash and the
-# tracked worktree and index are clean, so no edit can sit between the passing
-# run and the push. The stamp lives in the git dir: local, untracked, never pushed.
+# A stamp records the git tree hash of a commit that passed Proof of Life and
+# when it passed. The pre-push hook may skip a rerun only when HEAD has that same
+# tree hash, the tracked worktree and index are clean, and the pass is recent
+# (VDE_POL_STAMP_TTL seconds, default 1800), so no edit or environment drift can
+# sit between the passing run and the push. The stamp lives in the git dir:
+# local, untracked, never pushed.
+
+zmodload zsh/datetime
 
 # Print the stamp path.
 vde_pol_stamp_path() {
@@ -21,12 +25,16 @@ vde_pol_clean_tree() {
     git rev-parse 'HEAD^{tree}'
 }
 
-# Succeed only when the stamp matches the current clean HEAD tree.
+# Succeed only when the stamp matches the current clean HEAD tree and is fresh.
 vde_pol_stamp_valid() {
-    local tree stamp
+    local tree stamp rec_tree rec_time ttl="${VDE_POL_STAMP_TTL:-1800}"
+    [[ "${ttl}" == <-> ]] || ttl=1800
     tree="$(vde_pol_clean_tree)" || return 1
     stamp="$(vde_pol_stamp_path)"
-    [[ -f "${stamp}" ]] && [[ "$(<"${stamp}")" == "${tree}" ]]
+    [[ -f "${stamp}" ]] || return 1
+    read -r rec_tree rec_time < "${stamp}"
+    [[ "${rec_tree}" == "${tree}" && "${rec_time}" == <-> ]] || return 1
+    (( EPOCHSECONDS - rec_time >= 0 && EPOCHSECONDS - rec_time <= ttl ))
 }
 
 # Run a Proof of Life command ("$@"); stamp only a pass whose tree was clean and identical before and after.
@@ -38,6 +46,6 @@ vde_pol_run_and_stamp() {
     "$@" || return $?
     [[ -n "${before}" ]] || return 0
     after="$(vde_pol_clean_tree)" || return 0
-    [[ "${before}" == "${after}" ]] && print -r -- "${after}" > "${stamp}"
+    [[ "${before}" == "${after}" ]] && print -r -- "${after} ${EPOCHSECONDS}" > "${stamp}"
     return 0
 }

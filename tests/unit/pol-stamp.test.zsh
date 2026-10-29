@@ -69,6 +69,24 @@ vde_pol_run_and_stamp pol_pass
 vde_pol_run_and_stamp pol_fail
 vde_pol_stamp_valid && test_fail "failed run" "stamp survived a failed run" || test_pass "failed run"
 
+test_start "fresh stamp inside the TTL is valid; expired or future-dated stamp is not"
+vde_pol_run_and_stamp pol_pass
+typeset tree_now; tree_now="$(vde_pol_clean_tree)"
+typeset stamp_file; stamp_file="$(vde_pol_stamp_path)"
+print -r -- "${tree_now} $(( EPOCHSECONDS - 1700 ))" > "${stamp_file}"
+vde_pol_stamp_valid && test_pass "inside TTL" || test_fail "inside TTL" "29m-old stamp rejected"
+print -r -- "${tree_now} $(( EPOCHSECONDS - 1900 ))" > "${stamp_file}"
+vde_pol_stamp_valid && test_fail "expired" "31m-old stamp accepted" || test_pass "expired"
+print -r -- "${tree_now} $(( EPOCHSECONDS + 600 ))" > "${stamp_file}"
+vde_pol_stamp_valid && test_fail "future" "future-dated stamp accepted" || test_pass "future"
+print -r -- "${tree_now}" > "${stamp_file}"
+vde_pol_stamp_valid && test_fail "legacy" "timestamp-less stamp accepted" || test_pass "legacy"
+
+test_start "VDE_POL_STAMP_TTL overrides the window; junk falls back to 1800"
+print -r -- "${tree_now} $(( EPOCHSECONDS - 100 ))" > "${stamp_file}"
+VDE_POL_STAMP_TTL=50 vde_pol_stamp_valid && test_fail "ttl override" "100s-old accepted at 50s" || test_pass "ttl override"
+VDE_POL_STAMP_TTL=junk vde_pol_stamp_valid && test_pass "ttl junk" || test_fail "ttl junk" "no fallback"
+
 test_start "failed run propagates its status"
 vde_pol_run_and_stamp pol_fail; typeset rc=$?
 (( rc == 1 )) && test_pass "status" || test_fail "status" "rc=${rc}"
