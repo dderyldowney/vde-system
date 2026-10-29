@@ -130,15 +130,22 @@ _dirs_block_lists_student_dir() {
     return ${hit}
 }
 
+# Helper: print the body of the 'local dirs_to_remove=( ... )' array in FILE
+# (between the opening paren and the first ')'). Entries on the opening line
+# (single-line array) and a ')' that shares a line with the last entry are both
+# included, and extraction stops at that ')' so later code is never scanned.
+_extract_dirs_block() {
+    awk '/local dirs_to_remove=\(/{sub(/.*dirs_to_remove=\(/,"");f=1} f{if(/\)/){sub(/\).*/,"");print;f=0}else print}' "${1}"
+}
+
 # =============================================================================
 # TEST: static guard -- dirs_to_remove never lists projects/ or data/
 # =============================================================================
 test_dirs_to_remove_excludes_student_data() {
     test_start "nuke-vde dirs_to_remove excludes 'projects' and 'data'"
 
-    # Pull the array literal body (between 'local dirs_to_remove=(' and ')').
     local block
-    block="$(awk '/local dirs_to_remove=\(/{f=1;next} f&&/^\s*\)/{f=0} f' "${NUKE_SRC}")"
+    block="$(_extract_dirs_block "${NUKE_SRC}")"
 
     if [[ -z "${block}" ]]; then
         test_fail "dirs_to_remove guard" "could not locate dirs_to_remove array in ${NUKE_SRC}"
@@ -189,6 +196,47 @@ test_dirs_guard_detects_all_forms() {
         test_pass "dirs_to_remove guard detects all forms"
     else
         test_fail "dirs_to_remove guard detects all forms" "${why}"
+    fi
+}
+
+# =============================================================================
+# TEST: the extraction reads the whole array however it is laid out
+# =============================================================================
+test_dirs_extraction_shapes() {
+    test_start "dirs_to_remove extraction handles single-line, trailing-paren and multi-line arrays"
+
+    local tmp f why="" ok=1
+    tmp="$(mktemp -d "${TMPDIR:-/tmp}/vde-nuke-extract.XXXXXX")"
+
+    # name|source text|expected: flag (guard must report) or clean
+    local -a names=(multiline single-line-bad single-line-ok trailing-paren-ok trailing-paren-bad multiline-unquoted)
+    local -a flags=(clean flag clean clean flag flag)
+    local -a srcs=(
+        $'x() {\n    local dirs_to_remove=(\n        "logs"\n        ".cache"\n    )\n}'
+        $'x() {\n    local dirs_to_remove=("logs" "projects")\n}'
+        $'x() {\n    local dirs_to_remove=("logs" ".cache")\n}'
+        $'x() {\n    local dirs_to_remove=(\n        "logs"\n        ".cache")\n    local other=("projects" "data")\n}'
+        $'x() {\n    local dirs_to_remove=(\n        "logs"\n        "data")\n}'
+        $'x() {\n    local dirs_to_remove=(\n        "logs"\n        projects\n    )\n}'
+    )
+
+    local -i i
+    for (( i = 1; i <= ${#names}; i++ )); do
+        f="${tmp}/${names[$i]}.zsh"
+        print -r -- "${srcs[$i]}" > "${f}"
+        local blk; blk="$(_extract_dirs_block "${f}")"
+        if _dirs_block_lists_student_dir "${blk}" >/dev/null; then
+            [[ "${flags[$i]}" == flag ]] || { ok=0; why="${names[$i]}: wrongly flagged"; }
+        else
+            [[ "${flags[$i]}" == clean ]] || { ok=0; why="${names[$i]}: not flagged"; }
+        fi
+    done
+    rm -rf "${tmp}"
+
+    if (( ok )); then
+        test_pass "dirs_to_remove extraction shapes"
+    else
+        test_fail "dirs_to_remove extraction shapes" "${why}"
     fi
 }
 
@@ -248,6 +296,7 @@ test_safe_move_tree_non_destructive
 test_safe_move_tree_known_only_filters
 test_dirs_to_remove_excludes_student_data
 test_dirs_guard_detects_all_forms
+test_dirs_extraction_shapes
 
 echo ""
 echo "=============================================="
