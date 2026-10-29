@@ -102,6 +102,7 @@ sudo -H -u devuser zsh -c '
 # holds. probe-rs needs libusb and libudev, installed in step 1.
 sudo -H -u devuser zsh -c '
     set -e
+    limit="$1"; shift
     export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
     if ! command -v probe-rs >/dev/null; then
         _installer=$(mktemp)
@@ -115,11 +116,13 @@ sudo -H -u devuser zsh -c '
         # deliberately avoids. Running the vendor installer under sh is the
         # unavoidable third-party path (Signet #551). Listed in
         # docs/governance/bash-exceptions.md.
-        sh "${_installer}"
+        # The installer does its own downloads, which curl bounds cannot reach,
+        # so an overall deadline applies (Signet #600).
+        timeout "${limit}" sh "${_installer}"
         rm -f "${_installer}"
         command -v probe-rs >/dev/null || { print -u2 "probe-rs did not install"; exit 1; }
     fi
-' _ "${VDE_CURL_BOUNDS[@]}"
+' _ "${VDE_INSTALLER_TIMEOUT}" "${VDE_CURL_BOUNDS[@]}"
 
 # 6. PURGING THE GHOSTS (Rule 12.5)
 vde_purge_ghosts

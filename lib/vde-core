@@ -282,9 +282,14 @@ vde_purge_ghosts() {
 # A stalled connection must fail the image build, not hang it: cap connect time,
 # cap each attempt's total time and retry transient errors. --max-time applies
 # per attempt, so the worst case is (retries + 1) attempts plus retry delays.
-# Bounds curl only, not a vendor installer's own downloads.
+# Bounds curl only, not a vendor installer's own downloads (see VDE_INSTALLER_TIMEOUT).
 # Pass as "${VDE_CURL_BOUNDS[@]}".
 typeset -ga VDE_CURL_BOUNDS=(--connect-timeout 30 --max-time 600 --retry 3 --retry-delay 2)
+
+# VDE_INSTALLER_TIMEOUT - overall deadline in seconds (coreutils `timeout`) for vendor
+# installers that do their own downloads, which VDE_CURL_BOUNDS cannot reach. Generous
+# so a slow but live install is not killed (Signet #600).
+typeset -g VDE_INSTALLER_TIMEOUT=1800
 
 # vde_install_rustup USER LABEL - install rustup for USER unless rustc exists.
 # Mandate C (ZSH ONLY): fetch rustup's NATIVE installer binary and run it
@@ -294,7 +299,7 @@ vde_install_rustup() {
     local user="${1:?vde_install_rustup: user required}" label="${2:-VDE-RUST}"
     sudo -H -u "${user}" zsh -c '
         set -e
-        label="$1"; shift
+        label="$1"; limit="$2"; shift 2
         if ! command -v rustc >/dev/null; then
             case "$(uname -m)" in
                 x86_64)        triple="x86_64-unknown-linux-gnu" ;;
@@ -312,10 +317,18 @@ vde_install_rustup() {
             curl --proto "=https" --tlsv1.2 -sSfL "$@" \
                 "https://static.rust-lang.org/rustup/dist/${triple}/rustup-init" -o "${installer}"
             [[ -s "${installer}" ]] || { print -u2 "${label}: rustup-init download failed or empty"; exit 1; }
+            curl --proto "=https" --tlsv1.2 -sSfL "$@" \
+                "https://static.rust-lang.org/rustup/dist/${triple}/rustup-init.sha256" -o "${tmpdir}/rustup-init.sha256"
+            [[ -s "${tmpdir}/rustup-init.sha256" ]] || { print -u2 "${label}: rustup-init sha256 download failed or empty"; exit 1; }
+            expected="$(<"${tmpdir}/rustup-init.sha256")"
+            expected="${expected%%[[:space:]]*}"
+            actual="$(sha256sum "${installer}")"
+            actual="${actual%%[[:space:]]*}"
+            [[ "${expected}" == "${actual}" ]] || { print -u2 "${label}: rustup-init sha256 mismatch"; exit 1; }
             chmod +x "${installer}"
-            "${installer}" -y --no-modify-path
+            timeout "${limit}" "${installer}" -y --no-modify-path
         fi
-    ' _ "${label}" "${VDE_CURL_BOUNDS[@]}"
+    ' _ "${label}" "${VDE_INSTALLER_TIMEOUT}" "${VDE_CURL_BOUNDS[@]}"
 }
 
 # vde_script_documented SCRIPT_NAME DOC_FILE: succeed when DOC_FILE documents the

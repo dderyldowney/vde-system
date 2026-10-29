@@ -15,6 +15,10 @@ typeset vde_kotlin_pkgs="curl git unzip zip"
 apt-get update
 apt-get install -y ${=vde_kotlin_pkgs} default-jdk
 
+# 2b. VDE CORE (loaded before first bounded download; provides VDE_CURL_BOUNDS)
+export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
+source "${VDE_ROOT_DIR}/lib/vde-core" || { echo "CRITICAL: vde-core library missing" >&2; exit 1; }
+
 # 3. KOTLIN INSTALLATION (Hardened Home)
 typeset dev_home="/home/devuser"
 mkdir -p "${dev_home}"
@@ -30,7 +34,7 @@ if [[ ! -d "${dev_home}/.sdkman" ]]; then
     # Downloaded to a file and verified first so an HTTP error cannot ship a
     # broken image with exit 0 (a curl|bash pipe would mask it).
     typeset _sdkman_installer=$(mktemp)
-    curl -fsSL --connect-timeout 15 --max-time 120 "https://get.sdkman.io" -o "${_sdkman_installer}"
+    curl -fsSL "${VDE_CURL_BOUNDS[@]}" "https://get.sdkman.io" -o "${_sdkman_installer}"
     [[ -s "${_sdkman_installer}" ]] || { echo "CRITICAL: SDKMAN installer download failed or empty" >&2; exit 1; }
     chmod 755 "${_sdkman_installer}"
     sudo -H -u devuser bash "${_sdkman_installer}"
@@ -52,6 +56,4 @@ fi
 chown -R devuser:devuser "${dev_home}"
 
 # 5. PURGING THE GHOSTS (Rule 12.5)
-export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
-source "${VDE_ROOT_DIR}/lib/vde-core" || { echo "CRITICAL: vde-core library missing" >&2; exit 1; }
 vde_purge_ghosts
