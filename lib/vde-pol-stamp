@@ -20,8 +20,14 @@ vde_pol_stamp_path() {
 }
 
 # Print HEAD's tree hash when the tracked worktree and index are clean; else fail.
+# git status hides assume-unchanged and skip-worktree files, so refuse those too,
+# and treat any failing git command as "not verified clean".
 vde_pol_clean_tree() {
-    [[ -z "$(git status --porcelain --untracked-files=no)" ]] || return 1
+    local st flags
+    st="$(git status --porcelain --untracked-files=no)" || return 1
+    [[ -z "${st}" ]] || return 1
+    flags="$(git ls-files -v)" || return 1
+    [[ "${flags}" != *$'\n'[^H]\ * && "${flags}" != [^H]\ * ]] || return 1
     git rev-parse 'HEAD^{tree}'
 }
 
@@ -37,15 +43,27 @@ vde_pol_stamp_valid() {
     (( EPOCHSECONDS - rec_time >= 0 && EPOCHSECONDS - rec_time <= ttl ))
 }
 
+# Succeed only when every outgoing tree ("$@", tree-ish) equals the stamped HEAD tree.
+vde_pol_push_covered() {
+    local ref head_tree
+    vde_pol_stamp_valid || return 1
+    head_tree="$(git rev-parse 'HEAD^{tree}')" || return 1
+    for ref in "$@"; do
+        [[ "$(git rev-parse "${ref}^{tree}" 2>/dev/null)" == "${head_tree}" ]] || return 1
+    done
+}
+
 # Run a Proof of Life command ("$@"); stamp only a pass whose tree was clean and identical before and after.
 vde_pol_run_and_stamp() {
     local before after stamp
     stamp="$(vde_pol_stamp_path)"
-    rm -f "${stamp}"
+    rm -f "${stamp}" || return 1
     before="$(vde_pol_clean_tree)" || before=""
     "$@" || return $?
     [[ -n "${before}" ]] || return 0
     after="$(vde_pol_clean_tree)" || return 0
-    [[ "${before}" == "${after}" ]] && print -r -- "${after} ${EPOCHSECONDS}" > "${stamp}"
+    [[ "${before}" == "${after}" ]] || return 0
+    print -r -- "${after} ${EPOCHSECONDS}" > "${stamp}" \
+        || print -u2 "[WARN] Proof of Life passed but the stamp could not be written; the next push reruns it."
     return 0
 }

@@ -87,6 +87,35 @@ print -r -- "${tree_now} $(( EPOCHSECONDS - 100 ))" > "${stamp_file}"
 VDE_POL_STAMP_TTL=50 vde_pol_stamp_valid && test_fail "ttl override" "100s-old accepted at 50s" || test_pass "ttl override"
 VDE_POL_STAMP_TTL=junk vde_pol_stamp_valid && test_pass "ttl junk" || test_fail "ttl junk" "no fallback"
 
+test_start "assume-unchanged edit is not clean"
+vde_pol_run_and_stamp pol_pass
+git update-index --assume-unchanged f; print hidden >> f
+vde_pol_stamp_valid && test_fail "assume-unchanged" "hidden edit accepted" || test_pass "assume-unchanged"
+git update-index --no-assume-unchanged f; git checkout -q -- f
+
+test_start "skip-worktree edit is not clean"
+git update-index --skip-worktree f; print hidden >> f
+vde_pol_clean_tree >/dev/null && test_fail "skip-worktree" "hidden edit accepted" || test_pass "skip-worktree"
+git update-index --no-skip-worktree f; git checkout -q -- f
+
+test_start "outgoing ref with a different tree is not covered"
+vde_pol_run_and_stamp pol_pass
+vde_pol_push_covered HEAD && test_pass "head covered" || test_fail "head covered" "rejected stamped HEAD"
+git branch -q other && git checkout -q other && print x > g && git add g && git commit -qm x && git checkout -q -
+vde_pol_push_covered HEAD other && test_fail "other ref" "unstamped ref accepted" || test_pass "other ref"
+git branch -q same && vde_pol_push_covered HEAD same && test_pass "same tree ref" || test_fail "same tree ref" "rejected"
+
+test_start "undeletable stamp aborts before running PoL"
+vde_pol_run_and_stamp pol_pass
+typeset ran=0; pol_marks() { ran=1; return 0; }
+chmod 500 "$(dirname "$(vde_pol_stamp_path)")"
+if [[ -w "$(dirname "$(vde_pol_stamp_path)")" ]]; then
+    test_pass "undeletable stamp (skipped: running as owner with write access)"
+else
+    vde_pol_run_and_stamp pol_marks 2>/dev/null; (( ran == 0 )) && test_pass "undeletable stamp" || test_fail "undeletable stamp" "PoL ran"
+fi
+chmod 700 "$(dirname "$(vde_pol_stamp_path)")"
+
 test_start "failed run propagates its status"
 vde_pol_run_and_stamp pol_fail; typeset rc=$?
 (( rc == 1 )) && test_pass "status" || test_fail "status" "rc=${rc}"

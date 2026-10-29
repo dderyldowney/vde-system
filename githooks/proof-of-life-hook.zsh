@@ -32,7 +32,16 @@ echo "[${_SENTINEL}] Feature: tests/features/core-infrastructure/proof-of-life-t
 
 # Reuse (Signet #602): skip only when this exact tree already passed Proof of Life
 # and the tracked worktree is clean. Anything weaker runs the full contract.
-if vde_pol_stamp_valid; then
+# The hook receives "<local ref> <local sha> <remote ref> <remote sha>" lines on
+# stdin when run by git; every outgoing tree must be the stamped one.
+typeset -a _pushed_shas=()
+typeset _lref _lsha _rref _rsha
+if [[ ! -t 0 ]]; then
+    while read -r _lref _lsha _rref _rsha; do
+        [[ -z "${_lsha//0/}" ]] || _pushed_shas+=("${_lsha}")
+    done
+fi
+if vde_pol_push_covered HEAD "${_pushed_shas[@]}"; then
     echo -e "${GREEN}✓ Proof of Life already certified for this exact tree (stamp matched, worktree clean). Skipping rerun.${RESET}"
     exit 0
 fi
