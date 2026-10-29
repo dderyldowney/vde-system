@@ -108,6 +108,28 @@ test_safe_move_tree_non_destructive() {
     fi
 }
 
+# Helper: succeed (printing the offending lines) when an array body lists a
+# student dir ('projects' or 'data') in any quoting/prefix form. Comment lines
+# and trailing '# ...' comments are ignored; quotes, an optional
+# "${VDE_ROOT_DIR}/", "$VDE_ROOT_DIR/" or "./" prefix and an optional trailing "/" are stripped
+# before the exact-name match, so 'projects-old' and 'database' do not match.
+_dirs_block_lists_student_dir() {
+    local line entry hit=1
+    local re='^([$]([{]VDE_ROOT_DIR[}]|VDE_ROOT_DIR)/|[.]/)?(projects|data)/?$'
+    for line in "${(@f)1}"; do
+        line="${line%%\#*}"
+        for entry in "${(@z)line}"; do
+            entry="${entry//[\"\']/}"
+            if [[ "${entry}" =~ ${re} ]]; then
+                print -r -- "${line}"
+                hit=0
+                break
+            fi
+        done
+    done
+    return ${hit}
+}
+
 # =============================================================================
 # TEST: static guard -- dirs_to_remove never lists projects/ or data/
 # =============================================================================
@@ -124,15 +146,49 @@ test_dirs_to_remove_excludes_student_data() {
     fi
 
     local bad=""
-    # Match a whole-word quoted "projects" or "data" entry in the list.
-    if print -r -- "${block}" | grep -Eq '"(projects|data)"'; then
-        bad="$(print -r -- "${block}" | grep -E '"(projects|data)"')"
-    fi
-
-    if [[ -z "${bad}" ]]; then
-        test_pass "dirs_to_remove guard"
-    else
+    if bad="$(_dirs_block_lists_student_dir "${block}")"; then
         test_fail "dirs_to_remove guard" "student dir listed for removal: ${bad}"
+    else
+        test_pass "dirs_to_remove guard"
+    fi
+}
+
+# =============================================================================
+# TEST: the dirs_to_remove guard flags every projects/data form, and only those
+# =============================================================================
+test_dirs_guard_detects_all_forms() {
+    test_start "dirs_to_remove guard detects all quoting/prefix forms of projects/data"
+
+    local -a flag_cases=(
+        '    "projects"'
+        "    'data'"
+        '    projects'
+        '    "${VDE_ROOT_DIR}/projects"'
+        '    "$VDE_ROOT_DIR/data"'
+        '    ./data'
+        '    "data/"'
+        $'    "logs"\n    "projects"\n    "env-files"'
+    )
+    local -a clean_cases=(
+        $'    "logs"\n    "env-files"\n    ".cache"\n    ".locks"'
+        '    "database"'
+        '    "projects-old"'
+        '    "logs" # projects'
+        '    # the word projects lives only in this comment'
+    )
+
+    local c why="" ok=1
+    for c in "${flag_cases[@]}"; do
+        _dirs_block_lists_student_dir "${c}" >/dev/null || { ok=0; why="not flagged: ${c}"; }
+    done
+    for c in "${clean_cases[@]}"; do
+        _dirs_block_lists_student_dir "${c}" >/dev/null && { ok=0; why="wrongly flagged: ${c}"; }
+    done
+
+    if (( ok )); then
+        test_pass "dirs_to_remove guard detects all forms"
+    else
+        test_fail "dirs_to_remove guard detects all forms" "${why}"
     fi
 }
 
@@ -191,6 +247,7 @@ echo "=============================================="
 test_safe_move_tree_non_destructive
 test_safe_move_tree_known_only_filters
 test_dirs_to_remove_excludes_student_data
+test_dirs_guard_detects_all_forms
 
 echo ""
 echo "=============================================="

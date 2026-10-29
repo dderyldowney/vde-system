@@ -70,6 +70,9 @@ def step_snapshot_repo(context):
             shutil.rmtree(p, ignore_errors=True)
 
     context.add_cleanup(_restore)
+    # Signals to step_unset_base that .env has a registered verbatim restore,
+    # so it is safe for that step to edit .env.
+    context.proj_repo_snapshotted = True
 
 
 # ---------------------------------------------------------------------------
@@ -192,9 +195,28 @@ def step_export_base(context, label):
     context.proj_env = ("set", str(context.proj_bases[label]))
 
 
+def _strip_projects_dir_lines(env_file):
+    """Drop every `VDE_PROJECTS_DIR=` line from .env, keeping all other bytes
+    and the file mode. No write happens when no such line exists."""
+    if not env_file.exists():
+        return
+    lines = env_file.read_bytes().splitlines(keepends=True)
+    kept = [ln for ln in lines if not ln.startswith(b"VDE_PROJECTS_DIR=")]
+    if len(kept) != len(lines):
+        env_file.write_bytes(b"".join(kept))
+
+
 @given('VDE_PROJECTS_DIR is unset')
 def step_unset_base(context):
     _ensure_bases(context)
+    # A repo .env VDE_PROJECTS_DIR= line would leak into the helper's fallback,
+    # so remove it. Only safe once the Background snapshot has registered a
+    # verbatim restore of .env; refuse to mutate it otherwise.
+    assert getattr(context, "proj_repo_snapshotted", False), (
+        "refusing to edit repo .env: 'the repo state is snapshotted for "
+        "restoration' (Background) must run first to register its restore"
+    )
+    _strip_projects_dir_lines(VDE_ROOT / ".env")
     context.proj_env = ("unset", None)
 
 
@@ -437,19 +459,44 @@ def step_prepopulate(context, label):
 
 @when('VDE ensures the per-alias directories for "{aliases}" under that base')
 def step_ensure_alias_dirs(context, aliases):
-    # Real code path used by `vde start` (bin/vde) and ensure_vm_directories
-    # (lib/vm-common): mkdir -p "$(vde_projects_dir)/<alias>". We invoke the
-    # genuine vde_projects_dir helper and the same idempotent mkdir -p, so the
-    # adoption behaviour (mkdir -p over an existing folder is a no-op that never
-    # touches its contents) is exercised exactly as production does it. This
-    # touches ONLY the external base, never the repo.
+    # Runs the REAL production helper ensure_vm_directories (lib/vm-common),
+    # which `vde start` uses. For each alias it creates the external
+    # $(vde_projects_dir)/<alias> (the adoption path under test: an existing
+    # folder is left untouched) plus repo-local configs/docker/<category>/<alias>
+    # and logs/<alias>. configs/ is restored by the Background snapshot; logs/
+    # is not, so the logs dirs this step creates are recorded here and removed
+    # by a registered cleanup. Nothing else in the repo is touched.
     env = _subprocess_env(context)
     parts = [a.strip() for a in aliases.split(",") if a.strip()]
-    cmds = "; ".join(f'mkdir -p "$(vde_projects_dir)/{a}"' for a in parts)
-    script = f'source "${{VDE_ROOT_DIR}}/lib/vde-path-utils"; {cmds}'
+
+    logs_dir = VDE_ROOT / "logs"
+    logs_existed = logs_dir.exists()
+    created_logs = [logs_dir / a for a in parts if not (logs_dir / a).exists()]
+
+    def _cleanup_logs():
+        for d in created_logs:
+            if d.exists():
+                shutil.rmtree(d, ignore_errors=True)
+        if not logs_existed and logs_dir.is_dir() and not any(logs_dir.iterdir()):
+            logs_dir.rmdir()
+
+    context.add_cleanup(_cleanup_logs)
+
+    # Libraries are sourced in the same order bin/nuke-vde uses. Aliases go in
+    # as positional args ($@), so no alias text is ever spliced into the script.
+    script = (
+        'source "${VDE_ROOT_DIR}/lib/vde-shell-compat"; '
+        'source "${VDE_ROOT_DIR}/lib/vde-constants"; '
+        'source "${VDE_ROOT_DIR}/lib/vde-errors"; '
+        'source "${VDE_ROOT_DIR}/lib/vde-log"; '
+        'source "${VDE_ROOT_DIR}/lib/vde-naming"; '
+        'source "${VDE_ROOT_DIR}/lib/vde-core"; '
+        'source "${VDE_ROOT_DIR}/lib/vm-common"; '
+        'for a in "$@"; do ensure_vm_directories "$a" lang || exit 1; done'
+    )
     result = subprocess.run(
-        ["zsh", "-c", script], capture_output=True, text=True, timeout=30,
-        cwd=str(VDE_ROOT), env=env,
+        ["zsh", "-c", script, "zsh", *parts], capture_output=True, text=True,
+        timeout=60, cwd=str(VDE_ROOT), env=env,
     )
     context.proj_last = result
 
