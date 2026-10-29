@@ -18,7 +18,6 @@ Columns: script, a literal fragment of the invocation line (the match key), reas
 | `kotlin-init.zsh` | `bash "${_sdkman_installer}"` | SDKMAN is Bash; its installer and generated sdkman-init.sh require Bash. Downloaded with `-fSL` and verified non-empty before running. |
 | `csharp-init.zsh` | `bash /tmp/dotnet-install.sh` | Microsoft's dotnet-install.sh uses bashisms and pipefail; no native installer. |
 | `embed-init.zsh` | `sh "${_installer}"` | probe-rs ships only a cargo-dist POSIX-sh installer; the alternative is a ~15-minute source build. |
-| `kotlin-init.zsh` | `bash -c 'source "$HOME/.sdkman/bin/sdkman-init.sh" && sdkman_auto_answer=true sdk install kotlin </dev/null'` | `sdk` is a Bash function defined by SDKMAN's sdkman-init.sh and cannot run under zsh; used to install the Kotlin compiler at build time (Signet #608). |
 
 Resolved, no longer exceptions: `js-init.zsh` (NodeSource) configures the signed
 apt repository directly in zsh (Signet #594).
