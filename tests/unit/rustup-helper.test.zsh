@@ -4,7 +4,7 @@
 typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests: shared rustup helper, bounded downloads and installer timeout
-# (Signet #598, #600, #607).
+# (Signet #598, #600, #607, #611).
 #
 # vde_install_rustup lives once in lib/vde-core; rust-init and embed-init call
 # it, and the rustup-init and probe-rs downloads carry VDE_CURL_BOUNDS. The
@@ -140,49 +140,97 @@ if (( rc != 0 )); then test_fail "skip status" "vde_install_rustup returned ${rc
 elif [[ ! -e "${CURL_LOG}" ]]; then test_pass "no curl call, status 0"
 else test_fail "idempotency" "curl ran"; fi
 
+# Wiring pins read executable lines only: a comment that still spells out a
+# safeguard must not satisfy a pin (Signet #611). Full-line comments and trailing
+# " # ..." comments are dropped (a "#" inside a word, as in "${#x}", is kept).
+# code_n keeps the original line numbers for ordering checks.
+code_of() { grep -vE '^[[:space:]]*#' "$1" | sed -E 's/[[:space:]]+#([[:space:]].*)?$//'; }
+code_n()  { grep -nvE '^[[:space:]]*#' "$1" | sed -E 's/[[:space:]]+#([[:space:]].*)?$//'; }
+
+typeset e=scripts/setup/embed-init.zsh
+typeset k=scripts/setup/kotlin-init.zsh
+typeset cs_file=scripts/setup/csharp-init.zsh
+typeset re_probe='timeout -k 30 "[$][{][A-Za-z_]+[}]" sh "[$][{]_installer[}]"'
+typeset re_sdkman='timeout -k 30 "[$][{][A-Za-z_]+[}]" (sudo -H -u [a-z]+ )?bash "[$][{]_sdkman_installer[}]"'
+typeset re_cs_timeout='timeout -k 30 "[$][{]VDE_INSTALLER_TIMEOUT[}]" bash /tmp/dotnet-install[.]sh'
+
+# Each pin prints one reason per broken safeguard on $1 and nothing when wired.
+pin_probe_bounds() {
+    local c; c="$(code_of "$1")"
+    print -r -- "${c}" | grep -qF 'probe-rs-tools-installer.sh' \
+      && print -r -- "${c}" | grep -B1 -F 'probe-rs-tools-installer.sh' | grep -qF -- '-sSfL "$@"' \
+      && print -r -- "${c}" | grep -qF "' _ \"\${VDE_INSTALLER_TIMEOUT}\" \"\${VDE_CURL_BOUNDS[@]}\"" \
+      || print -r -- "probe-rs bounds not wired end to end"
+}
+pin_timeout_embed() {
+    [[ "$(code_of "$1")" =~ $re_probe ]] || print -r -- "probe-rs installer not wrapped by timeout -k 30"
+}
+pin_timeout_kotlin() {
+    [[ "$(code_of "$1")" =~ $re_sdkman ]] || print -r -- "SDKMAN installer not wrapped by timeout -k 30"
+}
+pin_csharp() {
+    local f="$1" c n_src n_use
+    local -a curl_l
+    c="$(code_of "${f}")"
+    curl_l=( ${(M)${(f)c}:#*dot.net/v1/dotnet-install.sh*} )
+    if (( ${#curl_l} != 1 )) || [[ "${curl_l[1]}" != *'"${VDE_CURL_BOUNDS[@]}"'* ]]; then
+        print -r -- 'dotnet download line lacks "${VDE_CURL_BOUNDS[@]}"'
+    fi
+    [[ "${c}" =~ $re_cs_timeout ]] || print -r -- 'dotnet installer not run under timeout -k 30 "${VDE_INSTALLER_TIMEOUT}"'
+    n_src="$(code_n "${f}" | grep -m1 -E '^[0-9]+:[[:space:]]*(source|[.]) .*lib/vde-core' | cut -d: -f1)"
+    n_use="$(code_n "${f}" | grep -m1 'VDE_CURL_BOUNDS' | cut -d: -f1)"
+    (( n_src && n_use && n_src < n_use )) \
+      || print -r -- "lib/vde-core (line ${n_src:-none}) not sourced before first VDE_CURL_BOUNDS (line ${n_use:-none})"
+}
+
 test_start "rust and embed Spokes call the shared helper, not an inline copy"
 typeset s ok=1
 for s in scripts/setup/rust-init.zsh scripts/setup/embed-init.zsh; do
-    grep -q '^vde_install_rustup devuser ' "${s}" || { ok=0; test_fail "${s}" "missing helper call"; }
-    grep -q 'rustup/dist' "${s}" && { ok=0; test_fail "${s}" "inline rustup download remains"; }
+    code_of "${s}" | grep -q '^vde_install_rustup devuser ' || { ok=0; test_fail "${s}" "missing helper call"; }
+    code_of "${s}" | grep -q 'rustup/dist' && { ok=0; test_fail "${s}" "inline rustup download remains"; }
 done
 (( ok )) && test_pass "both Spokes use vde_install_rustup"
 
 test_start "probe-rs download is bounded"
-typeset e=scripts/setup/embed-init.zsh
-if grep -F 'probe-rs-tools-installer.sh' "${e}" >/dev/null \
-   && grep -B1 -F 'probe-rs-tools-installer.sh' "${e}" | grep -qF -- '-sSfL "$@"' \
-   && grep -qF "' _ \"\${VDE_INSTALLER_TIMEOUT}\" \"\${VDE_CURL_BOUNDS[@]}\"" "${e}"; then
+typeset why
+why="$(pin_probe_bounds "${e}")"
+if [[ -z "${why}" ]]; then
     test_pass "curl takes \"\$@\" and the block passes the timeout and VDE_CURL_BOUNDS"
-else test_fail "probe-rs curl" "bounds not wired end to end"; fi
+else test_fail "probe-rs curl" "${why}"; fi
 
 test_start "probe-rs and SDKMAN installers are directly preceded by timeout -k 30 \"\${...}\""
-typeset k=scripts/setup/kotlin-init.zsh
-typeset re_probe='timeout -k 30 "[$][{][A-Za-z_]+[}]" sh "[$][{]_installer[}]"'
-typeset re_sdkman='timeout -k 30 "[$][{][A-Za-z_]+[}]" (sudo -H -u [a-z]+ )?bash "[$][{]_sdkman_installer[}]"'
-if [[ "$(<"${e}")" =~ $re_probe ]] && [[ "$(<"${k}")" =~ $re_sdkman ]]; then
+why="$(pin_timeout_embed "${e}")$(pin_timeout_kotlin "${k}")"
+if [[ -z "${why}" ]]; then
     test_pass "embed-init runs sh under timeout -k 30; kotlin-init runs SDKMAN under timeout -k 30"
-else test_fail "installer timeout wiring" "embed-init probe-rs or kotlin-init SDKMAN not wrapped by timeout -k 30 \"\${...}\""; fi
+else test_fail "installer timeout wiring" "${why}"; fi
 
 test_start "csharp-init bounds the dotnet download and runs the installer under timeout -k 30, vde-core sourced first"
-typeset cs_file=scripts/setup/csharp-init.zsh
-typeset cs="$(<"${cs_file}")"
-typeset -a cs_curl=( ${(M)${(f)cs}:#*dot.net/v1/dotnet-install.sh*} )
-typeset re_cs_timeout='timeout -k 30 "[$][{]VDE_INSTALLER_TIMEOUT[}]" bash /tmp/dotnet-install[.]sh'
-typeset cs_src cs_use
-cs_src="$(grep -n 'lib/vde-core' "${cs_file}" | head -1 | cut -d: -f1)"
-cs_use="$(grep -n 'VDE_CURL_BOUNDS' "${cs_file}" | head -1 | cut -d: -f1)"
-typeset cs_ok=1
-if (( ${#cs_curl} != 1 )) || [[ "${cs_curl[1]}" != *'"${VDE_CURL_BOUNDS[@]}"'* ]]; then
-    cs_ok=0; test_fail "dotnet curl" "download line lacks \"\${VDE_CURL_BOUNDS[@]}\""
-fi
-if [[ ! "${cs}" =~ $re_cs_timeout ]]; then
-    cs_ok=0; test_fail "dotnet installer" "installer not run under timeout -k 30 \"\${VDE_INSTALLER_TIMEOUT}\""
-fi
-if (( ! cs_src || ! cs_use || cs_src >= cs_use )); then
-    cs_ok=0; test_fail "vde-core order" "lib/vde-core (line ${cs_src:-none}) not before first VDE_CURL_BOUNDS (line ${cs_use:-none})"
-fi
-(( cs_ok )) && test_pass "csharp-init bounds the dotnet download and runs the installer under timeout -k 30, vde-core sourced first"
+why="$(pin_csharp "${cs_file}")"
+if [[ -z "${why}" ]]; then
+    test_pass "csharp-init bounds the dotnet download and runs the installer under timeout -k 30, vde-core sourced first"
+else test_fail "csharp-init wiring" "${why}"; fi
+
+# A pin that passes on raw text would hide a disabled safeguard. Comment out the
+# line that carries each safeguard (or demote it to a trailing comment on a no-op
+# line), leaving its text behind, and require the pin to notice.
+test_start "pins fail when a safeguard survives only in a comment (full-line or trailing)"
+typeset mut="${stub}/mut" mok=1
+mkdir -p "${mut}"
+mutant_caught() {   # $1 pin function, $2 script, $3 BRE address (no "|") of the line to disable
+    local out="${mut}/${2:t}" sub
+    for sub in 's|^\([[:space:]]*\)|\1# |' 's|^\([[:space:]]*\)\(.*\)$|\1true  # \2|'; do
+        sed "\\|$3| ${sub}" "$2" > "${out}"
+        cmp -s "$2" "${out}" && return 1
+        [[ -n "$("$1" "${out}")" ]] || return 1
+    done
+}
+mutant_caught pin_csharp         "${cs_file}" 'devuser timeout'                || { mok=0; test_fail "csharp timeout" "commented-out timeout still passes"; }
+mutant_caught pin_csharp         "${cs_file}" 'dot[.]net/v1'                   || { mok=0; test_fail "csharp curl" "commented-out download still passes"; }
+mutant_caught pin_csharp         "${cs_file}" '^source .*lib/vde-core'         || { mok=0; test_fail "csharp source" "commented-out source still passes"; }
+mutant_caught pin_timeout_embed  "${e}"       '^[[:space:]]*timeout -k 30'     || { mok=0; test_fail "embed timeout" "commented-out timeout still passes"; }
+mutant_caught pin_probe_bounds   "${e}"       "^' _ "                          || { mok=0; test_fail "embed bounds" "commented-out bounds still pass"; }
+mutant_caught pin_timeout_kotlin "${k}"       'devuser timeout -k 30'          || { mok=0; test_fail "kotlin timeout" "commented-out timeout still passes"; }
+(( mok )) && test_pass "6 safeguards rejected as full-line and as trailing comments"
 
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"
 (( TESTS_FAILED == 0 ))
