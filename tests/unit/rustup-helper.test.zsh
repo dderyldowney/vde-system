@@ -142,10 +142,10 @@ else test_fail "idempotency" "curl ran"; fi
 
 # Wiring pins read executable lines only: a comment that still spells out a
 # safeguard must not satisfy a pin (Signet #611). Full-line comments and trailing
-# " # ..." comments are dropped (a "#" inside a word, as in "${#x}", is kept).
+# " #..." comments are dropped (a "#" inside a word, as in "${#x}", is kept).
 # code_n keeps the original line numbers for ordering checks.
-code_of() { grep -vE '^[[:space:]]*#' "$1" | sed -E 's/[[:space:]]+#([[:space:]].*)?$//'; }
-code_n()  { grep -nvE '^[[:space:]]*#' "$1" | sed -E 's/[[:space:]]+#([[:space:]].*)?$//'; }
+code_of() { grep -vE '^[[:space:]]*#' "$1" | sed -E 's/[[:space:]]+#.*$//'; }
+code_n()  { grep -nvE '^[[:space:]]*#' "$1" | sed -E 's/[[:space:]]+#.*$//'; }
 
 typeset e=scripts/setup/embed-init.zsh
 typeset k=scripts/setup/kotlin-init.zsh
@@ -177,7 +177,7 @@ pin_csharp() {
         print -r -- 'dotnet download line lacks "${VDE_CURL_BOUNDS[@]}"'
     fi
     [[ "${c}" =~ $re_cs_timeout ]] || print -r -- 'dotnet installer not run under timeout -k 30 "${VDE_INSTALLER_TIMEOUT}"'
-    n_src="$(code_n "${f}" | grep -m1 -E '^[0-9]+:[[:space:]]*(source|[.]) .*lib/vde-core' | cut -d: -f1)"
+    n_src="$(code_n "${f}" | grep -m1 -E '^[0-9]+:[[:space:]]*(source|[.]) .*lib/vde-core"?([[:space:]]|$)' | cut -d: -f1)"
     n_use="$(code_n "${f}" | grep -m1 'VDE_CURL_BOUNDS' | cut -d: -f1)"
     (( n_src && n_use && n_src < n_use )) \
       || print -r -- "lib/vde-core (line ${n_src:-none}) not sourced before first VDE_CURL_BOUNDS (line ${n_use:-none})"
@@ -218,7 +218,7 @@ typeset mut="${stub}/mut" mok=1
 mkdir -p "${mut}"
 mutant_caught() {   # $1 pin function, $2 script, $3 BRE address (no "|") of the line to disable
     local out="${mut}/${2:t}" sub
-    for sub in 's|^\([[:space:]]*\)|\1# |' 's|^\([[:space:]]*\)\(.*\)$|\1true  # \2|'; do
+    for sub in 's|^\([[:space:]]*\)|\1# |' 's|^\([[:space:]]*\)\(.*\)$|\1true  # \2|' 's|^\([[:space:]]*\)\(.*\)$|\1true #\2|'; do
         sed "\\|$3| ${sub}" "$2" > "${out}"
         cmp -s "$2" "${out}" && return 1
         [[ -n "$("$1" "${out}")" ]] || return 1
