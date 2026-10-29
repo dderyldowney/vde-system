@@ -4,7 +4,7 @@
 typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests: shared rustup helper, bounded downloads and installer timeout
-# (Signet #598, #600).
+# (Signet #598, #600, #607).
 #
 # vde_install_rustup lives once in lib/vde-core; rust-init and embed-init call
 # it, and the rustup-init and probe-rs downloads carry VDE_CURL_BOUNDS. The
@@ -163,6 +163,26 @@ typeset re_sdkman='timeout -k 30 "[$][{][A-Za-z_]+[}]" (sudo -H -u [a-z]+ )?bash
 if [[ "$(<"${e}")" =~ $re_probe ]] && [[ "$(<"${k}")" =~ $re_sdkman ]]; then
     test_pass "embed-init runs sh under timeout -k 30; kotlin-init runs SDKMAN under timeout -k 30"
 else test_fail "installer timeout wiring" "embed-init probe-rs or kotlin-init SDKMAN not wrapped by timeout -k 30 \"\${...}\""; fi
+
+test_start "csharp-init bounds the dotnet download and runs the installer under timeout -k 30, vde-core sourced first"
+typeset cs_file=scripts/setup/csharp-init.zsh
+typeset cs="$(<"${cs_file}")"
+typeset -a cs_curl=( ${(M)${(f)cs}:#*dot.net/v1/dotnet-install.sh*} )
+typeset re_cs_timeout='timeout -k 30 "[$][{]VDE_INSTALLER_TIMEOUT[}]" bash /tmp/dotnet-install[.]sh'
+typeset cs_src cs_use
+cs_src="$(grep -n 'lib/vde-core' "${cs_file}" | head -1 | cut -d: -f1)"
+cs_use="$(grep -n 'VDE_CURL_BOUNDS' "${cs_file}" | head -1 | cut -d: -f1)"
+typeset cs_ok=1
+if (( ${#cs_curl} != 1 )) || [[ "${cs_curl[1]}" != *'"${VDE_CURL_BOUNDS[@]}"'* ]]; then
+    cs_ok=0; test_fail "dotnet curl" "download line lacks \"\${VDE_CURL_BOUNDS[@]}\""
+fi
+if [[ ! "${cs}" =~ $re_cs_timeout ]]; then
+    cs_ok=0; test_fail "dotnet installer" "installer not run under timeout -k 30 \"\${VDE_INSTALLER_TIMEOUT}\""
+fi
+if (( ! cs_src || ! cs_use || cs_src >= cs_use )); then
+    cs_ok=0; test_fail "vde-core order" "lib/vde-core (line ${cs_src:-none}) not before first VDE_CURL_BOUNDS (line ${cs_use:-none})"
+fi
+(( cs_ok )) && test_pass "csharp-init bounds the dotnet download and runs the installer under timeout -k 30, vde-core sourced first"
 
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"
 (( TESTS_FAILED == 0 ))
