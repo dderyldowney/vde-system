@@ -1,5 +1,8 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # VDE Core Library - Essential Functions for VDE
 # Source this library with: source ./lib/vde-core
 # Requires: zsh 5.0+

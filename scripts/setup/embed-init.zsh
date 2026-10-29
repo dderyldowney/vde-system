@@ -106,6 +106,7 @@ sudo -H -u devuser zsh -c '
     export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
     if ! command -v probe-rs >/dev/null; then
         _installer=$(mktemp)
+        trap '"'"'rm -f "${_installer}"'"'"' EXIT
         curl --proto "=https" --tlsv1.2 -sSfL "$@" \
             https://github.com/probe-rs/probe-rs/releases/latest/download/probe-rs-tools-installer.sh \
             -o "${_installer}"
@@ -120,7 +121,6 @@ sudo -H -u devuser zsh -c '
         # so an overall deadline applies (Signet #600). SIGKILL follows 30s after
         # SIGTERM (timeout -k 30) if the installer ignores the deadline.
         timeout -k 30 "${limit}" sh "${_installer}"
-        rm -f "${_installer}"
         command -v probe-rs >/dev/null || { print -u2 "probe-rs did not install"; exit 1; }
     fi
 ' _ "${VDE_INSTALLER_TIMEOUT}" "${VDE_CURL_BOUNDS[@]}"
