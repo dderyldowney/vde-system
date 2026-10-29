@@ -37,7 +37,7 @@ The main agent MUST complete these 10 steps sequentially before doing *anything 
 
 Violating any of these mandates is a failure of the agent's primary directive.
 
-1.  **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden. The agent MUST NOT use `bash` to execute commands.
+1.  **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden. The agent MUST NOT use `bash` to execute commands. Every new zsh file over 30 lines MUST include the Zsh expansion-flag shibboleth `typeset _ZSH_PURE=${(%):-%x}` near the top (after the shebang/header comment); `bin/vde-enforce-uap.zsh` warns "lacks ZSH parameter flags" on any such file with no `${(` expansion, and a warning fails the audit.
 2.  **THE ANVIL IS DEFAULT**: All active work MUST occur on the `develop` branch (The Anvil). `main` (Production) is reserved for STABLE RELEASES ONLY. Direct work on `main` is strictly prohibited.
 3.  **Main Agent is Orchestrator ONLY**: The Main Agent MUST NOT write implementation code if it spans >1 file. The Main Agent's job is planning, orchestrating, and verifying. *Exception: If sub-agents are technically unavailable, the Main Agent may perform direct implementation provided every action is strictly supervised by the Enforcer.*
 4.  **Enforcer Supervision (Rule A)**: Every single action (shell commands, dispatches, verification steps, and cleanup) MUST be run under the supervision of the Enforcer (`bin/vde-enforce-uap.zsh`).
