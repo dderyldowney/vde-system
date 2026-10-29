@@ -288,7 +288,8 @@ typeset -ga VDE_CURL_BOUNDS=(--connect-timeout 30 --max-time 600 --retry 3 --ret
 
 # VDE_INSTALLER_TIMEOUT - overall deadline in seconds (coreutils `timeout`) for vendor
 # installers that do their own downloads, which VDE_CURL_BOUNDS cannot reach. Generous
-# so a slow but live install is not killed (Signet #600).
+# so a slow but live install is not killed (Signet #600). The deadline sends SIGTERM,
+# then SIGKILL after 30s (`timeout -k 30`) so an installer that ignores SIGTERM cannot hang the build.
 typeset -g VDE_INSTALLER_TIMEOUT=1800
 
 # vde_install_rustup USER LABEL - install rustup for USER unless rustc exists.
@@ -326,7 +327,7 @@ vde_install_rustup() {
             actual="${actual%%[[:space:]]*}"
             [[ "${expected}" == "${actual}" ]] || { print -u2 "${label}: rustup-init sha256 mismatch"; exit 1; }
             chmod +x "${installer}"
-            timeout "${limit}" "${installer}" -y --no-modify-path
+            timeout -k 30 "${limit}" "${installer}" -y --no-modify-path
         fi
     ' _ "${label}" "${VDE_INSTALLER_TIMEOUT}" "${VDE_CURL_BOUNDS[@]}"
 }

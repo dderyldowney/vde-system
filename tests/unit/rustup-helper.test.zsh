@@ -33,12 +33,13 @@ stub="$(mktemp -d)" || exit 1
 trap 'rm -rf "${stub}"' EXIT
 # sudo stub drops "-H -u USER" and runs the command as the current user.
 printf '#!/usr/bin/env zsh\nshift 3\nexec "$@"\n' > "${stub}/sudo"
-# curl stub appends its arguments to CURL_LOG on every call. For a -o target
-# ending in .sha256 it writes the real sha256 of the stub installer (or
+# curl stub appends each call to CURL_LOG as a ---CALL--- marker line followed by
+# its arguments, one per line, so every fetch can be checked on its own. For a
+# -o target ending in .sha256 it writes the real sha256 of the stub installer (or
 # SHA_OVERRIDE when set); any other -o target gets the no-op installer.
 cat > "${stub}/curl" <<'STUB'
 #!/usr/bin/env zsh
-printf '%s\n' "$@" >> "${CURL_LOG}"
+printf '%s\n' '---CALL---' "$@" >> "${CURL_LOG}"
 o=; while (( $# )); do [[ $1 == -o ]] && o=$2; shift; done
 body='#!/usr/bin/env zsh
 print -r -- "${0:t}" > "${CURL_LOG}.ran"'
@@ -73,15 +74,28 @@ if [[ "${VDE_INSTALLER_TIMEOUT}" =~ '^[1-9][0-9]*$' ]]; then
     test_pass "VDE_INSTALLER_TIMEOUT=${VDE_INSTALLER_TIMEOUT}"
 else test_fail "VDE_INSTALLER_TIMEOUT" "got '${VDE_INSTALLER_TIMEOUT}'"; fi
 
-test_start "vde_install_rustup downloads the native binary with the bounds"
+test_start "vde_install_rustup downloads the native binary and its .sha256 with the bounds"
 PATH="${stub}" vde_install_rustup nobody VDE-T >/dev/null 2>&1
 typeset rc=$?
-typeset got="$(<"${CURL_LOG}")"
+# Split the log on the ---CALL--- marker: each part is one curl invocation. A
+# part's arguments are "\n"-prefixed and "\n"-terminated, so a contiguous
+# newline-delimited match of the bounds block proves every bound is an argument.
+typeset -a calls=( ${(s:---CALL---:)"$(<"${CURL_LOG}")"} )
+typeset call bin_ok=0 sha_ok=0 bounded_bin=0 bounded_sha=0
+for call in "${calls[@]}"; do
+    [[ "${call}" == *"/rustup/dist/"* ]] || continue
+    if [[ "${call}" == *"/rustup-init.sha256"$'\n'* ]]; then
+        sha_ok=1
+        [[ "${call}" == *$'\n'"${want_lines}"$'\n'* ]] && bounded_sha=1
+    elif [[ "${call}" == *"/rustup-init"$'\n'* ]]; then
+        bin_ok=1
+        [[ "${call}" == *$'\n'"${want_lines}"$'\n'* ]] && bounded_bin=1
+    fi
+done
 if (( rc != 0 )); then test_fail "helper status" "vde_install_rustup returned ${rc}"
-elif [[ "${got}" == *"${want_lines}"* && "${got}" == *"static.rust-lang.org/rustup/dist/"*"/rustup-init"* \
-     && "${got}" == *"rustup-init.sha256"* ]]; then
-    test_pass "curl got each bound as its own argument: ${want[*]}, plus the .sha256 fetch"
-else test_fail "curl args" "want separate '${want[*]}', the rustup-init URL and its .sha256, got '${(j: :)${(f)got}}'"; fi
+elif (( bin_ok && sha_ok && bounded_bin && bounded_sha )); then
+    test_pass "binary and .sha256 curl calls each got ${want[*]} as separate arguments"
+else test_fail "curl args" "want each of the binary and .sha256 calls to carry '${want[*]}' (bin ${bin_ok}/${bounded_bin}, sha ${sha_ok}/${bounded_sha}), log: '${(j: | :)${(f)$(<"${CURL_LOG}")}}'"; fi
 
 test_start "installer keeps the name rustup-init (multi-call dispatch)"
 typeset ran="$(<"${CURL_LOG}.ran" 2>/dev/null)"
@@ -100,18 +114,22 @@ elif [[ -e "${CURL_LOG}.ran" ]]; then test_fail "mismatch" "installer ran despit
 elif [[ "${err}" != *"sha256 mismatch"* ]]; then test_fail "mismatch message" "got '${err}'"
 else test_pass "returned ${rc}, reported the mismatch, installer not run"; fi
 
-test_start "installer runs under timeout with VDE_INSTALLER_TIMEOUT as its limit"
+test_start "installer runs as the command timeout executes, under -k 30 VDE_INSTALLER_TIMEOUT"
 rm -f "${stub}/timeout" "${CURL_LOG}.timeout" "${CURL_LOG}.ran"
 # Replace the timeout link first: writing through it would clobber /usr/bin/timeout.
-printf '#!/usr/bin/env zsh\nprint -r -- "$1" > "${CURL_LOG}.timeout"\nshift\nexec "$@"\n' > "${stub}/timeout"
+# The stub records every argument, one per line, then drops timeout's own
+# "-k 30 LIMIT" and execs the remaining command, so the installer really runs.
+printf '#!/usr/bin/env zsh\nprint -rl -- "$@" > "${CURL_LOG}.timeout"\nshift 3\nexec "$@"\n' > "${stub}/timeout"
 chmod +x "${stub}/timeout"
 PATH="${stub}" vde_install_rustup nobody VDE-T >/dev/null 2>&1
 rc=$?
-typeset limit="$(<"${CURL_LOG}.timeout" 2>/dev/null)"
+typeset targs_raw="$(<"${CURL_LOG}.timeout" 2>/dev/null)"
+typeset -a targs=( ${(f)targs_raw} )
 if (( rc != 0 )); then test_fail "timeout status" "vde_install_rustup returned ${rc}"
-elif [[ "${limit}" == "${VDE_INSTALLER_TIMEOUT}" && -e "${CURL_LOG}.ran" ]]; then
-    test_pass "timeout received ${limit}, installer ran under it"
-else test_fail "installer timeout" "timeout got '${limit}', want '${VDE_INSTALLER_TIMEOUT}'"; fi
+elif (( ${#targs} >= 4 )) && [[ "${targs[1]}" == -k && "${targs[2]}" == 30 \
+     && "${targs[3]}" == "${VDE_INSTALLER_TIMEOUT}" && "${targs[4]:t}" == rustup-init && -e "${CURL_LOG}.ran" ]]; then
+    test_pass "timeout got -k 30 ${targs[3]}, then ran ${targs[4]:t} (installer executed)"
+else test_fail "installer timeout" "timeout got '${(j: :)targs}', want '-k 30 ${VDE_INSTALLER_TIMEOUT} .../rustup-init' and an executed installer"; fi
 
 test_start "vde_install_rustup skips the download when rustc exists"
 rm -f "${CURL_LOG}"
@@ -137,6 +155,14 @@ if grep -F 'probe-rs-tools-installer.sh' "${e}" >/dev/null \
    && grep -qF "' _ \"\${VDE_INSTALLER_TIMEOUT}\" \"\${VDE_CURL_BOUNDS[@]}\"" "${e}"; then
     test_pass "curl takes \"\$@\" and the block passes the timeout and VDE_CURL_BOUNDS"
 else test_fail "probe-rs curl" "bounds not wired end to end"; fi
+
+test_start "probe-rs and SDKMAN installers are directly preceded by timeout -k 30 \"\${...}\""
+typeset k=scripts/setup/kotlin-init.zsh
+typeset re_probe='timeout -k 30 "[$][{][A-Za-z_]+[}]" sh "[$][{]_installer[}]"'
+typeset re_sdkman='timeout -k 30 "[$][{][A-Za-z_]+[}]" (sudo -H -u [a-z]+ )?bash "[$][{]_sdkman_installer[}]"'
+if [[ "$(<"${e}")" =~ $re_probe ]] && [[ "$(<"${k}")" =~ $re_sdkman ]]; then
+    test_pass "embed-init runs sh under timeout -k 30; kotlin-init runs SDKMAN under timeout -k 30"
+else test_fail "installer timeout wiring" "embed-init probe-rs or kotlin-init SDKMAN not wrapped by timeout -k 30 \"\${...}\""; fi
 
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"
 (( TESTS_FAILED == 0 ))

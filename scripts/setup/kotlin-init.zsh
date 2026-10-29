@@ -37,7 +37,8 @@ if [[ ! -d "${dev_home}/.sdkman" ]]; then
     curl -fsSL "${VDE_CURL_BOUNDS[@]}" "https://get.sdkman.io" -o "${_sdkman_installer}"
     [[ -s "${_sdkman_installer}" ]] || { echo "CRITICAL: SDKMAN installer download failed or empty" >&2; exit 1; }
     chmod 755 "${_sdkman_installer}"
-    sudo -H -u devuser bash "${_sdkman_installer}"
+    # SDKMAN installer does its own downloads that curl bounds cannot reach (Signet #600)
+    timeout -k 30 "${VDE_INSTALLER_TIMEOUT}" sudo -H -u devuser bash "${_sdkman_installer}"
     rm -f "${_sdkman_installer}"
 fi
 

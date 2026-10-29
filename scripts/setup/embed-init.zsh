@@ -117,8 +117,9 @@ sudo -H -u devuser zsh -c '
         # unavoidable third-party path (Signet #551). Listed in
         # docs/governance/bash-exceptions.md.
         # The installer does its own downloads, which curl bounds cannot reach,
-        # so an overall deadline applies (Signet #600).
-        timeout "${limit}" sh "${_installer}"
+        # so an overall deadline applies (Signet #600). SIGKILL follows 30s after
+        # SIGTERM (timeout -k 30) if the installer ignores the deadline.
+        timeout -k 30 "${limit}" sh "${_installer}"
         rm -f "${_installer}"
         command -v probe-rs >/dev/null || { print -u2 "probe-rs did not install"; exit 1; }
     fi
