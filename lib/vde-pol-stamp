@@ -1,0 +1,43 @@
+#!/usr/bin/env zsh
+# @forge (Governance Sentinel)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
+# lib/vde-pol-stamp - Proof of Life stamp (Signet #602)
+#
+# A stamp records the git tree hash of a commit that passed Proof of Life. The
+# pre-push hook may skip a rerun only when HEAD has that same tree hash and the
+# tracked worktree and index are clean, so no edit can sit between the passing
+# run and the push. The stamp lives in the git dir: local, untracked, never pushed.
+
+# Print the stamp path.
+vde_pol_stamp_path() {
+    git rev-parse --git-path vde-pol-stamp
+}
+
+# Print HEAD's tree hash when the tracked worktree and index are clean; else fail.
+vde_pol_clean_tree() {
+    [[ -z "$(git status --porcelain --untracked-files=no)" ]] || return 1
+    git rev-parse 'HEAD^{tree}'
+}
+
+# Succeed only when the stamp matches the current clean HEAD tree.
+vde_pol_stamp_valid() {
+    local tree stamp
+    tree="$(vde_pol_clean_tree)" || return 1
+    stamp="$(vde_pol_stamp_path)"
+    [[ -f "${stamp}" ]] && [[ "$(<"${stamp}")" == "${tree}" ]]
+}
+
+# Run a Proof of Life command ("$@"); stamp only a pass whose tree was clean and identical before and after.
+vde_pol_run_and_stamp() {
+    local before after stamp
+    stamp="$(vde_pol_stamp_path)"
+    rm -f "${stamp}"
+    before="$(vde_pol_clean_tree)" || before=""
+    "$@" || return $?
+    [[ -n "${before}" ]] || return 0
+    after="$(vde_pol_clean_tree)" || return 0
+    [[ "${before}" == "${after}" ]] && print -r -- "${after}" > "${stamp}"
+    return 0
+}
