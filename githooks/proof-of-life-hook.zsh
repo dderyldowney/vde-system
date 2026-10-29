@@ -11,6 +11,7 @@ export VDE_ROOT_DIR
 # Source core libraries
 [[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
 [[ -f "${VDE_ROOT_DIR}/lib/vde-log" ]] && source "${VDE_ROOT_DIR}/lib/vde-log"
+source "${VDE_ROOT_DIR}/lib/vde-pol-stamp"
 
 # Colors
 typeset RED='\033[0;31m'
@@ -29,9 +30,25 @@ echo "[${_SENTINEL}] Running Proof of Life (Mandate L) Validation..."
 typeset _SENTINEL=${(U):-"sentinel active"}
 echo "[${_SENTINEL}] Feature: tests/features/core-infrastructure/proof-of-life-the-contract.feature"
 
+# Reuse (Signet #602): skip only when this exact tree already passed Proof of Life
+# and the tracked worktree is clean. Anything weaker runs the full contract.
+# The hook receives "<local ref> <local sha> <remote ref> <remote sha>" lines on
+# stdin when run by git; every outgoing tree must be the stamped one.
+typeset -a _pushed_shas=()
+typeset _lref _lsha _rref _rsha
+if [[ ! -t 0 ]]; then
+    while read -r _lref _lsha _rref _rsha; do
+        [[ -z "${_lsha//0/}" ]] || _pushed_shas+=("${_lsha}")
+    done
+fi
+if vde_pol_push_covered HEAD "${_pushed_shas[@]}"; then
+    echo -e "${GREEN}✓ Proof of Life already certified for this exact tree (stamp matched, worktree clean). Skipping rerun.${RESET}"
+    exit 0
+fi
+
 # Run the absolute lifecycle test
 # We use the full path to ensure it runs correctly from any directory
-if python3 -m behave "${VDE_ROOT_DIR}/tests/features/core-infrastructure/proof-of-life-the-contract.feature" --quiet --no-summary; then
+if vde_pol_run_and_stamp python3 -m behave "${VDE_ROOT_DIR}/tests/features/core-infrastructure/proof-of-life-the-contract.feature" --quiet --no-summary; then
     echo -e "${GREEN}✓ Proof of Life Certified.${RESET}"
     exit 0
 else

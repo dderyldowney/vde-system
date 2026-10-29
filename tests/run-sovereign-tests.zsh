@@ -81,6 +81,7 @@ UNIT_TESTS=(
     "${VDE_ROOT_DIR}/tests/unit/vde-router-exit-status.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/setup-bash-allowlist.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/rustup-helper.test.zsh"
+    "${VDE_ROOT_DIR}/tests/unit/pol-stamp.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vde-router-delegate-args.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/vde-actions.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/compose-template-drift.test.zsh"
