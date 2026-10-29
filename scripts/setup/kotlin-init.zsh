@@ -42,6 +42,12 @@ if [[ ! -d "${dev_home}/.sdkman" ]]; then
     rm -f "${_sdkman_installer}"
 fi
 
+if [[ ! -e "${dev_home}/.sdkman/candidates/kotlin/current" ]]; then
+    echo "[VDE-KOTLIN] Installing the Kotlin compiler via SDKMAN..."
+    # Mandate C exception (Signet #608): `sdk` is a Bash function defined by sdkman-init.sh, so it can only run under bash; listed in docs/governance/bash-exceptions.md. sdk downloads the compiler itself, so it runs under the same overall deadline as the installer.
+    sudo -H -u devuser timeout -k 30 "${VDE_INSTALLER_TIMEOUT}" bash -c 'source "$HOME/.sdkman/bin/sdkman-init.sh" && sdkman_auto_answer=true sdk install kotlin </dev/null'
+fi
+
 # 4. PERSISTENCE ANCHOR
 typeset _zshenv="${dev_home}/.zshenv"
 # Idempotent via a marker line: a re-run/re-smelt never appends a second block.
