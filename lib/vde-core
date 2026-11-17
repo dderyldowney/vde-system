@@ -117,7 +117,7 @@ vde_split_rebuild_args() {
     typeset -ga VDE_REBUILD_REST=()
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --no-cache|--pull|--regenerate-keys|-h|--help)
+            --no-cache|--pull|--keep-cache|--regenerate-keys|-h|--help)
                 VDE_REBUILD_FLAGS+=("$1")
                 ;;
             --vm)

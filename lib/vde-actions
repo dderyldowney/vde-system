@@ -352,6 +352,58 @@ vde_action_port() {
     exit $?
 }
 
+# vde_action_clean - vde clean [--dry-run]  - free Docker's build cache (Signet #617)
+# Build cache only: never images, containers or volumes. The same cleanup runs
+# automatically after a successful rebuild/create; this is for when it did not
+# (--keep-cache, or a build that was interrupted). Flags are peeled off by the
+# router (vde_split_clean_args), so any remaining argument is a mistake.
+vde_action_clean() {
+    if [[ ${#input_targets} -gt 0 ]]; then
+        vde_log_error "'vde clean' takes no arguments (got: ${input_targets[*]}). Usage: vde clean [--dry-run]"
+        exit ${VDE_ERR_INVALID_INPUT}
+    fi
+    local clean_rc=0
+    if (( ${VDE_CLEAN_DRY_RUN:-0} )); then
+        vde_prune_build_cache --dry-run || clean_rc=$?
+    else
+        vde_prune_build_cache || clean_rc=$?
+    fi
+    exit ${clean_rc}
+}
+
+# vde_action_cache - vde cache clean [--dry-run]  - an alias group for vde clean,
+# for the person who describes the problem as "the build cache"
+vde_action_cache() {
+    case "${input_targets[1]:-}" in
+        clean|cleanup|clear|prune)
+            input_targets=( "${(@)input_targets[2,-1]}" )
+            vde_action_clean
+            ;;
+        *)
+            print -u2 -r -- "Usage: vde cache clean [--dry-run]   (frees Docker's build cache; the same as: vde clean)"
+            exit ${VDE_ERR_INVALID_INPUT}
+            ;;
+    esac
+}
+
+# vde_suggest_command NAME - after an unknown command, point at the command a
+# student most likely meant. Prints to stderr; prints nothing when it has no idea
+# (a wrong hint is worse than none). Returns 0 if it suggested something.
+vde_suggest_command() {
+    case "${1:-}" in
+        disk|df|space|free|gc|clear|clear-cache|clearcache|tidy|reclaim)
+            print -u2 -r -- "Did you mean: vde clean   (frees Docker's build cache; add --dry-run to preview)"
+            ;;
+        build)
+            print -u2 -r -- "Did you mean: vde rebuild <name>   (builds a Spoke's image, e.g. 'vde rebuild python')"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    return 0
+}
+
 # vde_action_help - vde help  - print usage (exit status from _vde_help_status)
 vde_action_help() {
     cat <<EOF
@@ -362,6 +414,9 @@ Core Commands:
   init            Initialize the VDE Forge, generate configs, and smelting foundation images.
   create <name>   Forge a specific VM Spoke or cluster. Resolves aliases and units.
   rebuild <name>  Destroy and re-forge a Spoke (use --no-cache to ignore Docker layer cache).
+                  Docker's build cache is cleaned afterwards; --keep-cache keeps it.
+  clean           Free Docker's build cache (removes no images). --dry-run previews the size.
+                  Also: vde cleanup, vde cache clean.
   start <name>    Ignite a Spoke or cluster (e.g., 'vde start default').
   stop <name>     Quench a running Spoke or cluster unit.
   restart <name>  Reset a Spoke or cluster unit.

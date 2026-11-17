@@ -1,0 +1,157 @@
+#!/usr/bin/env zsh
+# @armor (Engine Core)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
+# VDE Build-Cache Cleanup (Signet #617)
+# Source this library with: source ./lib/vde-build-cache
+#
+# A --no-cache rebuild round leaves tens of gigabytes of BuildKit cache behind;
+# on a student's disk that ends in "no space left on device" and a failure that
+# looks like a VDE bug. This library holds the ONE implementation of cleaning it,
+# shared by the automatic prune after bin/vde-rebuild and by `vde clean`.
+#
+# Scope is the build cache and nothing else: the only destructive call is
+# `docker builder prune --all -f`. Never images, containers, volumes or
+# `docker system prune`. BuildKit does not remove cache records that a running
+# build is using (measured: a prune during a running build freed 0B and the build
+# finished). Dependencies: the docker CLI only.
+
+if [[ "${_VDE_BUILD_CACHE_LOADED:-}" = "1" ]]; then
+    return 0 2>/dev/null || exit 0
+fi
+_VDE_BUILD_CACHE_LOADED=1
+
+# Informational output, silenced by -q/--quiet (VDE_QUIET=1). Errors and warnings
+# go to stderr unconditionally.
+_vde_bc_say() { [[ "${VDE_QUIET:-0}" == "1" ]] || print -r -- "$*"; return 0 }
+
+# vde_build_cache_size - print the size of Docker's build cache (e.g. 4.855GB), or
+# nothing when it cannot be read. Read-only. `docker system df` walks every image,
+# container and volume, so only the dry run asks for it.
+vde_build_cache_size() {
+    local line
+    for line in "${(@f)$(docker system df --format '{{.Type}}|{{.Size}}' 2>/dev/null)}"; do
+        [[ "${line}" == "Build Cache|"* ]] && { print -r -- "${line#Build Cache|}"; return 0; }
+    done
+    return 0
+}
+
+# vde_prune_build_cache [--dry-run]
+# Remove Docker's build cache, or with --dry-run only report what would be freed.
+# Always names the Docker context (and DOCKER_HOST) first, so a remote or shared
+# daemon is never cleaned unawares.
+# Returns: 0 done / nothing to do / dry run, 1 the prune failed or the daemon is
+# not running, 3 Docker is not installed
+vde_prune_build_cache() {
+    local dry=0
+    [[ "${1:-}" == "--dry-run" ]] && dry=1
+
+    if ! command -v docker >/dev/null 2>&1; then
+        print -u2 -r -- "[ERROR] Docker is not installed, so there is no build cache to clean."
+        return 3
+    fi
+
+    # A stopped daemon makes every query fail; that must not read as "empty".
+    if ! docker info >/dev/null 2>&1; then
+        print -u2 -r -- "[ERROR] The Docker daemon is not running (or not reachable), so the build cache cannot be cleaned."
+        return 1
+    fi
+
+    local ctx host="${DOCKER_HOST:-}"
+    ctx="$(docker context show 2>/dev/null)" || ctx=""
+    _vde_bc_say "Docker build cache on context '${ctx:-default}'${host:+ (DOCKER_HOST=${host})}"
+
+    if (( dry )); then
+        local size
+        size="$(vde_build_cache_size)"
+        if [[ "${size}" == "0B" ]]; then
+            _vde_bc_say "Build cache is already empty. Nothing to clean."
+        elif [[ -n "${size}" ]]; then
+            _vde_bc_say "Would free ${size} (dry run: nothing was removed)."
+        else
+            _vde_bc_say "Could not read the build cache size (dry run: nothing was removed)."
+        fi
+        return 0
+    fi
+
+    local out
+    if ! out="$(docker builder prune --all -f 2>&1)"; then
+        print -u2 -r -- "[WARN] Could not clean the Docker build cache: ${out}"
+        return 1
+    fi
+
+    # `docker builder prune` ends with "Total:<tab>4.855GB". A regex trims the
+    # whitespace without needing extended_glob, which a sourced library cannot assume.
+    local total="" line
+    for line in "${(@f)out}"; do
+        [[ "${line}" =~ 'Total:[[:space:]]*(.+)$' ]] && total="${match[1]}"
+    done
+    if [[ -z "${total}" || "${total}" == "0B" ]]; then
+        # Either nothing was there, or BuildKit skipped records a running build is
+        # using. Both are honest "nothing right now" results, never "Freed 0B".
+        _vde_bc_say "Nothing to free right now (the build cache is empty, or in use by a running build)."
+        return 0
+    fi
+    _vde_bc_say "Freed ${total} of Docker build cache. The next build starts cold (slower once)."
+    return 0
+}
+
+# vde_maybe_prune_build_cache KEEP
+# The automatic prune after a successful build. KEEP=true (--keep-cache) leaves
+# the cache and says how to free it later. A prune failure only warns: cleaning
+# up must never turn a successful build into a failed one. Always returns 0.
+vde_maybe_prune_build_cache() {
+    if [[ "${1:-false}" == "true" ]]; then
+        _vde_bc_say "Build cache kept (--keep-cache). Free the disk space later with: vde clean"
+        return 0
+    fi
+    vde_prune_build_cache || true
+    return 0
+}
+
+# vde_build_low_disk_hint
+# After a FAILED build: if the filesystem that holds Docker's data (not necessarily /)
+# is nearly full, say so and name the fix. A build that dies out of space looks like
+# a VDE bug. Silent when there is room, or when usage cannot be read. Returns 0.
+# Threshold: VDE_DISK_HINT_THRESHOLD, a percentage (default 90).
+vde_build_low_disk_hint() {
+    local threshold="${VDE_DISK_HINT_THRESHOLD:-90}" root
+    # A remote daemon's disk is not ours to measure: the local df would describe the
+    # wrong machine and could claim a full disk that is not.
+    [[ -z "${DOCKER_HOST:-}" || "${DOCKER_HOST}" == unix://* ]] || return 0
+    root="$(docker info --format '{{.DockerRootDir}}' 2>/dev/null)" || root=""
+    [[ -n "${root}" && -e "${root}" ]] || root="/"
+
+    local -a rows=( "${(@f)$(df -P -- "${root}" 2>/dev/null)}" )
+    local -a fields=( ${=rows[2]} )
+    local usage="${fields[5]%\%}"
+    [[ "${usage}" == <-> ]] || return 0
+    (( usage >= threshold )) || return 0
+
+    if typeset -f vde_error_insufficient_disk >/dev/null; then
+        vde_error_insufficient_disk "${usage}"
+    else
+        print -u2 -r -- "[WARN] The disk holding Docker's data (${root}) is ${usage}% full. Free Docker's build cache with: vde clean"
+    fi
+    return 0
+}
+
+# vde_split_clean_args - separate `vde clean`'s own flags from everything else.
+# -q/--quiet is the router's own flag, so it is passed through for the router.
+# Sets: VDE_CLEAN_DRY_RUN (1 or 0), VDE_CLEAN_REST (remaining args)
+# Returns: 0, or 2 on an unknown option
+vde_split_clean_args() {
+    typeset -g VDE_CLEAN_DRY_RUN=0
+    typeset -ga VDE_CLEAN_REST=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --dry-run|-n) VDE_CLEAN_DRY_RUN=1 ;;
+            -q|--quiet)   VDE_CLEAN_REST+=("$1") ;;
+            -*) print -u2 -r -- "Unknown option '$1' for 'vde clean'. Usage: vde clean [--dry-run] [-q]"; return 2 ;;
+            *)  VDE_CLEAN_REST+=("$1") ;;
+        esac
+        shift
+    done
+    return 0
+}

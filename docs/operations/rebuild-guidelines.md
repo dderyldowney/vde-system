@@ -106,6 +106,21 @@ If you are iterating quickly and want to use cache:
 vde start python --rebuild
 ```
 
+**The build cache is cleaned after every successful rebuild or create.** Docker's
+build cache grows by tens of gigabytes over a few `--no-cache` rebuilds and fills the
+disk, so once every build in a command has succeeded VDE removes it
+(`docker builder prune --all -f`, which never touches images, containers or volumes).
+The cost is that the *next* rebuild starts cold and takes longer. If you are iterating
+and want fast incremental rebuilds, keep the cache and clean it yourself later:
+
+```zsh
+vde rebuild --keep-cache python     # keep Docker's build cache after this build
+vde clean --dry-run                 # how much would be freed?
+vde clean                           # free it (the same cleanup, on demand)
+```
+
+A build that fails keeps its cache so the retry is fast.
+
 ### Rebuild Doesn't Pick Up Changes
 
 Ensure you are using the standard ritual:
@@ -129,6 +144,16 @@ present. Editing those inputs, updating `vde-base`, pruning the Docker build cac
 or building on a fresh host re-runs the hydration layer, and pyenv then resolves the
 newest stable CPython — so a plain rebuild can advance the interpreter as a side
 effect. To see what you actually have, run `python --version` inside the Spoke.
+
+Because VDE now cleans the build cache after every successful rebuild (see "Rebuild
+Takes Too Long"), the cached hydration layer is normally already gone, so a plain
+`vde rebuild python` re-runs the hydration layer and **may advance the interpreter**.
+To keep the interpreter you have, rebuild with `--keep-cache` (and the cache from that
+build stays, so the next plain rebuild can reuse it):
+
+```zsh
+vde rebuild --keep-cache python
+```
 
 To advance `vde-python` to the latest stable CPython deliberately, force a clean
 build so the resolver always re-runs:

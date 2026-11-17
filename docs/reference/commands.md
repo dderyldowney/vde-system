@@ -112,7 +112,28 @@ vde rebuild python
 
 # Full clean rebuild without cache
 vde rebuild --no-cache python
+
+# Keep Docker's build cache after the build (it is cleaned by default)
+vde rebuild --keep-cache python
 ```
+
+### Freeing Disk Space
+```zsh
+# How much Docker build cache is there? (changes nothing)
+vde clean --dry-run
+
+# Free Docker's build cache. Removes NO images, containers or volumes.
+vde clean
+
+# The same command, under the names a first guess might use
+vde cleanup
+vde cache clean
+```
+`vde rebuild` and `vde create` already clean the build cache once every build in the
+command has succeeded, so `vde clean` is for when that did not happen: you passed
+`--keep-cache`, or a build was interrupted. It prints which Docker context it is
+cleaning, and reports how much it freed. Cache that a running build is using is left
+alone. The next build after a clean starts cold, so it takes longer once.
 
 ### Dissolution
 ```zsh
