@@ -1,91 +1,167 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
-# VDE Pruning Ritual (Forge's Ingot Stash)
-# Usage: vde prune [--timeframe <7d|3d|24h|12h>]
+# VDE repository pruning ritual (Forge housekeeping). Zsh only.
+# Usage: vde prune [--timeframe <7d|3d|24h|12h>] [--dry-run|--apply] [--yes]
 
-typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
-set -e
+typeset _ZSH_PURE=${(%):-%x}
 
 VDE_ROOT="${VDE_ROOT_DIR:-$HOME/VDE}"
-
 TIMEFRAME="7d"
-if [[ "$1" == "--timeframe" && -n "$2" ]]; then
-    TIMEFRAME="$2"
-fi
+APPLY=0
+YES=0
+DRY_RUN=0
 
-# Convert timeframe to minutes for find
-typeset minutes=10080 # Default 7d
+usage() {
+    print -r -- "Usage: vde prune [--timeframe <7d|3d|24h|12h>] [--dry-run|--apply] [--yes]"
+    print -r -- "  Default and --dry-run print a plan without changing files."
+    print -r -- "  --apply performs the plan; --yes skips confirmation."
+}
+
+while (( $# > 0)); do
+    case "$1" in
+        --timeframe)
+            (( $# >= 2 )) || { print -u2 -r -- "missing value for --timeframe"; usage; exit 2; }
+            TIMEFRAME="$2"
+            shift 2
+            ;;
+        --dry-run) DRY_RUN=1; shift ;;
+        --apply) APPLY=1; shift ;;
+        --yes) YES=1; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) print -u2 -r -- "unknown option or argument: $1"; usage; exit 2 ;;
+    esac
+done
+
+if (( APPLY && DRY_RUN)); then
+    print -u2 -r -- "--apply and --dry-run cannot be used together"; exit 2
+fi
 case "$TIMEFRAME" in
-    *d) minutes=$(( ${TIMEFRAME%d} * 24 * 60 )) ;;
-    *h) minutes=$(( ${TIMEFRAME%h} * 60 )) ;;
-    *m) minutes=${TIMEFRAME%m} ;;
+    7d|3d|24h|12h) ;;
+    *) print -u2 -r -- "invalid --timeframe: $TIMEFRAME (allowed: 7d, 3d, 24h, 12h)"; exit 2 ;;
 esac
 
-# ZSH Git Tracking Check
+typeset number=${TIMEFRAME[1,-2]}
+typeset unit=${TIMEFRAME[-1]}
+typeset minutes
+case "$unit" in
+    d) minutes=$(( number * 24 * 60 )) ;;
+    h) minutes=$(( number * 60 )) ;;
+    m) minutes=$number ;;
+esac
+
+CURRENT_BASELINE=""
+if [[ -f "${VDE_ROOT}/docs/governance/vde-spec.md" ]]; then
+    CURRENT_BASELINE=$(awk '/^Version:/ {print $2; exit}' "${VDE_ROOT}/docs/governance/vde-spec.md")
+fi
+
 is_tracked() {
-    git -C "${VDE_ROOT}" ls-files --error-unmatch "$1" >/dev/null 2>&1
+    git -C "${VDE_ROOT}" ls-files --error-unmatch "${1#$VDE_ROOT/}" >/dev/null 2>&1
 }
 
-safe_rm() {
-    local file="$1"
-    if is_tracked "$file"; then
-        git -C "${VDE_ROOT}" rm -qf "$file"
-    else
-        rm -rf "$file"
-    fi
+is_protected() {
+    local dir="$1" file="$2"
+    [[ "$dir" == "docs/releases" && "$file" == "${CURRENT_BASELINE}.md" ]] && return 0
+    [[ "$file" == "system-spine-contract.md" ]] && return 0
+    [[ "$file" == "2026-04-13-pruning-ritual-plan.md" ]] && return 0
+    [[ "$file" == "2026-04-13-ingot-stash-plan.md" ]] && return 0
+    [[ "$file" == *-init.zsh ]] && return 0
+    return 1
 }
 
-safe_mv() {
-    local src="$1"
-    local dest="$2"
-    mkdir -p "$dest"
-    if is_tracked "$src"; then
-        # git mv requires the destination directory to be tracked or it acts on the file directly
-        git -C "${VDE_ROOT}" mv "$src" "$dest/"
-    else
-        mv "$src" "$dest/"
-    fi
-}
+# One selection routine is shared by dry-run and apply.
+typeset -a DELETE_FILES MOVE_FILES
+DELETE_FILES=()
+MOVE_FILES=()
 
-echo "Commencing the Forge's Ingot Stash Ritual (Timeframe: ${TIMEFRAME}, ${minutes}m)..."
-
-# Extract the Sovereign Baseline
-CURRENT_BASELINE=$(awk '/^Version:/ {print $2; exit}' "${VDE_ROOT}/docs/governance/vde-spec.md")
-echo "Protecting Sovereign Baseline: ${CURRENT_BASELINE}"
-
-# 1. Hard Stop Delete (> timeframe) "No Mercy"
 for dir in logs plans plans/scripts backup docs/releases; do
-    if [[ -d "${VDE_ROOT}/${dir}" ]]; then
-        # Use find to get files older than specified minutes
-        # Note: -maxdepth 1 for specific folders to avoid recursive archiving issues
-        find "${VDE_ROOT}/${dir}" -maxdepth 1 -type f -mmin +${minutes} | while read -r file; do
-            filename=$(basename "$file")
-            # Protect current baseline doc and contract
-            if [[ "${dir}" == "docs/releases" && "$filename" == "${CURRENT_BASELINE}.md" ]]; then continue; fi
-            if [[ "$filename" == "system-spine-contract.md" || "$filename" == "2026-04-13-pruning-ritual-plan.md" || "$filename" == "2026-04-13-ingot-stash-plan.md" ]]; then continue; fi
-            
-            echo "Deleting expired data: $filename"
-            safe_rm "$file"
-        done
-    fi
+    [[ -d "${VDE_ROOT}/${dir}" ]] || continue
+    while IFS= read -r file; do
+        [[ -n "$file" ]] || continue
+        typeset filename=${file:t}
+        is_protected "$dir" "$filename" && continue
+        DELETE_FILES+=("$file")
+    done < <(find "${VDE_ROOT}/${dir}" -maxdepth 1 -type f -mmin +${minutes} -print)
 done
 
-# 2. Archive (Active -> Archive for items older than 24h, but within timeframe)
-archive_minutes=$(( 24 * 60 ))
 for dir in plans plans/scripts docs/releases; do
-    if [[ -d "${VDE_ROOT}/${dir}" ]]; then
-        mkdir -p "${VDE_ROOT}/${dir}/archive"
-        # Find files older than 24h but not in archive directory
-        find "${VDE_ROOT}/${dir}" -maxdepth 1 -type f -mmin +${archive_minutes} | while read -r file; do
-            filename=$(basename "$file")
-            # Protect current baseline doc, contract, and active hydration rituals
-            if [[ "${dir}" == "docs/releases" && "$filename" == "${CURRENT_BASELINE}.md" ]]; then continue; fi
-            if [[ "$filename" == "system-spine-contract.md" || "$filename" == *-init.zsh || "$filename" == "2026-04-13-pruning-ritual-plan.md" || "$filename" == "2026-04-13-ingot-stash-plan.md" ]]; then continue; fi
-            
-            echo "Archiving to Ingot Stash: $filename"
-            safe_mv "$file" "${VDE_ROOT}/${dir}/archive"
-        done
+    [[ -d "${VDE_ROOT}/${dir}" ]] || continue
+    while IFS= read -r file; do
+        [[ -n "$file" ]] || continue
+        typeset filename=${file:t}
+        is_protected "$dir" "$filename" && continue
+        MOVE_FILES+=("$file")
+    done < <(find "${VDE_ROOT}/${dir}" -maxdepth 1 -type f -mmin +1440 -mmin -${minutes} -print)
+done
+
+print -r -- "VDE prune plan (timeframe: ${TIMEFRAME}, ${minutes}m)"
+print -r -- "DELETE (${#DELETE_FILES[@]}):"
+for file in "${DELETE_FILES[@]}"; do print -r -- "  ${file#$VDE_ROOT/}"; done
+print -r -- "MOVE (${#MOVE_FILES[@]}):"
+for file in "${MOVE_FILES[@]}"; do print -r -- "  ${file#$VDE_ROOT/} -> ${file:h}/archive/${file:t}"; done
+
+if (( ! APPLY && ! DRY_RUN )) || (( DRY_RUN)); then
+    print -r -- "dry run: no files changed. Use --apply --yes to apply this exact plan."
+    exit 0
+fi
+
+if (( ! YES)); then
+    if [[ ! -t 0 ]]; then
+        print -u2 -r -- "Refusing interactive confirmation without a terminal; use --yes"
+        exit 2
+    fi
+    local reply
+    read "reply?Apply this plan? [y/N] "
+    [[ "$reply" == [yY]* ]] || { print -r -- "Cancelled: no files changed."; exit 0; }
+fi
+
+typeset deleted=0 moved=0 failures=0
+for file in "${DELETE_FILES[@]}"; do
+    if is_tracked "$file"; then
+        if git -C "${VDE_ROOT}" rm -q "${file#$VDE_ROOT/}"; then
+            (( deleted++ ))
+            print -r -- "DELETED ${file#$VDE_ROOT/}"
+        else
+            (( failures++ ))
+            print -u2 -r -- "FAILED DELETE ${file#$VDE_ROOT/}"
+        fi
+    else
+        if rm -rf -- "$file"; then
+            (( deleted++ ))
+            print -r -- "DELETED ${file#$VDE_ROOT/}"
+        else
+            (( failures++ ))
+            print -u2 -r -- "FAILED DELETE ${file#$VDE_ROOT/}"
+        fi
     fi
 done
 
-echo "The Ingot Stash Ritual is complete. The Forge is lean."
+for file in "${MOVE_FILES[@]}"; do
+    typeset dest="${file:h}/archive"
+    typeset destination="${dest}/${file:t}"
+    if [[ -e "$destination" ]]; then
+        (( failures++))
+        print -u2 -r -- "FAILED MOVE ${file#$VDE_ROOT/}: archive collision at ${destination#$VDE_ROOT/}"
+        continue
+    fi
+    mkdir -p -- "$dest" || { (( failures++)); print -u2 -r -- "FAILED MOVE ${file#$VDE_ROOT/}: cannot create archive"; continue; }
+    if is_tracked "$file"; then
+        if git -C "${VDE_ROOT}" mv "${file#$VDE_ROOT/}" "$destination"; then
+            (( moved++ ))
+            print -r -- "MOVED ${file#$VDE_ROOT/} -> ${dest#$VDE_ROOT/}/${file:t}"
+        else
+            (( failures++ ))
+            print -u2 -r -- "FAILED MOVE ${file#$VDE_ROOT/}"
+        fi
+    else
+        if mv -- "$file" "$dest/"; then
+            (( moved++ ))
+            print -r -- "MOVED ${file#$VDE_ROOT/} -> ${dest#$VDE_ROOT/}/${file:t}"
+        else
+            (( failures++ ))
+            print -u2 -r -- "FAILED MOVE ${file#$VDE_ROOT/}"
+        fi
+    fi
+done
+
+print -r -- "Applied: deleted=${deleted} moved=${moved} failed=${failures}"
+(( failures == 0 ))

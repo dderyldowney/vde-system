@@ -14,7 +14,7 @@ Overview of all scripts included with VDE.
 The `vde` command is the canonical entry point for the **Sovereign Evolution**. It wraps all infrastructure logic in the `vde_run` safety layer, ensuring Zsh purity and system integrity.
 
 | Command | Purpose | Usage |
-|---------|---------|-------|
+| --------- | --------- | ------- |
 | `vde init` | **The Initialization Ritual**: Hydrate infrastructure, SSH keys, networks, and build vde-base. | `vde init` |
 | `vde create <vm>` | Create a new VM Spoke from the Beskar Registry. | `vde create python` |
 | `vde path-of-the-foundling` | **The Path of the Foundling**: Interactive onboarding ritual for new students. | `vde path-of-the-foundling` |
@@ -44,7 +44,7 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution**. 
 | `vde ssh-sync` | Sync VDE SSH public keys to the build context. | `vde ssh-sync` |
 | `vde networks` | Audit and manage the `vde-net` Docker bridges. | `vde networks` |
 | `vde validate` | Verify the integrity of the Beskar Registry (JSON schemas). | `vde validate` |
-| `vde prune` | **The Pruning Ritual**: Archive old plans/scripts and purge aged logs. | `vde prune` |
+| `vde prune` | **Repository Housekeeping**: Plan repository cleanup from a dry run (the default) and require `--apply --yes` for explicit deletion. Use `vde clean` for Docker disk cleanup. | `vde prune [--apply --yes]` |
 | `vde rebuild-cache` | Force a re-smelt of the internal VM cache. | `vde rebuild-cache` |
 | `vde sync-version` | Synchronize versioning across the Hub and Spokes. | `vde sync-version` |
 | `vde port <alias>` | Retrieve the assigned SSH port for a Spoke. | `vde port python` |
@@ -66,12 +66,12 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution**. 
 These scripts provide specialized maintenance, automation, and development support.
 
 | Script | Purpose |
-|--------|---------|
+| -------- | --------- |
 | `vde-bootstrap` | Initial Hub installation and dependency check. |
 | `vde-set-projects-dir` | **@armor Engine Core** (zsh): Re-point the Projects base — resolve/create/validate the new base, move per-alias subfolders (skipping collisions), update `.env` `VDE_PROJECTS_DIR`, and regenerate compose configs via `generate-all-configs`. |
 | `generate-all-configs` | Smelt all Spoke compose and SSH configurations. Invoked by `vde-set-projects-dir` after the base changes. |
 | `cleanup-ports` | Purge stale or orphaned entries from the port registry. |
-| `vde-prune.zsh` | Archive old plans/scripts and purge aged logs. |
+| `vde-prune.zsh` | Repository housekeeping maintenance: dry-run/default plan for cleanup targets; requires explicit `--apply --yes` to delete. Docker disk cleanup is handled by `vde clean`. |
 | `validate-schemas.zsh` | Verify Beskar Registry integrity against JSON schemas. |
 | `vde-tactical-sweep.zsh` | Perform a project-wide cleanup of containers and locks. |
 | `vde-poll` | Continuous health monitoring of the Spoke ecosystem. |

@@ -10,6 +10,7 @@ Complete reference for all VDE commands in the **Sovereign Baseline (1.5.6)**.
 ## General Management
 
 ### List Available VMs
+
 ```zsh
 # List all predefined and custom VMs
 vde list
@@ -23,6 +24,7 @@ vde list python
 ```
 
 ### Process Status
+
 ```zsh
 # List all running VDE-managed containers
 vde list
@@ -32,6 +34,7 @@ vde list python postgres
 ```
 
 ### Detailed Information
+
 ```zsh
 # Inspect container metadata and labels
 vde inspect python
@@ -41,6 +44,7 @@ vde info rust
 ```
 
 ### The Archivist’s Vision
+
 ```zsh
 # View real-time Markdown-based status grid
 vde vision
@@ -51,6 +55,7 @@ vde vision
 ## Lifecycle Operations
 
 ### Infrastructure Initialization
+
 ```zsh
 # Hydrate infrastructure, generate vde_student keys, and build base image
 vde init
@@ -62,17 +67,21 @@ vde init --force
 vde init --projects-dir "$HOME/Projects"
 vde init --projects-dir=/srv/students/projects
 ```
+
 **Projects base precedence** (highest wins): `--projects-dir <path>` flag → exported
 `VDE_PROJECTS_DIR` → existing `VDE_PROJECTS_DIR` in `.env` → interactive prompt →
 default `${VDE_ROOT_DIR}/projects`.
 
 ### Re-point the Projects Base
+
 ```zsh
 # Move the Projects base to a new location (prompts if path omitted)
 vde set-projects-dir "$HOME/Projects"
 vde set-projects-dir
 ```
+
 **Details**:
+
 - Resolves, creates, and validates the new base (expands `~` and env vars,
   absolutizes the path, and requires it to be writable).
 - **Moves** each existing per-alias subfolder from the old base to the new one.
@@ -83,15 +92,19 @@ vde set-projects-dir
 - Reports exactly what was moved and what was skipped.
 
 ### Spoke Creation
+
 ```zsh
 # Create configuration and directories for a VM
 vde create python
 ```
+
 **Details**:
+
 - **Atomic Port Allocation**: Automatically reserves a unique SSH port and records it in the Beskar Registry.
 - **Workspace Initialization**: Syncs `$HOME/workspace/` to the host's `projects/` directory.
 
 ### Ignition and Quenching
+
 ```zsh
 # Start VMs (ignite)
 vde start python
@@ -106,6 +119,7 @@ vde restart rust
 ```
 
 ### Maintenance and Re-forging
+
 ```zsh
 # Rebuild a Spoke's Docker image (refreshes image)
 vde rebuild python
@@ -118,6 +132,7 @@ vde rebuild --keep-cache python
 ```
 
 ### Freeing Disk Space
+
 ```zsh
 # How much Docker build cache is there? (changes nothing)
 vde clean --dry-run
@@ -129,6 +144,7 @@ vde clean
 vde cleanup
 vde cache clean
 ```
+
 `vde rebuild` and `vde create` already clean the build cache once every build in the
 command has succeeded, so `vde clean` is for when that did not happen: you passed
 `--keep-cache`, or a build was interrupted. It prints which Docker context it is
@@ -139,6 +155,7 @@ because BuildKit cannot scope the clean to VDE. `--dry-run` reports the total as
 upper bound, since cache in use by a running build is skipped.
 
 ### Dissolution
+
 ```zsh
 # Remove a VM instance and its locks
 vde remove rust
@@ -150,24 +167,28 @@ vde rm rust
 ## Execution & Connectivity
 
 ### Sovereign Handshake (SSH)
+
 ```zsh
 # Enter a Spoke's login shell as devuser
 vde enter python
 ```
 
 ### Command Execution
+
 ```zsh
 # Execute a single command inside a Spoke
 vde exec go "go version"
 ```
 
 ### Port Identification
+
 ```zsh
 # Retrieve the assigned SSH port for a Spoke
 vde port python
 ```
 
 ### Logs
+
 ```zsh
 # Tail the logs of a specific Spoke
 vde logs redis
@@ -178,6 +199,7 @@ vde logs redis
 ## Orchestration & Clusters
 
 ### Tech Stack Clusters
+
 ```zsh
 # Orchestrate multi-VM tech stacks
 vde cluster list
@@ -186,6 +208,7 @@ vde cluster stop mean-stack
 ```
 
 ### DNS Handshake
+
 ```zsh
 # Verify cross-Spoke DNS resolution within vde-net
 vde dns-check python postgres
@@ -217,6 +240,7 @@ and 1 on any unknown alias or failed docker operation. Full table:
 ## Dynamic Expansion
 
 ### Register New Spoke Types
+
 ```zsh
 # Add a new Spoke type to the Beskar Registry
 vde add --pkgs "htop,tree" my-custom-vm
@@ -226,12 +250,14 @@ vde add --type service --port 5000 my-api
 ```
 
 ### Permanent Removal
+
 ```zsh
 # Remove a Spoke type from the Registry
 vde uninstall my-custom-vm --skip-confirm
 ```
 
 ### Registry Integrity
+
 ```zsh
 # Verify Beskar Registry against JSON schemas
 vde validate
@@ -245,29 +271,46 @@ vde rebuild-cache
 ## Onboarding & Maintenance
 
 ### Path of the Foundling
+
 ```zsh
 # Interactive induction ritual for new students
 bin/vde path-of-the-foundling
 ```
 
 ### System Health
+
 ```zsh
 # Run System Spine health checks (Spine Check)
 vde health
 ```
 
 ### The Pruning Ritual
+
 ```zsh
-# Archive old plans/scripts and purge aged logs
+# Print a plan; make no changes by default
 vde prune
+vde prune --dry-run
+
+# Apply the plan only after confirmation, or skip the prompt
+vde prune --apply
+vde prune --apply --yes
 ```
 
+**Details**:
+
+- `vde prune` and `vde prune --dry-run` print a plan and change nothing.
+- `vde prune --apply` archives old plans and scripts and deletes old repository housekeeping files; it requires confirmation unless `--yes` is supplied.
+- Use `vde clean` to free Docker build-cache disk space.
+
 ### The Great Quench
+
 ```zsh
 # Safe removal of VDE's own state (preserves projects + data)
 vde nuke
 ```
+
 **Details**:
+
 - **Preserves** both the Projects base (`projects/` or `VDE_PROJECTS_DIR`) and the
   database `data/` directory — in-tree or external, they are never deleted.
 - Offers to move `projects/` and `data/` to a safe location before proceeding.
