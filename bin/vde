@@ -27,6 +27,7 @@ source "${VDE_ROOT_DIR}/lib/vde-cluster-utils"
 # block the very command that restores it.
 [[ "${1}" == "heal" ]] && export VDE_SKIP_AUTO_LOAD=1
 source "${VDE_ROOT_DIR}/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-build-cache"
 source "${VDE_ROOT_DIR}/lib/vde-actions"
 unset VDE_SKIP_AUTO_LOAD
 
@@ -107,6 +108,13 @@ if [[ "${ACTION}" == "rebuild" || "${ACTION}" == "create" ]]; then
     set -- "${VDE_REBUILD_REST[@]}"
 fi
 
+# clean/cleanup/cache: peel `vde clean`'s own flags (--dry-run) so they are never
+# resolved as targets (Signet #617).
+if [[ "${ACTION}" == "clean" || "${ACTION}" == "cleanup" || "${ACTION}" == "cache" ]]; then
+    vde_split_clean_args "$@" || exit ${VDE_ERR_INVALID_INPUT}
+    set -- "${VDE_CLEAN_REST[@]}"
+fi
+
 # 1. Parse flags and initial targets
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -177,6 +185,12 @@ case ${ACTION} in
     rebuild|create)
         # Build flags are forwarded as flags, never resolved as targets (#556).
         vde_run "${ACTION}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${VDE_REBUILD_FLAGS[@]}" "${targets[@]}"
+        ;;
+    clean|cleanup)
+        vde_action_clean
+        ;;
+    cache)
+        vde_action_cache
         ;;
     start)
         vde_action_start
@@ -306,6 +320,7 @@ case ${ACTION} in
         ;;
     *)
         echo "Unknown command '${ACTION}'. Run 'vde help' for usage." >&2
+        vde_suggest_command "${ACTION}" || true
         exit ${VDE_ERR_INVALID_INPUT}
         ;;
 esac

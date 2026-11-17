@@ -6,6 +6,7 @@
 #
 # Options:
 #   --no-cache   Rebuild without using cache
+#   --keep-cache Keep Docker's build cache afterwards (cleaned by default; see vde clean)
 #   --vm <name>  Rebuild only specific VM (or "base" for base image)
 #   -h, --help   Show this help
 #
@@ -25,6 +26,7 @@ VDE_ROOT_DIR="${0:h:h}"
 export VDE_ROOT_DIR
 
 source "${VDE_ROOT_DIR}/lib/vm-common"
+source "${VDE_ROOT_DIR}/lib/vde-build-cache"
 export VDE_IN_REBUILD=1
 
 # Function trace support (activates only when VDE_TRACE_MODE is set)
@@ -32,6 +34,7 @@ export VDE_IN_REBUILD=1
 
 # Configuration
 NOCACHE=false
+KEEP_CACHE=false
 REGENERATE_KEYS=false
 PULL=false
 SPECIFIC_VM=""
@@ -71,6 +74,8 @@ Rebuild all VDE Docker images.
 
 Options:
   --no-cache        Rebuild without using cache
+  --keep-cache      Keep Docker's build cache afterwards (it is cleaned by default
+                    once every build succeeds; free it later with: vde clean)
   --vm base         Rebuild only vde-base image
   --regenerate-keys Force regeneration of VDE SSH keys before build
   -h, --help        Show this help
@@ -100,6 +105,10 @@ while [[ ${#} -gt 0 ]] ; do
             ;;
         --pull)
             PULL=true
+            shift
+            ;;
+        --keep-cache)
+            KEEP_CACHE=true
             shift
             ;;
         --regenerate-keys)
@@ -156,6 +165,9 @@ build_base_image() {
         return 0
     else
         echo "✗ Failed to build vde-base:latest"
+        # A build that dies out of space looks like a VDE bug: if the disk Docker
+        # uses is nearly full, say so and name the fix (`vde clean`) (Signet #617).
+        vde_build_low_disk_hint
         if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
             trap - INT TERM HUP
             release_lock "${base_lock}"
@@ -234,6 +246,8 @@ build_vm_image() {
         return 0
     else
         echo "✗ Failed to rebuild ${canonical_name}"
+        # See build_base_image: name the fix when the disk is nearly full (Signet #617).
+        vde_build_low_disk_hint
         if [[ "${VDE_NO_LOCK:-0}" != "1" ]]; then
             trap - INT TERM HUP
             release_lock "${vm_lock}"
@@ -286,6 +300,12 @@ fi
 for spoke in "${spokes[@]}"; do
     build_vm_image "${spoke}"
 done
+
+# Every build above succeeded (a failure exits here under `set -e`, which keeps the
+# cache for the retry). Clean Docker's build cache now so it is not left behind to
+# fill the disk; --keep-cache opts out. A prune failure only warns (Signet #617).
+echo ""
+vde_maybe_prune_build_cache "${KEEP_CACHE}"
 
 echo ""
 echo "Done!"

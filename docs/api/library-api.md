@@ -305,6 +305,21 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 
 ---
 
+### vde-build-cache (@armor) (Build-Cache Cleanup)
+**Purpose**: The one implementation of cleaning Docker's BuildKit build cache, shared by the automatic prune after `bin/vde-rebuild` and by `vde clean`. Depends only on the `docker` CLI (Signet #617).  
+**Key Functions**:
+- `vde_build_cache_size()` - print the build cache size (e.g. `4.855GB`); read-only
+- `vde_prune_build_cache [--dry-run]` - remove the build cache (`docker builder prune --all -f`), or with `--dry-run` only report the size (an upper bound: cache a running build uses is skipped). Names the Docker context and `DOCKER_HOST` first. Any other argument is refused with status 2 and nothing is removed, so a typo such as `--dry-rnu` can never run the real prune. Returns 0 (done, nothing to do, or dry run), 1 (prune failed, the daemon is not running, or a dry run could not read the size), 2 (bad argument), 3 (Docker not installed)
+- `vde_maybe_prune_build_cache KEEP` - the automatic prune. `KEEP=true` (`--keep-cache`) keeps the cache and says how to free it later. A prune failure only warns: it always returns 0, so cleanup can never fail a successful build
+- `vde_build_low_disk_hint()` - after a FAILED build: if the filesystem holding Docker's data (`DockerRootDir`) is at or over `VDE_DISK_HINT_THRESHOLD` percent (default 90), print the disk-full error that names `vde clean`. Silent when there is room, when usage cannot be read, when the daemon is remote (`DOCKER_HOST` or the active context is not a local socket), and when `DockerRootDir` is not visible on this host (Docker Desktop's VM): it never measures a different disk. Always returns 0
+- `vde_split_clean_args "$@"` - separate `--dry-run` / `-n` from other arguments; `-q`/`--quiet` is handed on to the router (sets `VDE_CLEAN_DRY_RUN`, `VDE_CLEAN_REST`; returns 2 on an unknown option)
+
+`docker system df` (which walks every image, container and volume) is run only for `--dry-run`; the automatic prune does not need the size. `-q`/`--quiet` silences the informational lines, never errors.
+
+**Scope**: build cache only. The only destructive call is `docker builder prune --all -f`; it never removes images, containers or volumes. BuildKit skips cache records a running build is using (measured: a prune during a running build freed 0 B and the build completed).
+
+---
+
 ### vde-agent-sock (@armor) (Agent Socket Guard)
 **Purpose**: One shared check that the VDE agent socket path is free for an agent to bind. Dependency-free, so both `lib/vde-ssh` and the standalone `bin/vde-spine-check.zsh` source it.  
 **Key Functions**:
@@ -433,6 +448,9 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 - `vde_action_exec()` - `vde exec <vm> <command>`
 - `vde_action_enter()` - `vde enter|ssh <vm> [command]`
 - `vde_action_port()` - `vde port <vm>`
+- `vde_action_clean()` - `vde clean|cleanup [--dry-run]`: free Docker's build cache (Signet #617)
+- `vde_action_cache()` - `vde cache clean|cleanup|clear|prune [--dry-run]`: the same, for people who call it "the cache"
+- `vde_suggest_command()` - after an unknown command, a "Did you mean" hint to stderr for the guesses a student is likely to make (`disk`, `df`, `space`, `free`, `gc`, `clear`, `build`, ...); silent when it has no idea
 - `vde_action_help()` - usage text
 
 **Contract**: called only from `bin/vde` after argument handling; takes no positional parameters; reads the router globals `ACTION`, `ACTION_ARGS`, `input_targets`, `targets`, `force`, `_vde_help_status`; ends with an explicit `exit`. `stop`, `restart` and `remove` exit 0 when every target was handled or already stopped/absent, and 1 on any unknown alias or failed docker operation (see [router-handlers](../development/router-handlers.md), section 3). Guarded by `_VDE_ACTIONS_LOADED`. `vde_trace_install` does not wrap `vde_action_*`, so they add no frame to `function-trace` output.
@@ -687,6 +705,7 @@ vde-system/
 ├── lib/
 │   ├── vde-agent-sock         # Agent Socket Guard
 │   ├── vde-audit              # Resource Auditing
+│   ├── vde-build-cache        # Build-Cache Cleanup
 │   ├── vde-cluster-utils      # Cluster Utilities
 │   ├── vde-commands           # Command Wrappers
 │   ├── vde-constants          # Engine Constants
@@ -756,6 +775,9 @@ vde-ssh
 
 vde-agent-sock
   └─ (none: dependency-free, shared with bin/vde-spine-check.zsh)
+
+vde-build-cache
+  └─ (none: needs only the docker CLI; used by bin/vde and bin/vde-rebuild)
 
 vde-health
   └─ vm-common

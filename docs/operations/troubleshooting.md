@@ -99,6 +99,21 @@ If the directory has contents, or the path is a file or symlink, VDE leaves it a
 
 ---
 
+## "No Space Left on Device" During a Build
+
+**Problem:** a `vde rebuild`, `vde create` or `vde start` fails, or `df -h /` shows the disk nearly full. The usual cause is Docker's *build cache*: a `--no-cache` rebuild of a few Spokes can leave tens of gigabytes behind.
+
+```zsh
+vde clean --dry-run    # shows how much build cache there is; changes nothing
+vde clean              # frees it
+```
+
+`vde clean` removes only the build cache. It never removes images, containers or volumes, so your Spokes are untouched; the only cost is that the next build is slower once. VDE already cleans the cache after every successful rebuild, so you normally meet this only after an interrupted build, a failed build, or a rebuild with `--keep-cache`. When a build fails with the disk nearly full, VDE says so and names this command.
+
+If space is still short afterwards, look at what else Docker holds (`docker system df`) and at your own files. Do **not** run `vde prune` for this: it is the Forge's housekeeping for old logs and plans, not a disk-space tool. On Docker Desktop or WSL2, freed space stays inside Docker's disk file until that file is compacted, so the host's free space may not rise at once.
+
+---
+
 ## Spoke Won't Start
 
 **Problem:** A Spoke fails to ignite or crashes immediately.
