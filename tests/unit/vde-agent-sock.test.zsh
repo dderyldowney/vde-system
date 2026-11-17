@@ -106,6 +106,38 @@ out=$(vde_agent_sock_blocker "${SCRATCH}/link.sock" 2>&1); rc=$?
 [[ $rc -ne 0 && -L "${SCRATCH}/link.sock" ]] && test_pass "refused, link kept" || test_fail "symlink" "rc=${rc} out=${out}"
 
 #-------------------------------------------------------------------------------
+test_start "blocker: a symlink to a LIVE socket is refused (it could be someone else's agent) and is not deleted"
+make_socket "${SCRATCH}/real-agent.sock"
+ln -s "${SCRATCH}/real-agent.sock" "${SCRATCH}/linked.sock"
+out=$(vde_agent_sock_blocker "${SCRATCH}/linked.sock" 2>&1); rc=$?
+if [[ $rc -ne 0 && -L "${SCRATCH}/linked.sock" && -S "${SCRATCH}/real-agent.sock" && "${out}" == *"symbolic link"* ]]; then
+    test_pass "refused, link and target kept, message says symbolic link"
+else
+    test_fail "symlink to a live socket" "rc=${rc} out=${out}"
+fi
+
+#-------------------------------------------------------------------------------
+test_start "blocker: a REAL root-owned empty directory (created by Docker, as in the bug) is removed without sudo"
+# This is the exact artifact of Signet #616: Docker makes the directory as root inside
+# a folder the user owns. Needs a local alpine image; skipped, never pulled, otherwise.
+if ! command -v docker >/dev/null 2>&1 || ! docker image inspect alpine >/dev/null 2>&1; then
+    test_pass "skipped: docker or a local alpine image is not available"
+else
+    mkdir -p "${SCRATCH}/rootparent"
+    if docker run --rm -v "${SCRATCH}/rootparent:/m" alpine mkdir /m/agent.sock >/dev/null 2>&1 \
+        && [[ "$(stat -c %U "${SCRATCH}/rootparent/agent.sock" 2>/dev/null)" == "root" ]]; then
+        out=$(vde_agent_sock_blocker "${SCRATCH}/rootparent/agent.sock" 2>&1); rc=$?
+        if [[ $rc -eq 0 && ! -e "${SCRATCH}/rootparent/agent.sock" ]]; then
+            test_pass "root-owned directory removed by an unprivileged user"
+        else
+            test_fail "root-owned directory" "rc=${rc} out=${out}"
+        fi
+    else
+        test_pass "skipped: could not create a root-owned directory through docker"
+    fi
+fi
+
+#-------------------------------------------------------------------------------
 test_start "blocker: an empty directory that cannot be removed gets the exact sudo command, path quoted"
 if (( EUID == 0 )); then
     test_pass "skipped: running as root"
@@ -145,10 +177,12 @@ test_start "blocker: removal does NOT depend on who owns the directory, only on 
 # Docker's directory is root-owned but sits in a directory the user owns; rmdir
 # needs write access to the PARENT only. An ownership test would block exactly
 # that case, so the helper must not contain one.
-if grep -vE '^[[:space:]]*#' "${PROJECT_ROOT}/lib/vde-agent-sock" | grep -qE '\[\[ +-O '; then
-    test_fail "ownership gate present" "lib/vde-agent-sock tests [[ -O ]] before rmdir"
+typeset gate
+gate=$(grep -vE '^[[:space:]]*#' "${PROJECT_ROOT}/lib/vde-agent-sock" | grep -E '(\[\[ +-[OG] |\bstat\b|\bzstat\b|\$\{?E?UID\}?|\bid -u\b|\bwhoami\b)')
+if [[ -n "${gate}" ]]; then
+    test_fail "ownership gate present" "lib/vde-agent-sock inspects ownership or the caller: ${gate}"
 else
-    test_pass "no ownership gate before rmdir"
+    test_pass "no ownership/identity gate anywhere in the helper (the real root-owned case is exercised above when docker is available)"
 fi
 
 #-------------------------------------------------------------------------------
@@ -226,12 +260,32 @@ fi
 # Wiring pins. Match EXECUTABLE lines only: a comment must not satisfy them.
 exec_lines() { grep -nvE '^[[:space:]]*(#|$)' "$1" }
 
+# Line number of the first EXECUTABLE line of FILE matching PATTERN (zsh expansion, no cut).
+first_line_no() {
+    local hit
+    hit=$(exec_lines "$1" | grep -m1 -- "$2") || return 1
+    print -r -- "${hit%%:*}"
+}
+
+# Executable lines of the function NAME in FILE, up to its closing brace in column 0.
+fn_body() {
+    local line in_fn=0
+    for line in "${(@f)$(<"$1")}"; do
+        if (( ! in_fn )); then
+            [[ "${line}" == "$2() {"* ]] && in_fn=1
+            continue
+        fi
+        [[ "${line}" == "}" ]] && break
+        [[ "${line}" =~ '^[[:space:]]*(#|$)' ]] || print -r -- "${line}"
+    done
+}
+
 test_start "wiring: vde start runs the preflight before the spinner opens and before compose up"
 typeset actions="${PROJECT_ROOT}/lib/vde-actions"
 typeset pre_line spin_line up_line
-pre_line=$(exec_lines "${actions}" | grep -m1 'vde_preflight_agent_socket' | cut -d: -f1)
-spin_line=$(exec_lines "${actions}" | grep -m1 'vde_progress_spinner_start "Igniting' | cut -d: -f1)
-up_line=$(exec_lines "${actions}" | grep -m1 'compose_up_cmd+=(up -d)' | cut -d: -f1)
+pre_line=$(first_line_no "${actions}" 'vde_preflight_agent_socket')
+spin_line=$(first_line_no "${actions}" 'vde_progress_spinner_start "Igniting')
+up_line=$(first_line_no "${actions}" 'compose_up_cmd+=(up -d)')
 if [[ -n "${pre_line}" && -n "${spin_line}" && -n "${up_line}" && ${pre_line} -lt ${spin_line} && ${spin_line} -lt ${up_line} ]]; then
     test_pass "preflight (line ${pre_line}) < spinner (line ${spin_line}) < 'up -d' (line ${up_line})"
 else
@@ -249,17 +303,28 @@ else
 fi
 
 test_start "wiring: the pre-commit hook shows the spine check's output when it fails"
-if exec_lines "${PROJECT_ROOT}/githooks/pre-commit" | grep -q 'spine_out'; then
-    test_pass "failure output is surfaced"
+# Capturing the output is not enough: it must also be PRINTED, or it is still discarded.
+if exec_lines "${PROJECT_ROOT}/githooks/pre-commit" | grep -q 'spine_out=\$(' \
+    && exec_lines "${PROJECT_ROOT}/githooks/pre-commit" | grep -qE 'print .*\$\{spine_out\}'; then
+    test_pass "failure output is captured and printed"
 else
-    test_fail "pre-commit hook" "spine output is still discarded"
+    test_fail "pre-commit hook" "spine output is not both captured and printed"
 fi
 
-test_start "wiring: ensure_ssh_agent checks the socket path before starting an agent"
-if exec_lines "${PROJECT_ROOT}/lib/vde-ssh" | grep -q 'vde_agent_sock_blocker'; then
-    test_pass "lib/vde-ssh calls vde_agent_sock_blocker"
+test_start "wiring: ensure_ssh_agent ITSELF checks the socket path before starting an agent"
+# Inside the function body, not merely somewhere in the library: the preflight also
+# calls the blocker, so a whole-file match would survive its removal from ensure_ssh_agent.
+if fn_body "${PROJECT_ROOT}/lib/vde-ssh" ensure_ssh_agent | grep -q 'vde_agent_sock_blocker'; then
+    test_pass "ensure_ssh_agent calls vde_agent_sock_blocker"
 else
-    test_fail "ensure_ssh_agent wiring" "no executable call to vde_agent_sock_blocker in lib/vde-ssh"
+    test_fail "ensure_ssh_agent wiring" "no executable call to vde_agent_sock_blocker inside ensure_ssh_agent"
+fi
+
+test_start "wiring: the preflight itself calls the blocker first"
+if fn_body "${PROJECT_ROOT}/lib/vde-ssh" vde_preflight_agent_socket | grep -q 'vde_agent_sock_blocker'; then
+    test_pass "vde_preflight_agent_socket calls vde_agent_sock_blocker"
+else
+    test_fail "preflight wiring" "no executable call to vde_agent_sock_blocker inside vde_preflight_agent_socket"
 fi
 
 test_start "wiring: the spine check shares the same helper"

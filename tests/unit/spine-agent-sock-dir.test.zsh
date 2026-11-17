@@ -77,8 +77,10 @@ mkdir -p "${h3}/.ssh/vde/agent.sock"
 run_spine "${h3}"
 # The identity step fails later (no vde_student key in the scratch HOME); what
 # matters is that the directory is gone and a real socket took its place.
-if [[ -S "${h3}/.ssh/vde/agent.sock" ]]; then
-    test_pass "directory replaced by a live agent socket"
+if [[ -S "${h3}/.ssh/vde/agent.sock" \
+    && "${spine_out}" == *"Removed the empty directory at ${h3}/.ssh/vde/agent.sock"* \
+    && "${spine_out}" != *"characters; unix socket paths"* ]]; then
+    test_pass "directory replaced by a live agent socket, and the check said what it did"
 else
     test_fail "empty directory" "rc=${spine_rc} socket=$([[ -e ${h3}/.ssh/vde/agent.sock ]] && echo present-not-socket || echo absent) out=${spine_out}"
 fi
