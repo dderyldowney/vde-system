@@ -74,22 +74,6 @@ vde_action_start() {
             continue
         }
 
-        # PREFLIGHT (Signet #616): Docker creates a missing bind-mount source as a
-        # root-owned DIRECTORY, and for the agent socket that blocks the VDE agent
-        # for good. Make sure the agent is listening, or refuse, before compose
-        # runs. Done BEFORE the spinner opens so its messages print on their own
-        # lines. Only when the Spoke will mount VDE's own agent socket: a caller
-        # supplied VDE_HOST_SSH_AUTH_SOCK (e.g. a forwarded Docker Desktop socket)
-        # is theirs to manage.
-        if [[ -z "${VDE_HOST_SSH_AUTH_SOCK:-}" || "${VDE_HOST_SSH_AUTH_SOCK}" == "${VDE_SSH_AGENT_SOCK}" ]]; then
-            if ! vde_preflight_agent_socket; then
-                vde_log_error "${CANONICAL_NAME} was not started: the VDE SSH agent is not ready." "ssh"
-                release_lock "${vm_lock}"
-                GLOBAL_RC=1
-                continue
-            fi
-        fi
-
         vde_progress_spinner_start "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})"
         
         local compose_file=$(get_vm_compose_file "${CANONICAL_NAME}")
@@ -109,6 +93,27 @@ vde_action_start() {
                 continue
             fi
             vde_run "${CANONICAL_NAME}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${BASE_NAME}" || continue
+        fi
+
+        # PREFLIGHT (Signet #616): Docker creates a missing bind-mount source as a
+        # root-owned DIRECTORY, and for the agent socket that blocks the VDE agent
+        # for good. Make sure the agent is listening, or refuse, before compose
+        # runs. Placed AFTER the image check above (which can trigger a rebuild that
+        # takes minutes) so the gap between "agent is up" and "compose mounts it" is
+        # only the discovery below. The output is captured and printed after the
+        # spinner stops, so it never runs on into the spinner's line. Only when the
+        # Spoke will mount VDE's own agent socket: a caller supplied
+        # VDE_HOST_SSH_AUTH_SOCK (e.g. a forwarded Docker Desktop socket) is theirs.
+        if [[ -z "${VDE_HOST_SSH_AUTH_SOCK:-}" || "${VDE_HOST_SSH_AUTH_SOCK}" == "${VDE_SSH_AGENT_SOCK}" ]]; then
+            local preflight_out preflight_rc=0
+            preflight_out=$(vde_preflight_agent_socket 2>&1) || preflight_rc=$?
+            if (( preflight_rc != 0 )); then
+                vde_progress_spinner_stop "" "${CANONICAL_NAME} was not started: the VDE SSH agent is not ready" 1
+                [[ -n "${preflight_out}" ]] && print -r -- "${preflight_out}" >&2
+                release_lock "${vm_lock}"
+                GLOBAL_RC=1
+                continue
+            fi
         fi
 
         # DISCOVERY: Resolve the authoritative host SSH agent socket (Phase 31)

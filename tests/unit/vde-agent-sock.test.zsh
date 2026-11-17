@@ -280,22 +280,39 @@ fn_body() {
     done
 }
 
-test_start "wiring: vde start runs the preflight before the spinner opens and before compose up"
+test_start "wiring: vde start orders image check/rebuild < preflight < socket discovery < compose up"
+# The preflight must come AFTER the image check, which can trigger a rebuild lasting
+# minutes (a long gap between "agent is up" and "compose mounts it" is where a stopped
+# agent would let Docker create the directory), and BEFORE discovery and compose up.
 typeset actions="${PROJECT_ROOT}/lib/vde-actions"
-typeset pre_line spin_line up_line
+typeset rebuild_line pre_line disc_line up_line
+rebuild_line=$(first_line_no "${actions}" 'bin/vde-rebuild')
 pre_line=$(first_line_no "${actions}" 'vde_preflight_agent_socket')
-spin_line=$(first_line_no "${actions}" 'vde_progress_spinner_start "Igniting')
+disc_line=$(first_line_no "${actions}" 'vde_get_host_ssh_sock)')
 up_line=$(first_line_no "${actions}" 'compose_up_cmd+=(up -d)')
-if [[ -n "${pre_line}" && -n "${spin_line}" && -n "${up_line}" && ${pre_line} -lt ${spin_line} && ${spin_line} -lt ${up_line} ]]; then
-    test_pass "preflight (line ${pre_line}) < spinner (line ${spin_line}) < 'up -d' (line ${up_line})"
+if [[ -n "${rebuild_line}" && -n "${pre_line}" && -n "${disc_line}" && -n "${up_line}" \
+    && ${rebuild_line} -lt ${pre_line} && ${pre_line} -lt ${disc_line} && ${disc_line} -lt ${up_line} ]]; then
+    test_pass "rebuild (${rebuild_line}) < preflight (${pre_line}) < discovery (${disc_line}) < 'up -d' (${up_line})"
 else
-    test_fail "start wiring" "preflight='${pre_line}' spinner='${spin_line}' up='${up_line}'"
+    test_fail "start wiring" "rebuild='${rebuild_line}' preflight='${pre_line}' discovery='${disc_line}' up='${up_line}'"
+fi
+
+test_start "wiring: the preflight's output is captured and printed only after the spinner stops"
+typeset pf_block
+pf_block=$(exec_lines "${actions}" | grep -A8 'preflight_out=\$(vde_preflight_agent_socket')
+typeset before_stop="${pf_block%%vde_progress_spinner_stop*}"
+typeset before_print="${pf_block%%print -r -- *preflight_out*}"
+if [[ "${pf_block}" == *"vde_progress_spinner_stop"* && "${pf_block}" == *"print -r -- "*"preflight_out"* ]] \
+    && (( ${#before_stop} < ${#before_print} )); then
+    test_pass "spinner_stop precedes the print of the captured output"
+else
+    test_fail "spinner ordering" "${pf_block}"
 fi
 
 test_start "wiring: a failed preflight releases the Spoke lock and skips ignition"
 # The failure branch must release the lock it just claimed, or the next start waits on it.
 typeset branch
-branch=$(exec_lines "${actions}" | grep -A5 'if ! vde_preflight_agent_socket' )
+branch=$(exec_lines "${actions}" | grep -A6 'if (( preflight_rc != 0 ))')
 if [[ "${branch}" == *"release_lock"* && "${branch}" == *"continue"* ]]; then
     test_pass "release_lock then continue"
 else
