@@ -43,6 +43,7 @@ _VDE_SSH_LOADED=1
 . "${VDE_ROOT_DIR}/lib/vde-log"
 . "${VDE_ROOT_DIR}/lib/vde-naming"
 . "${VDE_ROOT_DIR}/lib/vde-security"
+. "${VDE_ROOT_DIR}/lib/vde-agent-sock"
 
 # =============================================================================
 # SSH CONFIGURATION
@@ -644,6 +645,11 @@ ensure_ssh_agent() {
         mkdir -p "${VDE_SSH_DIR}"
         chmod 700 "${VDE_SSH_DIR}"
 
+        # A directory (or any non-socket) at the agent path means ssh-agent cannot
+        # bind. Docker creates one when a Spoke starts before the agent (Signet
+        # #616): an empty directory of ours is cleared, anything else is explained.
+        vde_agent_sock_blocker "${VDE_SSH_AGENT_SOCK}" || return ${VDE_ERR_GENERAL}
+
         # A socket file left by a crashed agent is removed (ssh-agent will not reuse
         # it), but only when the connection is provably refused. Anything else may
         # be a live agent that did not answer in time: never orphan or replace it.
@@ -709,6 +715,26 @@ ensure_ssh_agent() {
         log_info "Added ${keys_added} missing key(s) to existing SSH agent"
     fi
 
+    return ${VDE_SUCCESS}
+}
+
+# vde_preflight_agent_socket - run before any Docker command that creates a
+# container mounting VDE's agent socket (Signet #616). Docker creates a missing
+# bind-mount source as a root-owned DIRECTORY, which then blocks the agent for
+# good, so a Spoke must never reach Docker without a live socket in place.
+# Returns: VDE_SUCCESS (0) when the socket exists and the agent answers on it;
+# VDE_ERR_GENERAL otherwise, with the cause already reported.
+vde_preflight_agent_socket() {
+    vde_agent_sock_blocker "${VDE_SSH_AGENT_SOCK}" || return ${VDE_ERR_GENERAL}
+
+    _vde_ssh_agent_ready && [[ -S "${VDE_SSH_AGENT_SOCK}" ]] && return ${VDE_SUCCESS}
+
+    ensure_ssh_agent || return ${VDE_ERR_GENERAL}
+
+    if [[ ! -S "${VDE_SSH_AGENT_SOCK}" ]] ; then
+        log_error "The VDE SSH agent is not listening on ${VDE_SSH_AGENT_SOCK}. Not starting the Spoke: Docker would create a root-owned directory at that path. Run: vde ssh-setup start"
+        return ${VDE_ERR_GENERAL}
+    fi
     return ${VDE_SUCCESS}
 }
 

@@ -130,6 +130,8 @@ source "${HOME}/.ssh/vde/agent_env"
 ssh-add "${IDENTITY_KEY}"
 ```
 
+**Start order (Signet #616).** The agent MUST be listening on `~/.ssh/vde/agent.sock` before any Spoke container is created, because every Spoke bind-mounts that path and Docker creates a missing bind source as an empty, root-owned *directory*, which the agent can then never bind over. `vde start` therefore calls `vde_preflight_agent_socket` (lib/vde-ssh) before it runs Docker: it starts the agent if needed, and refuses to start the Spoke if no socket results. `vde_agent_sock_blocker` (lib/vde-agent-sock) removes an empty directory with `rmdir`, and otherwise leaves the path alone and explains. A symbolic link on that path is refused even when it points at a live agent: the VDE agent is the one bound on this exact path.
+
 ### Port Forwarding Pattern
 ```zsh
 # Forward local port to Spoke service

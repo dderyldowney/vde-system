@@ -54,8 +54,11 @@ fi
 # 4. Silent Spine Check
 # Executes ./bin/vde-spine-check.zsh and blocks commit if it fails.
 if [[ -f "./bin/vde-spine-check.zsh" ]]; then
-    if ! ./bin/vde-spine-check.zsh > /dev/null 2>&1; then
+    # Success stays silent. On failure the check's own output is shown, because it
+    # names the cause and the fix (for example a directory blocking the agent socket).
+    if ! spine_out=$(./bin/vde-spine-check.zsh 2>&1); then
         echo -e "\033[0;31m[ERROR] VDE Spine Check Failed:\033[0m"
+        print -r -- "${spine_out}" >&2
         echo -e "  System spine verification failed. Run './bin/vde-health' for diagnostics."
         exit 1
     fi
