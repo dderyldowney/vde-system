@@ -16,6 +16,15 @@ set -e
 # ZSH-native logic demonstration (UAP Mandate 1)
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
+# The agent-socket guard is dependency-free so this standalone check can share it
+# with lib/vde-ssh (Signet #616).
+typeset _spine_agent_sock_lib="${0:A:h:h}/lib/vde-agent-sock"
+if [[ ! -r "${_spine_agent_sock_lib}" ]]; then
+    echo "[CRITICAL] Spine check cannot find its library ${_spine_agent_sock_lib}. Run it from a complete VDE checkout." >&2
+    exit 1
+fi
+source "${_spine_agent_sock_lib}"
+
 # Helpers for Pillar IV. Every one names the VDE socket explicitly: none of them
 # reads or modifies the inherited SSH_AUTH_SOCK.
 
@@ -167,6 +176,12 @@ main() {
     local agent_available=1
     local agent_recorded=0
     [[ -f "${agent_env}" && "$(_spine_recorded_sock "${agent_env}")" == "${vde_sock}" ]] && agent_recorded=1
+
+    # A directory (or any non-socket) at the agent path blocks the agent for good:
+    # Docker creates one when a Spoke starts before the agent (Signet #616). That is
+    # a real fault even in CI mode, not an agent that is merely absent. An empty
+    # directory of ours is cleared; anything else is explained, never deleted.
+    vde_agent_sock_blocker "${vde_sock}" || return 1
 
     if _spine_agent_answers "${vde_sock}"; then
         if [[ $agent_recorded -eq 0 ]]; then

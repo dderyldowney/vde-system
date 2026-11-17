@@ -293,6 +293,7 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 - `vde_ssh_add_identity()` - Add identity to SSH agent
 - `vde_ssh_add_all_identities()` - Add all known keys to agent
 - `vde_ssh_ensure_agent()` - Ensure SSH agent is running
+- `vde_preflight_agent_socket()` - Before any Docker command that mounts the agent socket: clear a blocking directory, start the agent if needed, refuse (non-zero) if no socket results
 - `vde_ssh_config_entry_add()` - Add entry to SSH config
 - `vde_ssh_config_entry_remove()` - Remove entry from SSH config
 
@@ -301,6 +302,15 @@ source "${VDE_ROOT_DIR}/lib/vm-common"
 - SSH key isolation (VDE_SSH_DIR)
 - Agent security enforcement
 - File permission validation
+
+---
+
+### vde-agent-sock (@armor) (Agent Socket Guard)
+**Purpose**: One shared check that the VDE agent socket path is free for an agent to bind. Dependency-free, so both `lib/vde-ssh` and the standalone `bin/vde-spine-check.zsh` source it.  
+**Key Functions**:
+- `vde_agent_sock_blocker PATH` - Returns 0 when PATH is absent, a live socket, or a directory `rmdir` can remove (so only an empty one; it works on a root-owned directory inside a folder the user owns; a notice is printed). Returns 1 otherwise, leaving PATH untouched, with the cause and the exact fix on stderr (a directory with contents or one `rmdir` was refused, a file, a symlink).
+
+**Why it exists**: Docker creates a missing bind-mount source as an empty, root-owned directory. If a Spoke starts before the VDE agent is listening, `~/.ssh/vde/agent.sock` becomes such a directory and the agent can never bind there (Signet #616). VDE never deletes anything but an empty directory it can remove, and never uses root.
 
 ---
 
@@ -675,6 +685,7 @@ fi
 ```
 vde-system/
 ├── lib/
+│   ├── vde-agent-sock         # Agent Socket Guard
 │   ├── vde-audit              # Resource Auditing
 │   ├── vde-cluster-utils      # Cluster Utilities
 │   ├── vde-commands           # Command Wrappers
@@ -740,7 +751,11 @@ vde-ssh
   ├─ vde-errors
   ├─ vde-log
   ├─ vde-naming
-  └─ vde-security
+  ├─ vde-security
+  └─ vde-agent-sock
+
+vde-agent-sock
+  └─ (none: dependency-free, shared with bin/vde-spine-check.zsh)
 
 vde-health
   └─ vm-common

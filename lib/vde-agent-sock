@@ -1,0 +1,60 @@
+#!/usr/bin/env zsh
+# @armor (Engine Core)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
+# VDE Agent Socket Guard (Signet #616)
+# Source this library with: source ./lib/vde-agent-sock
+#
+# Docker creates a missing bind-mount source as an EMPTY, ROOT-OWNED DIRECTORY.
+# If a Spoke starts while the VDE ssh-agent is not listening, that happens to
+# ~/.ssh/vde/agent.sock: the agent can then never bind there ("Address already in
+# use") and nothing says why. This library holds the one check for "is the agent
+# socket path free for an agent to bind", shared by lib/vde-ssh and by
+# bin/vde-spine-check.zsh. It has NO dependencies (no logging, no constants), so
+# the standalone spine check can source it.
+
+if [[ "${_VDE_AGENT_SOCK_LOADED:-}" = "1" ]]; then
+    return 0 2>/dev/null || exit 0
+fi
+_VDE_AGENT_SOCK_LOADED=1
+
+# vde_agent_sock_blocker PATH
+#   0  PATH is free for an agent to bind: absent, a live socket, or a directory
+#      that rmdir could remove (removed here, with a notice on stderr). rmdir
+#      only ever removes an EMPTY directory, so nothing is lost. What decides
+#      whether it works is write permission on the PARENT, not who owns the
+#      directory: Docker's root-owned directory inside the user's ~/.ssh/vde is
+#      removable without sudo.
+#   1  anything else, left untouched, with the cause and the exact fix on stderr:
+#      a directory rmdir could not remove (it has contents, or the parent is not
+#      writable), or a file/symlink of another kind. VDE never deletes data it
+#      did not create, and never reaches for root.
+vde_agent_sock_blocker() {
+    local sock="${1:?vde_agent_sock_blocker: path required}"
+
+    [[ -e "${sock}" || -L "${sock}" ]] || return 0
+    [[ -S "${sock}" ]] && return 0
+
+    local next="then run: vde ssh-setup start"
+
+    if [[ -d "${sock}" && ! -L "${sock}" ]]; then
+        if rmdir -- "${sock}" 2>/dev/null; then
+            print -u2 -r -- "[INFO] Removed the empty directory at ${sock} (Docker creates one when a Spoke starts before the VDE agent is running); the agent can bind there now."
+            return 0
+        fi
+        local -a contents=( "${sock}"/*(DN) )
+        if (( ${#contents} )); then
+            print -u2 -r -- "[CRITICAL] ${sock} is a directory that is not empty, and the VDE agent needs a socket there. VDE will not delete it: inspect or move its contents, remove the directory (rmdir ${(q)sock}), ${next}"
+        else
+            # Empty as far as this user can tell (an unreadable directory also lists as
+            # empty), but rmdir failed: no write access to the parent, or contents we
+            # cannot see. Say both, and give the one command that is safe either way.
+            print -u2 -r -- "[CRITICAL] ${sock} is a directory VDE could not remove, and the VDE agent needs a socket there. Docker creates one when a Spoke starts before the VDE agent is running. If it is empty, remove it yourself: sudo rmdir ${(q)sock}   (rmdir refuses a directory with contents)  ${next}"
+        fi
+        return 1
+    fi
+
+    print -u2 -r -- "[CRITICAL] ${sock} exists but is not a socket, and the VDE agent needs a socket there. VDE will not delete it: move or remove it yourself (rm ${(q)sock}), ${next}"
+    return 1
+}

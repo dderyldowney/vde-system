@@ -74,6 +74,22 @@ vde_action_start() {
             continue
         }
 
+        # PREFLIGHT (Signet #616): Docker creates a missing bind-mount source as a
+        # root-owned DIRECTORY, and for the agent socket that blocks the VDE agent
+        # for good. Make sure the agent is listening, or refuse, before compose
+        # runs. Done BEFORE the spinner opens so its messages print on their own
+        # lines. Only when the Spoke will mount VDE's own agent socket: a caller
+        # supplied VDE_HOST_SSH_AUTH_SOCK (e.g. a forwarded Docker Desktop socket)
+        # is theirs to manage.
+        if [[ -z "${VDE_HOST_SSH_AUTH_SOCK:-}" || "${VDE_HOST_SSH_AUTH_SOCK}" == "${VDE_SSH_AGENT_SOCK}" ]]; then
+            if ! vde_preflight_agent_socket; then
+                vde_log_error "${CANONICAL_NAME} was not started: the VDE SSH agent is not ready." "ssh"
+                release_lock "${vm_lock}"
+                GLOBAL_RC=1
+                continue
+            fi
+        fi
+
         vde_progress_spinner_start "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})"
         
         local compose_file=$(get_vm_compose_file "${CANONICAL_NAME}")

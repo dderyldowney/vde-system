@@ -130,6 +130,8 @@ Ownership is established by the dedicated socket path (section 1): VDE may adopt
 
 On the dedicated socket itself, when VDE cannot be sure what it would be acting on (a socket that does not answer, a recorded PID that cannot be found or now belongs to another process, a path that cannot be resolved), VDE kills, deletes and replaces nothing and reports it instead.
 
+A directory (or any other non-socket) found on the dedicated socket path is a blocked agent, not a stale one: Docker creates it, empty and owned by root, when a Spoke starts before the agent is listening (Signet #616). VDE removes it only with `rmdir`, which cannot remove a directory that has contents (and which succeeds on Docker's root-owned directory, because the user owns the folder it sits in). Otherwise it leaves the path untouched, names the cause and prints the exact command for the person to run; it never deletes data it did not create and never reaches for root. `vde start` therefore starts the VDE agent before it runs Docker, and refuses to start a Spoke when the agent cannot be started (`vde_preflight_agent_socket`).
+
 `ssh-setup cleanup` is the separate, narrower case of section 4: it kills only a stray agent whose own command line shows it was started on a socket inside `~/.ssh/vde` (never the dedicated one, the one `agent_env` records, or the one the caller exports), and compares resolved absolute paths only.
 
 ---

@@ -71,6 +71,34 @@ vde dns-check python postgres
 
 ---
 
+## "Address already in use" on `agent.sock` / Pillar IV Fails
+
+**Problem:** `vde ssh-setup start` or the Spine Check fails, and `ssh-agent` says:
+
+```text
+unix_listener: cannot bind to path /home/<you>/.ssh/vde/agent.sock: Address already in use
+```
+
+**Cause:** `~/.ssh/vde/agent.sock` is a *directory*, not a socket. Docker creates a missing bind-mount source as an empty directory owned by root. That happened because a Spoke started while the VDE agent was not running. Nothing is listening there; the path is simply taken.
+
+```zsh
+# Confirm: the first character must be "s" (a socket), not "d" (a directory)
+ls -ld ~/.ssh/vde/agent.sock
+```
+
+**Fix:** the Spine Check, `vde ssh-setup start` and `vde start` now remove the directory themselves when it is empty (`rmdir` cannot remove anything that has contents). It works even though root owns the directory, because you own the folder it sits in (`~/.ssh/vde`). If VDE cannot remove it, it prints the exact command:
+
+```zsh
+rmdir ~/.ssh/vde/agent.sock        # add sudo only if the line above is refused
+vde ssh-setup start                # start the agent and load vde_student
+```
+
+If the directory has contents, or the path is a file or symlink, VDE leaves it alone and says so: move or remove it yourself. This is a failure in every mode, including `VDE_CI_MODE=1`, because the agent cannot bind while anything other than a socket sits on that path. `git commit` runs the Spine Check and shows its message when it fails.
+
+**Prevention:** `vde start` now starts the VDE agent before it runs Docker, and refuses to start the Spoke if the agent cannot be started, so Docker is never handed a socket path that does not exist.
+
+---
+
 ## Spoke Won't Start
 
 **Problem:** A Spoke fails to ignite or crashes immediately.
