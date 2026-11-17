@@ -26,6 +26,16 @@ _VDE_BUILD_CACHE_LOADED=1
 # go to stderr unconditionally.
 _vde_bc_say() { [[ "${VDE_QUIET:-0}" == "1" ]] || print -r -- "$*"; return 0 }
 
+# _vde_bc_remote_daemon - true when the selected Docker daemon is not on this host:
+# DOCKER_HOST, or else the active context's endpoint, is not a local unix socket.
+_vde_bc_remote_daemon() {
+    local host="${DOCKER_HOST:-}"
+    if [[ -z "${host}" ]]; then
+        host="$(docker context inspect --format '{{(index .Endpoints "docker").Host}}' 2>/dev/null)" || host=""
+    fi
+    [[ -n "${host}" && "${host}" != unix://* ]]
+}
+
 # vde_build_cache_size - print the size of Docker's build cache (e.g. 4.855GB), or
 # nothing when it cannot be read. Read-only. `docker system df` walks every image,
 # container and volume, so only the dry run asks for it.
@@ -44,8 +54,22 @@ vde_build_cache_size() {
 # Returns: 0 done / nothing to do / dry run, 1 the prune failed or the daemon is
 # not running, 3 Docker is not installed
 vde_prune_build_cache() {
+    # Only --dry-run is accepted. Anything else (a typo such as --dry-rnu) must be
+    # refused, never read as "do the real, destructive prune".
+    # Decided by the argument COUNT, not by the first value: an explicitly passed
+    # empty string (an unset variable quoted into the call) is an argument too.
     local dry=0
-    [[ "${1:-}" == "--dry-run" ]] && dry=1
+    if (( $# > 1 )); then
+        print -u2 -r -- "[ERROR] vde_prune_build_cache: too many arguments; nothing was removed."
+        return 2
+    elif (( $# == 1 )); then
+        if [[ "$1" == "--dry-run" ]]; then
+            dry=1
+        else
+            print -u2 -r -- "[ERROR] vde_prune_build_cache: unknown option '$1' (only --dry-run is accepted); nothing was removed."
+            return 2
+        fi
+    fi
 
     if ! command -v docker >/dev/null 2>&1; then
         print -u2 -r -- "[ERROR] Docker is not installed, so there is no build cache to clean."
@@ -68,9 +92,12 @@ vde_prune_build_cache() {
         if [[ "${size}" == "0B" ]]; then
             _vde_bc_say "Build cache is already empty. Nothing to clean."
         elif [[ -n "${size}" ]]; then
-            _vde_bc_say "Would free ${size} (dry run: nothing was removed)."
+            # The total, not a promise: cache a running build is using is skipped.
+            _vde_bc_say "Build cache is ${size}; a clean would free up to that much (dry run: nothing was removed)."
         else
-            _vde_bc_say "Could not read the build cache size (dry run: nothing was removed)."
+            # A failure, not a result: shown even with -q, and the status says so.
+            print -u2 -r -- "[WARN] Could not read the build cache size (dry run: nothing was removed)."
+            return 1
         fi
         return 0
     fi
@@ -113,15 +140,20 @@ vde_maybe_prune_build_cache() {
 # vde_build_low_disk_hint
 # After a FAILED build: if the filesystem that holds Docker's data (not necessarily /)
 # is nearly full, say so and name the fix. A build that dies out of space looks like
-# a VDE bug. Silent when there is room, or when usage cannot be read. Returns 0.
+# a VDE bug. Silent when there is room, when usage cannot be read, when the daemon is
+# remote, and when Docker's data root is not visible on this host (Docker Desktop's VM):
+# it never measures a different disk. Returns 0.
 # Threshold: VDE_DISK_HINT_THRESHOLD, a percentage (default 90).
 vde_build_low_disk_hint() {
     local threshold="${VDE_DISK_HINT_THRESHOLD:-90}" root
-    # A remote daemon's disk is not ours to measure: the local df would describe the
+    # A remote daemon's disk is not ours to measure: a local df would describe the
     # wrong machine and could claim a full disk that is not.
-    [[ -z "${DOCKER_HOST:-}" || "${DOCKER_HOST}" == unix://* ]] || return 0
+    _vde_bc_remote_daemon && return 0
+    # Docker's data root must be visible on THIS host. On Docker Desktop it lives
+    # inside a VM, so measuring `/` instead would report the wrong disk: say nothing
+    # rather than something misleading.
     root="$(docker info --format '{{.DockerRootDir}}' 2>/dev/null)" || root=""
-    [[ -n "${root}" && -e "${root}" ]] || root="/"
+    [[ -n "${root}" && -e "${root}" ]] || return 0
 
     local -a rows=( "${(@f)$(df -P -- "${root}" 2>/dev/null)}" )
     local -a fields=( ${=rows[2]} )

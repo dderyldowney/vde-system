@@ -133,7 +133,10 @@ vde cache clean
 command has succeeded, so `vde clean` is for when that did not happen: you passed
 `--keep-cache`, or a build was interrupted. It prints which Docker context it is
 cleaning, and reports how much it freed. Cache that a running build is using is left
-alone. The next build after a clean starts cold, so it takes longer once.
+alone. The next build after a clean starts cold, so it takes longer once. It clears
+all unused build cache on that Docker daemon, including cache from your other projects,
+because BuildKit cannot scope the clean to VDE. `--dry-run` reports the total as an
+upper bound, since cache in use by a running build is skipped.
 
 ### Dissolution
 ```zsh

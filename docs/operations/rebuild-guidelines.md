@@ -110,7 +110,10 @@ vde start python --rebuild
 build cache grows by tens of gigabytes over a few `--no-cache` rebuilds and fills the
 disk, so once every build in a command has succeeded VDE removes it
 (`docker builder prune --all -f`, which never touches images, containers or volumes).
-The cost is that the *next* rebuild starts cold and takes longer. If you are iterating
+BuildKit cannot scope that to VDE: it clears **all unused build cache on the selected
+Docker daemon, including cache that belongs to your other projects**, which will start
+cold on their next build too. VDE prints which Docker context it is cleaning. The cost
+is that the *next* rebuild starts cold and takes longer. If you are iterating
 and want fast incremental rebuilds, keep the cache and clean it yourself later:
 
 ```zsh
@@ -136,20 +139,19 @@ layer is built. The version installed is whatever pyenv resolves as the newest
 stable CPython **at the moment that layer actually builds** — there is no pinned
 version file.
 
-A plain `vde rebuild python` normally keeps the CPython you already have, because
-Docker reuses the cached hydration layer. That reuse is not guaranteed: it holds
-only while the build inputs are unchanged (the `python-init.zsh` hydration script,
-anything under `lib/`, and the `vde-base` image) **and** the cached layer is still
-present. Editing those inputs, updating `vde-base`, pruning the Docker build cache,
-or building on a fresh host re-runs the hydration layer, and pyenv then resolves the
-newest stable CPython — so a plain rebuild can advance the interpreter as a side
-effect. To see what you actually have, run `python --version` inside the Spoke.
+Whether a plain `vde rebuild python` keeps the CPython you already have depends on
+whether Docker still holds the cached hydration layer. Reuse of that layer holds only
+while the build inputs are unchanged (the `python-init.zsh` hydration script, anything
+under `lib/`, and the `vde-base` image) **and** the cached layer is still present.
+VDE cleans Docker's build cache after every successful rebuild (see "Rebuild Takes
+Too Long"), so by default the layer is **gone** and a plain rebuild re-runs the
+hydration layer; pyenv then resolves the newest stable CPython, and the interpreter
+can advance as a side effect. Editing those inputs, updating `vde-base`, pruning the
+cache yourself, or building on a fresh host do the same. To see what you actually
+have, run `python --version` inside the Spoke.
 
-Because VDE now cleans the build cache after every successful rebuild (see "Rebuild
-Takes Too Long"), the cached hydration layer is normally already gone, so a plain
-`vde rebuild python` re-runs the hydration layer and **may advance the interpreter**.
-To keep the interpreter you have, rebuild with `--keep-cache` (and the cache from that
-build stays, so the next plain rebuild can reuse it):
+To keep the interpreter you have, rebuild with `--keep-cache`. The cache from that
+build stays, so the next rebuild can reuse the cached layer:
 
 ```zsh
 vde rebuild --keep-cache python

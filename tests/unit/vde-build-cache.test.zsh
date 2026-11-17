@@ -46,8 +46,16 @@ cat > "${SCRATCH}/bin/docker" <<'STUB'
 print -r -- "$*" >> "${STUB_CALLS:-/dev/null}"
 case "$1" in
     info)    [[ "$2" == --format* ]] && print -r -- "${STUB_ROOT:-}"; exit ${STUB_INFO_RC:-0} ;;
-    context) print -r -- "${STUB_CONTEXT:-default}" ;;
-    system)  print -r -- "Images|1GB"; print -r -- "Build Cache|${STUB_CACHE_SIZE:-4.855GB}" ;;
+    context)
+        case "$2" in
+            show)    print -r -- "${STUB_CONTEXT:-default}" ;;
+            inspect) print -r -- "${STUB_CTX_HOST:-unix:///var/run/docker.sock}" ;;
+        esac
+        ;;
+    system)
+        (( ${STUB_DF_RC:-0} )) && exit ${STUB_DF_RC}
+        print -r -- "Images|1GB"; print -r -- "Build Cache|${STUB_CACHE_SIZE:-4.855GB}"
+        ;;
     builder)
         if (( ${STUB_PRUNE_RC:-0} )); then print -u2 -r -- "boom: cannot prune"; exit ${STUB_PRUNE_RC}; fi
         print -r -- "Deleted build cache objects:"; print -r -- "abc123"; print -r -- ""
@@ -59,7 +67,7 @@ chmod +x "${SCRATCH}/bin/docker"
 
 typeset -gx STUB_CALLS="${SCRATCH}/calls"
 export PATH="${SCRATCH}/bin:${PATH}"
-reset_stub() { : > "${STUB_CALLS}"; unset STUB_PRUNE_RC STUB_CACHE_SIZE STUB_CONTEXT STUB_INFO_RC STUB_ROOT STUB_PRUNE_TOTAL DOCKER_HOST VDE_QUIET VDE_DISK_HINT_THRESHOLD; }
+reset_stub() { : > "${STUB_CALLS}"; unset STUB_PRUNE_RC STUB_CACHE_SIZE STUB_CONTEXT STUB_CTX_HOST STUB_DF_RC STUB_INFO_RC STUB_ROOT STUB_PRUNE_TOTAL DOCKER_HOST VDE_QUIET VDE_DISK_HINT_THRESHOLD; }
 calls() { <"${STUB_CALLS}"; }
 
 # --- the library under test (absent until the change lands) -------------------
@@ -148,25 +156,54 @@ else
 fi
 
 #-------------------------------------------------------------------------------
-test_start "low-disk hint: names 'vde clean' when the disk is over the threshold, silent when under"
-reset_stub
-out=$(VDE_DISK_HINT_THRESHOLD=0 vde_build_low_disk_hint 2>&1); rc=$?
-typeset quiet_out; quiet_out=$(VDE_DISK_HINT_THRESHOLD=101 vde_build_low_disk_hint 2>&1)
-if [[ $rc -eq 0 && "${out}" == *"vde clean"* && -z "${quiet_out}" ]]; then
-    test_pass "hint at threshold 0, nothing at 101"
+test_start "low-disk hint: fires AT the real usage of Docker's data root, and stays silent just above it (a healthy disk)"
+# Control the input: measure the real usage of the stub's data root, then bracket it.
+# usage_now is what df reports for ${SCRATCH}; the threshold is set to exactly that
+# (must fire) and to 2 above it (must be silent). A hint emitted at every ordinary
+# threshold would fail the second half.
+reset_stub; export STUB_ROOT="${SCRATCH}"
+typeset -a _rows=( "${(@f)$(df -P -- "${SCRATCH}")}" ) _f
+_f=( ${=_rows[2]} ); typeset usage_now="${_f[5]%\%}"
+out=$(VDE_DISK_HINT_THRESHOLD=${usage_now} vde_build_low_disk_hint 2>&1); rc=$?
+typeset healthy_out; healthy_out=$(VDE_DISK_HINT_THRESHOLD=$(( usage_now + 2 )) vde_build_low_disk_hint 2>&1)
+if [[ $rc -eq 0 && "${out}" == *"vde clean"* && -z "${healthy_out}" ]]; then
+    test_pass "hint at ${usage_now}% (threshold ${usage_now}), silent at threshold $(( usage_now + 2 ))"
 else
-    test_fail "low-disk hint" "rc=${rc} over='${out}' under='${quiet_out}'"
+    test_fail "low-disk hint" "usage=${usage_now} rc=${rc} fires='${out}' healthy='${healthy_out}'"
 fi
 
-test_start "low-disk hint: stays silent for a REMOTE daemon (the local df would describe the wrong machine)"
-reset_stub; export DOCKER_HOST=ssh://build.example
+test_start "low-disk hint: stays silent for a REMOTE daemon set by DOCKER_HOST"
+reset_stub; export STUB_ROOT="${SCRATCH}" DOCKER_HOST=ssh://build.example
 out=$(VDE_DISK_HINT_THRESHOLD=0 vde_build_low_disk_hint 2>&1); rc=$?
 [[ $rc -eq 0 && -z "${out}" ]] && test_pass "silent for ssh://" || test_fail "remote daemon" "rc=${rc} out=${out}"
 
-test_start "low-disk hint: measures Docker's data root, and falls back to / when that path is unreadable"
+test_start "low-disk hint: stays silent for a REMOTE daemon set by the active Docker context (DOCKER_HOST unset)"
+reset_stub; export STUB_ROOT="${SCRATCH}" STUB_CTX_HOST=tcp://build.example:2376
+out=$(VDE_DISK_HINT_THRESHOLD=0 vde_build_low_disk_hint 2>&1); rc=$?
+[[ $rc -eq 0 && -z "${out}" ]] && test_pass "silent for a remote context" || test_fail "remote context" "rc=${rc} out=${out}"
+
+test_start "low-disk hint: stays silent when Docker's data root is not visible on this host (Docker Desktop VM), never measuring / instead"
 reset_stub; export STUB_ROOT=/definitely/not/a/path
 out=$(VDE_DISK_HINT_THRESHOLD=0 vde_build_low_disk_hint 2>&1); rc=$?
-[[ $rc -eq 0 && "${out}" == *"vde clean"* ]] && test_pass "fell back to /, still hinted" || test_fail "fallback" "rc=${rc} out=${out}"
+[[ $rc -eq 0 && -z "${out}" ]] && test_pass "silent: no wrong-disk hint" || test_fail "invisible root" "rc=${rc} out=${out}"
+
+#-------------------------------------------------------------------------------
+test_start "a misspelled option is REFUSED and never read as 'do the real prune'"
+reset_stub
+out=$(vde_prune_build_cache --dry-rnu 2>&1); rc=$?
+typeset out2; out2=$(vde_prune_build_cache --dry-run extra 2>&1); typeset rc2=$?
+typeset out3; out3=$(vde_prune_build_cache "" 2>&1); typeset rc3=$?
+if [[ $rc -eq 2 && $rc2 -eq 2 && $rc3 -eq 2 && "$(calls)" != *"builder prune"* && "${out}" == *"unknown option"* ]]; then
+    test_pass "rc 2 for a typo, extra args and an explicit empty string; nothing pruned"
+else
+    test_fail "option typo" "rc=${rc}/${rc2}/${rc3} calls=$(calls) out=${out}"
+fi
+
+#-------------------------------------------------------------------------------
+test_start "a dry run that cannot read the size FAILS (rc 1), visibly, even under -q"
+reset_stub; export STUB_DF_RC=1
+out=$(VDE_QUIET=1 vde_prune_build_cache --dry-run 2>&1); rc=$?
+[[ $rc -eq 1 && "${out}" == *"Could not read the build cache size"* ]] && test_pass "rc 1, warned despite -q" || test_fail "unreadable size" "rc=${rc} out=${out}"
 
 #-------------------------------------------------------------------------------
 test_start "the Docker context being cleaned is printed (never silently prune a remote daemon)"
@@ -279,22 +316,49 @@ else
 fi
 
 test_start "wiring: vde-rebuild prunes ONLY after every build has run (set -e keeps the cache on failure)"
-typeset last_build prune_line
+typeset last_build loop_done prune_line
 last_build=$(first_line_no "${REB}" 'build_vm_image "\${spoke}"')
+# The prune must come after the `done` that CLOSES the spoke loop, not merely after the
+# first build: pruning inside the loop would discard the cache a later failing build keeps.
+loop_done=""
+typeset _row
+for _row in "${(@f)$(exec_lines "${REB}")}"; do
+    if (( ${_row%%:*} > last_build )) && [[ "${_row#*:}" == "done" ]]; then loop_done="${_row%%:*}"; break; fi
+done
 prune_line=$(first_line_no "${REB}" 'vde_maybe_prune_build_cache')
-if [[ -n "${last_build}" && -n "${prune_line}" && ${last_build} -lt ${prune_line} ]] && exec_lines "${REB}" | grep -q '^[0-9]*:set -e'; then
-    test_pass "builds (${last_build}) < prune (${prune_line}), under set -e"
+if [[ -n "${last_build}" && -n "${loop_done}" && -n "${prune_line}" && ${last_build} -lt ${loop_done} && ${loop_done} -lt ${prune_line} ]] \
+    && exec_lines "${REB}" | grep -q '^[0-9]*:set -e'; then
+    test_pass "builds (${last_build}) < end of spoke loop (${loop_done}) < prune (${prune_line}), under set -e"
 else
-    test_fail "prune placement" "builds='${last_build}' prune='${prune_line}'"
+    test_fail "prune placement" "builds='${last_build}' loop_done='${loop_done}' prune='${prune_line}'"
+fi
+
+test_start "behaviour: vde-rebuild --keep-cache is consumed by the option loop (a branch without shift would hang)"
+# Run the real option loop: a --keep-cache branch that forgets `shift` spins forever,
+# which the timeout turns into a non-zero status. --help exits right after parsing.
+out=$(timeout 30 zsh "${REB}" --keep-cache --help 2>&1); rc=$?
+if [[ $rc -eq 0 && "${out}" == *"--keep-cache"* && "${out}" == *"Usage: vde-rebuild"* ]]; then
+    test_pass "parsed and exited (rc 0)"
+else
+    test_fail "--keep-cache parse loop" "rc=${rc} (124 = hung) out=${out}"
 fi
 
 test_start "wiring: both failure branches print the low-disk hint"
-if fn_body "${REB}" build_base_image | grep -q 'vde_build_low_disk_hint' \
-    && fn_body "${REB}" build_vm_image | grep -q 'vde_build_low_disk_hint'; then
-    test_pass "build_base_image and build_vm_image call vde_build_low_disk_hint on failure"
-else
-    test_fail "low-disk hint" "a failure branch lacks vde_build_low_disk_hint"
-fi
+# The hint must sit in the FAILURE branch: after the line that reports the failure and
+# before that branch returns. Present somewhere in the function is not enough.
+typeset fn_name branch_ok=1
+for fn_name in build_base_image build_vm_image; do
+    typeset body; body="$(fn_body "${REB}" ${fn_name})"
+    typeset after_fail="${body#*Failed to }"          # text after the failure echo
+    if [[ "${body}" != *"Failed to "* || "${after_fail}" != *"vde_build_low_disk_hint"* ]]; then
+        branch_ok=0
+        test_fail "hint placement" "${fn_name}: vde_build_low_disk_hint is not after the 'Failed to ...' line"
+    elif [[ "${after_fail%%vde_build_low_disk_hint*}" == *"return"* ]]; then
+        branch_ok=0
+        test_fail "hint placement" "${fn_name}: the failure branch returns before the hint"
+    fi
+done
+(( branch_ok )) && test_pass "both functions print the hint after the failure message and before returning"
 
 test_start "the disk-full error recommends 'vde clean', not 'docker image prune -a'"
 typeset errbody
