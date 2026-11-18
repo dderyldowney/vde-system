@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: vde-debug
+description: "Debug failing VDE tests or runtime errors with a parallel swarm: classify the failure, run only the failing test, and write a root-cause report with a fix plan for approval."
+---
 # VDE-DEBUG
 <!-- @forge (Governance Sentinel) -->
 Debug failing tests or runtime errors in VDE using a parallel swarm.

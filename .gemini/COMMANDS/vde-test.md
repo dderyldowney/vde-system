@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: vde-test
+description: "Smart test runner that detects changed files and runs only the minimal appropriate tests, not the full suite during debugging. Pass a feature name to run it directly, or full for the whole suite."
+---
 # VDE-TEST
 <!-- @forge (Governance Sentinel) -->
 Smart test runner — detects what changed and runs the minimal appropriate tests.

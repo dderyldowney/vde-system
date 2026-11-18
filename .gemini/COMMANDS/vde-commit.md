@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: vde-commit
+description: "Verified git finalization under the UAP pre-flight gates: stages and cleans changes, then commits with a type: description message. Does not push without authorization."
+---
 # /vde-commit Command (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

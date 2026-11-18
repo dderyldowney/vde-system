@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: coder
+description: "Coder Agent procedure for VDE under the Universal Agent Protocol: implements features and fixes with DRY and TDD, refuses tasks needing more than one file edit, and runs /vde-enforce after each edit."
+---
 # Coder Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

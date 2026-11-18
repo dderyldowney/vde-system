@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: rule-enforcer
+description: "Audits VDE UAP mandate compliance (TDD, DRY, Swarm+MCP, Phases 0-5) and blocks progress on violations. Use when checking whether AGENTS.md mandates were followed before commit."
+---
 # Rule Enforcer Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

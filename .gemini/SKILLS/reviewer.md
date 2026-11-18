@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: reviewer
+description: "Reviewer audit under the Universal Agent Protocol: runs five checks (DRY, fake tests, spec alignment, security, ZSH) and returns APPROVED or BLOCKED. Run on every invocation, before any commit."
+---
 # Reviewer Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

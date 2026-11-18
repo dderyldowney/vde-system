@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: supervisor
+description: "Supervisor authority for the VDE Universal Agent Protocol that audits agents against the AGENTS.md mandates (TDD, DRY, Swarm and MCP) and lifecycle Phases 0-5, issuing PASS or BLOCKED verdicts."
+---
 # Supervisor Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: debugger
+description: "Read-only debugger for VDE failures: classifies zsh library, BDD, Docker runtime and SSH errors, traces the dependency chain, and returns a Root Cause Report with a fix plan."
+---
 # Debugger Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

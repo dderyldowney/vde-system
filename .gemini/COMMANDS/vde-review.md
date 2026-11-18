@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: vde-review
+description: "Runs a full logic and security audit of changed files for the Reviewer side of the Dual Approval gate, covering correctness, UAP DRY and fake-test scans, and SSH, Docker and portability posture."
+---
 # /vde-review Command (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

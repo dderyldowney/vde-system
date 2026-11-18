@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: vde-new-vm
+description: "Guided workflow to add a new VM type (lang or service) following docs/governance/vde-spec.md, with port assignment, template discovery, and a hard stop for user approval before any files are created."
+---
 # VDE-NEW-VM
 <!-- @forge (Governance Sentinel) -->
 Guided workflow to add a new VM type following docs/governance/vde-spec.md.

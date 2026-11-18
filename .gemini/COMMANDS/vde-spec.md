@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: vde-spec
+description: "Compare implementation against docs/governance/vde-spec.md to find gaps and violations. Takes a section name, feature name, or full for a complete audit."
+---
 # VDE-SPEC
 <!-- @forge (Governance Sentinel) -->
 Compare implementation against docs/governance/vde-spec.md — find gaps and violations.
