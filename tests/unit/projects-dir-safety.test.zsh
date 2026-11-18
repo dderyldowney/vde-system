@@ -253,6 +253,44 @@ test_spd_moves_only_known_vms() {
 }
 
 # -----------------------------------------------------------------------------
+# A DANGLING symlink at the destination is a collision, not a free slot. `-e`
+# is false for a dangling link, so an `-e`-only guard falls through to `mv`
+# (which fails). The collision must be detected and skipped without touching
+# the link or the source folder.
+# -----------------------------------------------------------------------------
+test_spd_dangling_symlink_destination_is_a_collision() {
+    test_start "vde-set-projects-dir treats a dangling symlink at destination as a collision"
+    local old; old="$(mktemp -d "${SANDBOX_ROOT}/spddangle-old.XXXXXX")"
+    local new="${SANDBOX_ROOT}/spddangle-new.${RANDOM}"
+    mkdir -p "${old}/python" "${new}"
+    print -r -- "pyfile" > "${old}/python/hello.txt"
+    ln -s "${SANDBOX_ROOT}/nowhere" "${new}/python"
+
+    local forge; forge="$(_make_spd_forge "${old}")"
+    typeset SPD_OUT SPD_RC
+    _run_spd "${forge}" "${new}"
+
+    # Regression guard (passes before and after the -L fix): mv itself refuses to
+    # put a directory over a dangling link, so set-projects-dir was already safe
+    # for directories. The per-alias skip message goes through vde_log_warn with
+    # stderr silenced, so only the summary counts are observable here.
+    assert_true  "summary: 0 moved, 1 skipped"                       "[[ \$SPD_OUT == *'Folders moved:  0'* && \$SPD_OUT == *'Folders skipped: 1'* ]]"
+    assert_true  "destination python is still a dangling symlink"    "[[ -L '${new}/python' && ! -e '${new}/python' ]]"
+    assert_true  "old base python/ and its file untouched"           "[[ -f '${old}/python/hello.txt' ]]"
+    assert_false "no 'Moved python' reported"                        "[[ \$SPD_OUT == *'Moved '*python* ]]"
+
+    # Wiring pin (RED before the fix): the collision guard must treat a symlink as
+    # existing, so a future file-moving change cannot replace a dangling link.
+    # Executable lines only -- comments never satisfy the pin.
+    local guard; guard="$(awk '!/^[[:space:]]*#/ && /-e "\$\{dest\}"/' "${SPD_SRC}")"
+    if [[ -n "${guard}" && "${guard}" == *'-L "${dest}"'* ]]; then
+        test_pass "collision guard also tests -L on the destination"
+    else
+        test_fail "collision guard also tests -L on the destination" "guard line: ${guard:-<not found>}"
+    fi
+}
+
+# -----------------------------------------------------------------------------
 # .env REWRITE must preserve sed-special chars (code-review fix #1). The old
 # `sed s|^VDE_PROJECTS_DIR=.*|VDE_PROJECTS_DIR=${base}|` mangled a base containing
 # `&` (whole-match) or `|` (delimiter); the zsh-native rewrite stores it verbatim.
@@ -412,6 +450,7 @@ test_init_loneflag_positive_control
 test_spd_injection_refused
 test_spd_nested_base_refused
 test_spd_moves_only_known_vms
+test_spd_dangling_symlink_destination_is_a_collision
 test_spd_env_rewrite_preserves_special_chars
 test_init_env_rewrite_preserves_special_chars
 test_spd_repoint_rewrites_existing_spoke_mount

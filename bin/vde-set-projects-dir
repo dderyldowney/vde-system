@@ -195,7 +195,8 @@ if [[ -d "${OLD_BASE}" ]]; then
 
         dest="${NEW_BASE}/${alias_name}"
 
-        if [[ -e "${dest}" ]]; then
+        # -L catches a dangling symlink that -e reports as absent.
+        if [[ -e "${dest}" || -L "${dest}" ]]; then
             vde_log_warn "Skipping '${alias_name}': already exists at destination (left in place for you)." 2>/dev/null \
                 || echo "  ! Skipping '${alias_name}': already exists at destination (left in place for you)."
             (( ++skipped ))
