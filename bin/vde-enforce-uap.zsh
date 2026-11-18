@@ -183,6 +183,61 @@ check_dir "${VDE_ROOT_DIR}/githooks"
 check_dir "${VDE_ROOT_DIR}/.github"
 check_dir "${VDE_ROOT_DIR}/.gemini_security"
 
+# 3b. Shibboleth sweep (Mandate C, Signet #626): every tracked zsh file must carry the literal line; shrink-only baseline.
+if [[ ! -f "${VDE_ROOT_DIR}/lib/vde-shibboleth" ]]; then
+    echo -e "${RED}[UAP-ERROR]${NC} lib/vde-shibboleth missing; cannot enforce the shibboleth (Mandate C)."
+    errors=$((errors + 1))
+else
+    source "${VDE_ROOT_DIR}/lib/vde-shibboleth"
+    # `|| shib_rc=$?`: this script runs under `set -e`, and a bare assignment from a
+    # failing command substitution would end the audit silently with no report.
+    shib_rc=0
+    shib_out="$(vde_shib_sweep "${VDE_ROOT_DIR}")" || shib_rc=$?
+    if [[ $shib_rc -ne 0 ]]; then
+        while IFS= read -r shib_line; do
+            [[ -z "${shib_line}" ]] && continue
+            case "${shib_line}" in
+                MISSING\ *)
+                    shib_rel="${shib_line#MISSING }"
+                    echo -e "${RED}[UAP-ERROR]${NC} Shibboleth MISSING in ${shib_rel}: add '${VDE_SHIBBOLETH_LITERAL}' as its own line within the first 20 lines (Mandate C)."
+                    ;;
+                STALE\ *)
+                    # Contract: `STALE <rel> :: <reason>`; split on the first ` :: ` (rel may contain spaces).
+                    shib_rest="${shib_line#STALE }"
+                    if [[ "${shib_rest}" == *" :: "* ]]; then
+                        shib_rel="${shib_rest%% :: *}"
+                        shib_reason="${shib_rest#* :: }"
+                    else
+                        shib_rel="${shib_rest}"
+                        shib_reason="unspecified"
+                    fi
+                    echo -e "${RED}[UAP-ERROR]${NC} Shibboleth baseline entry ${shib_rel} is stale (${shib_reason}); remove it from docs/governance/shibboleth-baseline.txt."
+                    ;;
+                *)
+                    echo -e "${RED}[UAP-ERROR]${NC} ${shib_line}"
+                    ;;
+            esac
+            errors=$((errors + 1))
+        done <<< "${shib_out}"
+    else
+        [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-CHECK]${NC} Shibboleth sweep clean"
+    fi
+
+    # Shrink-only growth check: baseline entries absent from the base ref are errors.
+    shib_base="${VDE_SHIB_BASE_REF:-origin/develop}"
+    shib_grow_rc=0
+    shib_growth="$(vde_shib_baseline_growth "${VDE_ROOT_DIR}" "${shib_base}")" || shib_grow_rc=$?
+    if [[ $shib_grow_rc -eq 1 ]]; then
+        while IFS= read -r shib_grow_line; do
+            [[ -z "${shib_grow_line}" ]] && continue
+            echo -e "${RED}[UAP-ERROR]${NC} Shibboleth baseline GREW versus ${shib_base}: ${shib_grow_line}. The baseline is shrink-only: add the shibboleth to that file instead of listing it."
+            errors=$((errors + 1))
+        done <<< "${shib_growth}"
+    elif [[ $shib_grow_rc -eq 3 ]] && [[ $quiet -eq 0 ]]; then
+        echo -e "${GREEN}[UAP-CHECK]${NC} Shibboleth baseline growth check skipped (base ref ${shib_base} not found)"
+    fi
+fi
+
 # 4. Continuous Security & Privacy Audit
 if [[ -f "${VDE_ROOT_DIR}/bin/vde-security-audit.zsh" ]]; then
     zsh "${VDE_ROOT_DIR}/bin/vde-security-audit.zsh" || errors=$((errors + 1))

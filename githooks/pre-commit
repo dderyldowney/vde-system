@@ -51,7 +51,40 @@ if [[ -f "${VDE_ROOT_DIR}/githooks/usp-validator.zsh" ]]; then
     fi
 fi
 
-# 4. Silent Spine Check
+# 4. Shibboleth Baseline Guard (Rule C)
+# Blocks commits that ADD lines to docs/governance/shibboleth-baseline.txt.
+# The baseline is shrink-only. A commit that does not stage the baseline is never affected.
+baseline_rel='docs/governance/shibboleth-baseline.txt'
+staged_baseline="$(git diff --cached --name-only -- "${baseline_rel}" || true)"
+if [[ -n "${staged_baseline}" ]]; then
+    # Fail closed: a staged baseline change cannot be verified without the guard lib.
+    if [[ ! -f "${VDE_ROOT_DIR}/lib/vde-shibboleth" ]]; then
+        echo -e "\033[0;31m[ERROR] Rule C: lib/vde-shibboleth is missing, so the shrink-only baseline cannot be verified.\033[0m"
+        exit 1
+    fi
+    source "${VDE_ROOT_DIR}/lib/vde-shibboleth"
+    added="$(vde_shib_staged_baseline_additions "${VDE_ROOT_DIR}" || true)"
+    if [[ -n "${added}" ]]; then
+        # Removed entries are the '-' lines of the hunks (skips the ---/+++ file headers).
+        removed="$(git diff --cached --no-color -U0 -- "${baseline_rel}" | sed -n '/^@@/,$ s/^-//p' || true)"
+        echo -e "\033[0;31m[ERROR] Rule C: the shibboleth baseline is shrink-only.\033[0m"
+        print -r -- "  Added to ${baseline_rel}:"
+        while IFS= read -r line; do
+            print -r -- "    + ${line}"
+        done <<< "${added}"
+        if [[ -n "${removed}" ]]; then
+            print -r -- "  Removed from ${baseline_rel} (allowed):"
+            while IFS= read -r line; do
+                print -r -- "    - ${line}"
+            done <<< "${removed}"
+        fi
+        print -r -- "  The baseline may only shrink: remove entries, and once it is empty keep the file empty. It must never be deleted."
+        print -r -- "  Fix the files instead: add '${VDE_SHIBBOLETH_LITERAL}' within the first 20 lines of each listed file."
+        exit 1
+    fi
+fi
+
+# 5. Silent Spine Check
 # Executes ./bin/vde-spine-check.zsh and blocks commit if it fails.
 if [[ -f "./bin/vde-spine-check.zsh" ]]; then
     # Success stays silent. On failure the check's own output is shown, because it
