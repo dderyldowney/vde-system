@@ -2,6 +2,8 @@
 <!-- @shared-law (Forge Component) -->
 Read and apply @.gemini/instructions.md
 
+Project state and rules live under `.gemini/`: read `.gemini/STATE/MEMORY.md` and `.gemini/STATE/session_handover.md` at session start (see READING LOCATIONS in `.gemini/instructions.md` and the startup checklist in `AGENTS.md`); project rules are in `.gemini/RULES/`.
+
 ## STRIKE PROTOCOL — MANDATORY. NO EXCEPTIONS.
 
 Every unit of work (a "Strike") MUST follow this sequence. There is no bypass except an explicit written instruction from the User in the current session:
