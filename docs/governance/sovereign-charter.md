@@ -44,6 +44,12 @@ To maintain strict focus and project separation, the VDE utilizes two primary op
 
 **The Decision Rule**: When working on the Armor, if a change is needed to the Forge to better create the product, the mode must be explicitly switched to Forge mode.
 
+### Forge-only development artifacts (not part of the Armor)
+
+`plans/` and `conductor/` are development artifacts of the Forge. They are working material for the people and agents who build VDE, not part of the student-facing Armor. In armor-only mode nothing reads or executes them: no Armor command sources a script from either directory. Three things refer to them, none of which the Armor needs: the Forge's Heavy Governance Gate (`bin/vde-enforce-uap.zsh`) checks `plans/` for stray ghost directories; the `vde prune` housekeeping command tidies old files under `plans/` and `plans/scripts/` and simply skips them when the directory does not exist; and the agent startup checklist reads `plans/session_handover_remediation.md`.
+
+Because they are not product code they are deliberately outside the audit's strict checks. In particular the zsh shibboleth check (`lib/vde-shibboleth`, enforced by `bin/vde-enforce-uap.zsh`) excludes `plans/` and `conductor/`, together with `docs/`, `bin/archive/`, `tests/docker/` and `.github/`. That exclusion list lives in `VDE_SHIBBOLETH_EXCLUDED_PREFIXES` in `lib/vde-shibboleth`.
+
 ---
 
 ## III. The Hierarchical Component Outline
