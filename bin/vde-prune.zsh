@@ -84,7 +84,7 @@ typeset -a DELETE_FILES MOVE_FILES
 DELETE_FILES=()
 MOVE_FILES=()
 
-for dir in plans plans/scripts; do
+for dir in plans plans/scripts docs/releases; do
     [[ -d "${VDE_ROOT}/${dir}" ]] || continue
     while IFS= read -r file; do
         [[ -n "$file" ]] || continue
@@ -94,7 +94,7 @@ for dir in plans plans/scripts; do
     done < <(find "${VDE_ROOT}/${dir}" -maxdepth 1 -type f -mmin +${minutes} -print)
 done
 
-for dir in plans plans/scripts; do
+for dir in plans plans/scripts docs/releases; do
     [[ -d "${VDE_ROOT}/${dir}" ]] || continue
     while IFS= read -r file; do
         [[ -n "$file" ]] || continue

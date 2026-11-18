@@ -105,9 +105,12 @@ else
 fi
 
 # Student data and historical releases are excluded from the destructive plan.
-test_start "dry run excludes logs, backup, and historical release files"
+test_start "dry run excludes logs and backup but plans historical release housekeeping"
+mkdir -p "${SCRATCH}/docs/releases"
+print -r -- 'historical release' > "${SCRATCH}/docs/releases/1.5.5.md"
+touch -d '10 days ago' "${SCRATCH}/docs/releases/1.5.5.md"
 out=$(VDE_ROOT_DIR="${SCRATCH}" zsh "${SCRIPT}" --dry-run 2>&1); rc=$?
-if [[ ${rc} -eq 0 && "${out}" != *"logs/old.log"* && "${out}" != *"backup/old-backup"* && "${out}" != *"docs/releases/1.5.5.md"* ]]; then
+if [[ ${rc} -eq 0 && "${out}" != *"logs/old.log"* && "${out}" != *"backup/old-backup"* && "${out}" == *"docs/releases/1.5.5.md"* ]]; then
     test_pass "protected student and release data excluded"
 else
     test_fail "protected data exclusion" "rc=${rc} out=${out}"
@@ -131,9 +134,11 @@ fi
 # Explicit apply remains destructive and reports it performed work.
 test_start "--apply --yes performs the planned delete on the scratch clone"
 rm -rf -- "${SCRATCH}/plans/archive/movable.md" "${SCRATCH}/plans/movable.md" "${SCRATCH}/plans/modified-move.md"
-touch -d '10 days ago' "${SCRATCH}/plans/old.md"
+mkdir -p "${SCRATCH}/docs/releases"
+print -r -- 'historical release' > "${SCRATCH}/docs/releases/1.5.5.md"
+touch -d '10 days ago' "${SCRATCH}/plans/old.md" "${SCRATCH}/docs/releases/1.5.5.md"
 out=$(VDE_ROOT_DIR="${SCRATCH}" zsh "${SCRIPT}" --apply --yes 2>&1); rc=$?
-if [[ ${rc} -eq 0 && ! -e "${SCRATCH}/plans/old.md" && -f "${SCRATCH}/logs/old.log" && -f "${SCRATCH}/backup/old-backup" && -f "${SCRATCH}/docs/releases/1.5.5.md" && -n "$(git -C "${SCRATCH}" status --porcelain)" ]]; then
+if [[ ${rc} -eq 0 && ! -e "${SCRATCH}/plans/old.md" && ! -e "${SCRATCH}/docs/releases/1.5.5.md" && -f "${SCRATCH}/logs/old.log" && -f "${SCRATCH}/backup/old-backup" && -n "$(git -C "${SCRATCH}" status --porcelain)" ]]; then
     test_pass "explicit apply worked"
 else
     test_fail "explicit apply" "rc=${rc} out=${out} status=$(git -C "${SCRATCH}" status --porcelain)"

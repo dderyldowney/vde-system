@@ -299,7 +299,8 @@ vde prune --apply --yes
 Supported timeframes are `7d` (default), `3d`, `24h`, and `12h`.
 
 - `vde prune` and `vde prune --dry-run` print a plan and change nothing.
-- `vde prune --apply` archives old plans and scripts and deletes old repository housekeeping files; it requires confirmation unless `--yes` is supplied.
+- `vde prune --apply` archives old plans, scripts, and release records and deletes old repository housekeeping files; it requires confirmation unless `--yes` is supplied. The current baseline release remains protected.
+- Student `logs/` and `backup/` data are excluded from pruning.
 - Use `vde clean` to free Docker build-cache disk space.
 
 ### The Great Quench
