@@ -417,6 +417,7 @@ Core Commands:
                   Docker's build cache is cleaned afterwards; --keep-cache keeps it.
   clean           Free Docker's build cache (removes no images). --dry-run previews the size.
                   Also: vde cleanup, vde cache clean.
+  prune           Repository housekeeping plan (dry-run by default); --apply --yes applies it; use clean for Docker disk space.
   start <name>    Ignite a Spoke or cluster (e.g., 'vde start default').
   stop <name>     Quench a running Spoke or cluster unit.
   restart <name>  Reset a Spoke or cluster unit.
