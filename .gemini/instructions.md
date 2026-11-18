@@ -9,6 +9,7 @@ MANDATE: In VDE workspace, follow instructions in AGENTS.md.
 
 - **Project state (read at session start):** `.gemini/STATE/MEMORY.md` (standing watch, baseline, recent Strikes) and `.gemini/STATE/session_handover.md` (current session goals and constraints).
 - **Project rules:** `.gemini/RULES/` (one file per rule family), `STYLE_GUIDE.md` (repository root) and `.gemini/instructions.md`.
+- **Procedures (the `/vde-*` commands and role skills named in these rules):** `.gemini/COMMANDS/` and `.gemini/SKILLS/`. They are not auto-discovered: read the named file and follow it.
 - **Plans and remediation:** `plans/` (Forge development artifacts; the active remediation plan is `plans/session_handover_remediation.md`). Retired plans are archived under `.gemini/PLANS/archive/`.
 - **Certified status record:** `PROJECT_STATUS.md` (repository root; part of the version-sync and Gospel mechanism).
 - **Tool-mandated entry points (stay at the repository root):** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (a symlink to `.gemini/instructions.md`) and `kilo.json`.

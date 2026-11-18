@@ -2,7 +2,7 @@
 <!-- @shared-law (Forge Component) -->
 # VDE Universal Agent Protocol (UAP)
 
-This document defines the **MANDATORY** development lifecycle and behavioral constraints for **ALL** AI agents (Gemini CLI and any sub-agents) interacting with the VDE workspace.
+This document defines the **MANDATORY** development lifecycle and behavioral constraints for **ALL** AI agents (Claude Code, Antigravity and any sub-agents) interacting with the VDE workspace.
 
 **There are NO EXCEPTIONS to these rules. Rationalizing bypasses is a critical failure.**
 
@@ -12,6 +12,7 @@ This document defines the **MANDATORY** development lifecycle and behavioral con
 
 - **Project state (read at session start):** `.gemini/STATE/MEMORY.md` (standing watch, baseline, recent Strikes) and `.gemini/STATE/session_handover.md` (current session goals and constraints).
 - **Project rules:** `.gemini/RULES/` (one file per rule family), `STYLE_GUIDE.md` (repository root) and `.gemini/instructions.md`.
+- **Procedures (the `/vde-*` commands and role skills named in these rules):** `.gemini/COMMANDS/` and `.gemini/SKILLS/`. They are not auto-discovered: read the named file and follow it.
 - **Plans and remediation:** `plans/` (Forge development artifacts; the active remediation plan is `plans/session_handover_remediation.md`). Retired plans are archived under `.gemini/PLANS/archive/`.
 - **Certified status record:** `PROJECT_STATUS.md` (repository root; part of the version-sync and Gospel mechanism).
 - **Tool-mandated entry points (stay at the repository root):** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (a symlink to `.gemini/instructions.md`) and `kilo.json`.
@@ -161,11 +162,13 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ## 5. Agent-Platform Mapping
 
-| Capability | Gemini CLI |
-|------------|------------|
-| Plan Mode | `enter_plan_mode` |
-| Sub-Agents | `generalist`, `codebase_investigator` |
-| Compliance | `/vde-enforce` |
-| Review | `/vde-review` |
+| Capability | Claude Code | Antigravity (`agy`) |
+|------------|-------------|---------------------|
+| Plan Mode | `EnterPlanMode` | `agy --mode plan` |
+| Sub-Agents | the `Agent` tool (for example the `worker` type) | `agy agents` lists the configured agents (this repository defines none) |
+| Compliance | `zsh bin/vde-enforce-uap.zsh` (procedure: `.gemini/COMMANDS/vde-enforce.md`) | `zsh bin/vde-enforce-uap.zsh` (procedure: `.gemini/COMMANDS/vde-enforce.md`) |
+| Review | the `/code-review` skill (procedure: `.gemini/COMMANDS/vde-review.md`) | follow `.gemini/COMMANDS/vde-review.md` |
 
-**The Agent Directory is the single source of truth. Rules apply regardless of which CLI is used.**
+**The `/vde-*` names used in these rules (`/vde-enforce`, `/vde-review`, `/vde-commit`, `/vde-plan` and the like) are procedures written in `.gemini/COMMANDS/`, and the role skills (`supervisor`, `reviewer` and the like) are written in `.gemini/SKILLS/`. They are not auto-discovered by any agent: verified 2026-11-18, Antigravity lists no skills or commands from this repository and Claude Code has none here. Read the named file and follow it.**
+
+**The Agent Directory is the single source of truth. Rules apply regardless of which agent platform is used.**
