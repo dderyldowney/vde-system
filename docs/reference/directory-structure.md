@@ -11,6 +11,8 @@ The complete directory layout of the **Sovereign Baseline (1.5.6)** installation
 
 ```
 VDE_ROOT/
+├── .agents/            # Antigravity native skills (symlinks to .gemini/SKILLS and .gemini/COMMANDS)
+│   └── skills/         # One folder per skill or /vde-* command, each holding a SKILL.md symlink
 ├── .cache/             # Persistent associative array caches and port registry
 ├── .docker-state/      # Real-time container state archives for status tracking
 ├── .gemini/            # Agent instructions, commands, and strike plans
@@ -47,6 +49,11 @@ VDE_ROOT/
 ---
 
 ## Key Directories Explained
+
+### `.agents/`
+A hidden folder that holds only `skills/`. Each `.agents/skills/<name>/SKILL.md` is a relative symlink to a skill document in `.gemini/SKILLS/` or a command document in `.gemini/COMMANDS/`, so Antigravity discovers them natively as skills and `/vde-*` slash commands. There are 19 such symlinks.
+
+Other local files under `.agents/` stay git-ignored. Every other agent reads the same documents by their `.gemini/` path.
 
 ### `.gemini/`
 Agent instructions, commands, rules, skills, and strike plans. Every agent (Claude, Gemini, Kilo and others) reads project state from `.gemini/STATE/` at session start:

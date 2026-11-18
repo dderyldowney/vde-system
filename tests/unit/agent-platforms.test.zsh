@@ -6,8 +6,10 @@ typeset _ZSH_PURE=${(%):-%x}
 # Unit tests for Signet #633: the agent rules describe the agent platforms that
 # actually exist (Claude Code and Antigravity's `agy`), not the retired Gemini
 # CLI, and they say plainly that .gemini/COMMANDS and .gemini/SKILLS are
-# procedures an agent is pointed at, not natively discovered commands/skills
-# (verified 2026-11-18: `agy` lists none of them, Claude has none).
+# procedures an agent is pointed at; Antigravity also discovers them natively
+# through .agents/skills (Signet #634, verified 2026-11-18 with `agy`), while
+# Claude Code and every other agent read the named file (Claude Code has no
+# commands or skills folder here).
 #
 # Read-only: it inspects tracked files and never writes anywhere.
 

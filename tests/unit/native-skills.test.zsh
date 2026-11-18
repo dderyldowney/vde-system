@@ -54,7 +54,9 @@ test_frontmatter_valid() {
         fi
         [[ "${line2}" == "# @"(forge|armor|shared-law)* ]] || { (( ++bad )); msg+="${rel}: line 2 is not a YAML comment tag | "; }
         [[ "$(frontmatter_field "${rel}" name)" == "${name}" ]] || { (( ++bad )); msg+="${rel}: name != ${name} | "; }
-        (( ${#desc} >= 20 )) || { (( ++bad )); msg+="${rel}: description missing/too short | "; }
+        # A closed double-quoted string of 20+ characters: a bare length check also accepts
+        # an unclosed quote, which is invalid YAML (Sourcery, PR #638).
+        [[ "${desc}" =~ '^"[^"]{20,}"$' ]] || { (( ++bad )); msg+="${rel}: description is not a closed double-quoted string of 20+ characters | "; }
         [[ -n "${close}" ]] || { (( ++bad )); msg+="${rel}: frontmatter never closed | "; }
     done
     (( bad == 0 )) && test_pass "all ${#CANON} files have valid frontmatter" || test_fail "all files have valid frontmatter" "${bad} problems: ${msg[1,300]}"
@@ -77,7 +79,9 @@ test_symlinks_resolve() {
         # everyone who clones the repository.
         git -C "${VDE_ROOT_DIR}" ls-files --error-unmatch -- ".agents/skills/${name}/SKILL.md" >/dev/null 2>&1 \
             || { (( ++bad )); msg+="${name}: link is not tracked by git | "; }
-        git -C "${VDE_ROOT_DIR}" check-ignore -q -- ".agents/skills/${name}/SKILL.md" 2>/dev/null \
+        # --no-index: by default git skips TRACKED paths, so a tracked link would look "not
+        # ignored" even when a rule matches it (Sourcery, PR #635/#638).
+        git -C "${VDE_ROOT_DIR}" check-ignore --no-index -q -- ".agents/skills/${name}/SKILL.md" 2>/dev/null \
             && { (( ++bad )); msg+="${name}: link is git-ignored | "; }
     done
     (( bad == 0 )) && test_pass "all ${#CANON} symlinks resolve to their canonical file" || test_fail "all symlinks resolve" "${bad} problems: ${msg[1,300]}"
@@ -127,13 +131,52 @@ test_docs_state_the_new_truth() {
 
 test_suite_is_in_the_ci_runner() {
     test_start "6: this suite is listed in tests/run-sovereign-tests.zsh (otherwise CI never runs it)"
-    grep -qF 'native-skills.test.zsh' "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" \
+    # Only an ACTIVE entry inside the UNIT_TESTS array counts (not a comment).
+    awk '/^UNIT_TESTS=\(/ { f = 1; next } f && /^\)/ { exit } f && !/^[[:space:]]*#/ { print }' "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" \
+        | grep -qF 'native-skills.test.zsh' \
         && test_pass "suite is in the CI runner list" \
         || test_fail "suite is in the CI runner list" "tests/run-sovereign-tests.zsh uses an explicit list without it"
 }
 
+test_new_vm_procedure_cannot_inject_a_shell_command() {
+    test_start "7: /vde-new-vm validates the VM name and never interpolates it into a double-quoted shell argument"
+    local f="${VDE_ROOT_DIR}/.gemini/COMMANDS/vde-new-vm.md"
+    # Sourcery (PR #638, High): the procedure ran `grep -i "<name>" ...`; a name such as
+    # $(cmd) satisfies "lowercase, no spaces" and would be executed by the shell. The
+    # procedure is now a one-slash-command away in Antigravity, so it must validate the
+    # name first and pass it as a fixed string in single quotes.
+    grep -qF '^[a-z][a-z0-9-]*$' "${f}" \
+        && test_pass "the procedure states the allowed name pattern ^[a-z][a-z0-9-]*\$" \
+        || test_fail "the procedure states the allowed name pattern" "no validation rule before the name reaches a shell"
+    grep -qE 'grep -iF -- '\''<name>'\''' "${f}" \
+        && test_pass "the conflict check passes the name as a single-quoted fixed string" \
+        || test_fail "the conflict check passes the name as a single-quoted fixed string" "expected: grep -iF -- '<name>' data/vm-types.json"
+    grep -qE 'grep -i "<name>"' "${f}" \
+        && test_fail "no double-quoted interpolation of the name remains" "grep -i \"<name>\" is still in the procedure" \
+        || test_pass "no double-quoted interpolation of the name remains"
+}
+
+test_directory_guide_lists_the_native_skills_folder() {
+    test_start "8: docs/reference/directory-structure.md lists .agents/skills"
+    grep -qF '.agents/skills' "${VDE_ROOT_DIR}/docs/reference/directory-structure.md" \
+        && test_pass "the directory guide lists .agents/skills" \
+        || test_fail "the directory guide lists .agents/skills" "the guide calls its tree complete but omits the new folder (Sourcery, PR #638)"
+}
+
+test_subagents_row_names_the_native_role_skills() {
+    test_start "9: section 5's Sub-Agents row tells Antigravity users the role skills exist natively"
+    local row
+    row="$(awk '/^## 5\. Agent-Platform Mapping/ { f = 1 } f && /^\| Sub-Agents/ { print; exit }' "${VDE_ROOT_DIR}/AGENTS.md")"
+    [[ "${row}" == *scout* && "${row}" == *security-auditor* && "${row}" == *reviewer* && "${row}" == *coder* ]] \
+        && test_pass "the Sub-Agents row names the scout, security-auditor, reviewer and coder skills" \
+        || test_fail "the Sub-Agents row names the scout, security-auditor, reviewer and coder skills" "row says: ${row[1,200]}"
+}
+
 test_canonical_files_exist
 test_frontmatter_valid
+test_new_vm_procedure_cannot_inject_a_shell_command
+test_directory_guide_lists_the_native_skills_folder
+test_subagents_row_names_the_native_role_skills
 test_symlinks_resolve
 test_no_orphans_or_collisions
 test_other_agents_unaffected

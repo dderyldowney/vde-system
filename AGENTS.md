@@ -165,13 +165,13 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 | Capability | Claude Code | Antigravity (`agy`) |
 |------------|-------------|---------------------|
 | Plan Mode | `EnterPlanMode` | `agy --mode plan` |
-| Sub-Agents | the `Agent` tool (for example the `worker` type) | `agy agents` lists the configured agents (this repository defines none) |
+| Sub-Agents | the `Agent` tool (for example the `worker` type) | the role skills `scout`, `security-auditor`, `reviewer` and `coder` are native skills (`.agents/skills`); `agy agents` lists configured agents (this repository defines none) |
 | Compliance | `zsh bin/vde-enforce-uap.zsh` (procedure: `.gemini/COMMANDS/vde-enforce.md`) | `/vde-enforce` (native skill) or `zsh bin/vde-enforce-uap.zsh` |
 | Review | the `/code-review` skill (procedure: `.gemini/COMMANDS/vde-review.md`) | `/vde-review` (native skill) |
 
 **Kilo** loads this rules file through `kilo.json` (which lists `.gemini/instructions.md`), so every rule here applies to it. No Kilo-specific plan, sub-agent, compliance or review mechanism is documented because none has been verified: Kilo is not installed in this environment. Follow the named procedure files like any other agent.
 
-**Where a platform has no sub-agent facility** (including Antigravity while `agy agents` lists none), do the role steps yourself, one after another, by reading and following the named file in `.gemini/SKILLS/` (for example `scout`, `security-auditor`, `reviewer`, `coder`). The Phase gates still apply and no step is skipped.
+**Where a platform has no sub-agent facility** (including Antigravity: its skills are single-agent procedures, not parallel sub-agents), do the role steps yourself, one after another, by reading and following the named file in `.gemini/SKILLS/` (for example `scout`, `security-auditor`, `reviewer`, `coder`). The Phase gates still apply and no step is skipped.
 
 **The `/vde-*` names used in these rules (`/vde-enforce`, `/vde-review`, `/vde-commit`, `/vde-plan` and the like) are procedures written in `.gemini/COMMANDS/`, and the role skills (`supervisor`, `reviewer` and the like) are written in `.gemini/SKILLS/`. Antigravity discovers them natively: each one is also a skill under `.agents/skills` (a symlink to the file), so the `/vde-*` names are real slash commands there. For every other agent they are not auto-discovered: read the named file and follow it. Verified 2026-11-18 with `agy` (the skills are listed and their descriptions are read through the links) and with Claude Code (each file is still read at its original path).**
 
