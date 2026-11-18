@@ -286,6 +286,146 @@ test_safe_move_tree_known_only_filters() {
 }
 
 # =============================================================================
+# TEST: _safe_move_tree maintains a global move counter (honesty for the summary)
+# =============================================================================
+# _SAFE_MOVE_COUNT is reset to 0 at the start of every call and incremented once
+# per successful move, so the caller can gate "relocated" messages on real moves.
+test_safe_move_tree_counts_moves() {
+    test_start "_safe_move_tree: _SAFE_MOVE_COUNT counts real moves and resets per call"
+
+    local tmp
+    tmp="$(mktemp -d "${TMPDIR:-/tmp}/vde-nuke-count.XXXXXX")"
+    local src="${tmp}/src" dst="${tmp}/dst"
+    local ok=1 why=""
+
+    # (a) two registered VMs movable, one unrelated dir -> exactly 2 moves.
+    mkdir -p "${src}/python" "${src}/rust" "${src}/mywork"
+    print -r -- "py"   > "${src}/python/main.py"
+    print -r -- "rs"   > "${src}/rust/main.rs"
+    print -r -- "MINE" > "${src}/mywork/notes.md"
+
+    _safe_move_tree "${src}" "${dst}" "true"
+    [[ "${_SAFE_MOVE_COUNT:-}" == 2 ]] \
+        || { ok=0; why="(a) expected count 2, got ${_SAFE_MOVE_COUNT:-unset}"; }
+
+    # (b) second call with nothing movable left in src -> counter reset to 0.
+    _safe_move_tree "${src}" "${dst}" "true"
+    [[ "${_SAFE_MOVE_COUNT:-}" == 0 ]] \
+        || { ok=0; why="${why:+${why}; }(b) expected reset to 0, got ${_SAFE_MOVE_COUNT:-unset}"; }
+
+    # (c) HONESTY CASE: dst already holds python/, src has only unrelated 'mywork'
+    #     with known_only=true -> nothing moves, so the count must be 0.
+    local tmp2="${tmp}/case-c"
+    local src2="${tmp2}/src" dst2="${tmp2}/dst"
+    mkdir -p "${src2}/mywork" "${dst2}/python"
+    print -r -- "MINE" > "${src2}/mywork/notes.md"
+    print -r -- "x"    > "${dst2}/python/x"
+
+    _safe_move_tree "${src2}" "${dst2}" "true"
+    [[ "${_SAFE_MOVE_COUNT:-}" == 0 ]] \
+        || { ok=0; why="${why:+${why}; }(c) nothing movable but count is ${_SAFE_MOVE_COUNT:-unset}"; }
+
+    rm -rf "${tmp}"
+
+    if (( ok )); then
+        test_pass "_safe_move_tree move counter"
+    else
+        test_fail "_safe_move_tree move counter" "${why}"
+    fi
+}
+
+# =============================================================================
+# TEST: a dangling symlink at the destination is an existing collision
+# =============================================================================
+# A broken symlink fails a plain -e test, so a naive collision check would let
+# the move replace it. It must be treated as occupied: left alone, src kept.
+test_safe_move_tree_never_replaces_dangling_symlink() {
+    test_start "_safe_move_tree: dangling symlink at destination is a collision, never replaced"
+
+    local tmp
+    tmp="$(mktemp -d "${TMPDIR:-/tmp}/vde-nuke-dangle.XXXXXX")"
+    local src="${tmp}/src" dst="${tmp}/dst"
+
+    mkdir -p "${src}" "${dst}"
+    print -r -- "MINE" > "${src}/report.txt"
+    ln -s "${tmp}/does-not-exist" "${dst}/report.txt"
+
+    unset _SAFE_MOVE_COUNT
+    _safe_move_tree "${src}" "${dst}"
+
+    local ok=1 why=""
+
+    # Destination symlink still present and still dangling (not replaced).
+    [[ -L "${dst}/report.txt" && ! -e "${dst}/report.txt" ]] \
+        || { ok=0; why="dangling destination symlink replaced or removed"; }
+
+    # Source file left in place with its content intact.
+    [[ -f "${src}/report.txt" && "$(<"${src}/report.txt")" == "MINE" ]] \
+        || { ok=0; why="${why:+${why}; }source report.txt moved or altered"; }
+
+    # The move must not have been counted.
+    [[ "${_SAFE_MOVE_COUNT:-0}" != 1 ]] \
+        || { ok=0; why="${why:+${why}; }counted a move that should not happen"; }
+
+    rm -rf "${tmp}"
+
+    if (( ok )); then
+        test_pass "_safe_move_tree dangling symlink collision"
+    else
+        test_fail "_safe_move_tree dangling symlink collision" "${why}"
+    fi
+}
+
+# =============================================================================
+# TEST: relocate flags in bin/nuke-vde are gated on the move counter
+# =============================================================================
+# Static wiring pin: PROJECTS_RELOCATED=true and DATA_RELOCATED=true may only be
+# set on a line that carries `_SAFE_MOVE_COUNT > 0` as its own condition. Also forbids combining those flags with an
+# `ls -A "${dest}/` listing check (that would again report on a non-empty dest
+# rather than on real moves).
+test_relocate_flags_gated_on_move_count() {
+    test_start "bin/nuke-vde: PROJECTS_RELOCATED / DATA_RELOCATED gated on _SAFE_MOVE_COUNT"
+
+    local -a exec_lines=()
+    local line stripped
+    setopt localoptions extendedglob
+    while IFS= read -r line || [[ -n "${line}" ]]; do
+        stripped="${line##[[:space:]]#}"
+        [[ -z "${stripped}" || "${stripped}" == \#* ]] && continue
+        exec_lines+=("${stripped}")
+    done < "${NUKE_SRC}"
+
+    local flag ok=1 why=""
+    local -i i n=${#exec_lines}
+    for flag in PROJECTS_RELOCATED=true DATA_RELOCATED=true; do
+        for (( i = 1; i <= n; i++ )); do
+            [[ "${exec_lines[i]}" == *"${flag}"* ]] || continue
+            # Same line only: the guard must be the flag's own condition, not a
+            # neighbouring statement that merely mentions the counter.
+            if [[ "${exec_lines[i]}" != *'_SAFE_MOVE_COUNT > 0'*"${flag}"* ]]; then
+                ok=0
+                why="${why:+${why}; }${flag} is ungated (needs '_SAFE_MOVE_COUNT > 0' as its own condition on the same line)"
+            fi
+        done
+    done
+
+    for (( i = 1; i <= n; i++ )); do
+        line="${exec_lines[i]}"
+        if [[ "${line}" == *'ls -A "${dest}/'* ]] \
+            && [[ "${line}" == *PROJECTS_RELOCATED=true* || "${line}" == *DATA_RELOCATED=true* ]]; then
+            ok=0
+            why="${why:+${why}; }relocate flag combined with ls -A dest check: ${line}"
+        fi
+    done
+
+    if (( ok )); then
+        test_pass "relocate flags gated on _SAFE_MOVE_COUNT"
+    else
+        test_fail "relocate flags gated on _SAFE_MOVE_COUNT" "${why}"
+    fi
+}
+
+# =============================================================================
 # Run All Tests
 # =============================================================================
 echo "=============================================="
@@ -294,6 +434,9 @@ echo "=============================================="
 
 test_safe_move_tree_non_destructive
 test_safe_move_tree_known_only_filters
+test_safe_move_tree_counts_moves
+test_safe_move_tree_never_replaces_dangling_symlink
+test_relocate_flags_gated_on_move_count
 test_dirs_to_remove_excludes_student_data
 test_dirs_guard_detects_all_forms
 test_dirs_extraction_shapes

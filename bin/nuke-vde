@@ -481,6 +481,7 @@ remove_vde_directories() {
 # owns only its <base>/<alias> subfolders, so every other entry is left exactly
 # in place -- never moved, deleted, or overwritten. Mirrors bin/vde-set-projects-dir.
 _safe_move_tree() {
+    typeset -gi _SAFE_MOVE_COUNT=0 # counts moves actually performed so callers report honestly
     local src="${1}" dst="${2}" known_only="${3:-false}"
     [[ -d "${src}" ]] || return 0
     [[ -n "$(ls -A "${src}" 2>/dev/null)" ]] || return 0
@@ -497,11 +498,13 @@ _safe_move_tree() {
             continue
         fi
         target="${dst}/${name}"
-        if [[ -e "${target}" ]]; then
+        # -L also catches a dangling symlink that -e misses (mv of a file would replace it).
+        if [[ -e "${target}" || -L "${target}" ]]; then
             print_warning "Skipping '${name}': already exists at ${dst} (left in place)."
             continue
         fi
         if mv "${child}" "${target}" 2>/dev/null; then
+            (( ++_SAFE_MOVE_COUNT ))
             print_success "Moved '${name}' -> ${dst}/"
         else
             print_warning "Could not move '${name}'; left in place."
@@ -593,9 +596,8 @@ offer_relocate_before_nuke() {
         # Move ONLY VDE-owned per-alias subfolders; the base may be shared with the
         # student's own unrelated repos, which must never be touched.
         _safe_move_tree "${projects_base}" "${dest}/projects" "true"
-        # Only claim a relocate if something actually landed at the destination.
-        [[ -d "${dest}/projects" && -n "$(ls -A "${dest}/projects" 2>/dev/null)" ]] \
-            && PROJECTS_RELOCATED=true
+        # Set only when THIS call actually moved something (a merely non-empty destination proves nothing).
+        (( _SAFE_MOVE_COUNT > 0 )) && PROJECTS_RELOCATED=true
     else
         print_warning "VM registry unavailable (vm-common failed to load); NOT moving your"
         print_warning "projects. They stay at ${projects_base} (nothing was touched or stranded)."
@@ -603,7 +605,7 @@ offer_relocate_before_nuke() {
 
     # The data base is VDE's own in-tree service-volume store; move it wholesale.
     _safe_move_tree "${data_base}" "${dest}/data"
-    [[ -d "${dest}/data" && -n "$(ls -A "${dest}/data" 2>/dev/null)" ]] && DATA_RELOCATED=true
+    (( _SAFE_MOVE_COUNT > 0 )) && DATA_RELOCATED=true
 
     if [[ "${PROJECTS_RELOCATED}" = "true" || "${DATA_RELOCATED}" = "true" ]]; then
         RELOCATE_DEST="${dest}"
