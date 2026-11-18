@@ -63,14 +63,22 @@ if [[ -n "${staged_baseline}" ]]; then
         exit 1
     fi
     source "${VDE_ROOT_DIR}/lib/vde-shibboleth"
+    if ! typeset -f vde_shib_staged_baseline_additions >/dev/null; then
+        echo -e "\033[0;31m[ERROR] Rule C: lib/vde-shibboleth did not define its functions, so the shrink-only baseline cannot be verified.\033[0m"
+        exit 1
+    fi
     added="$(vde_shib_staged_baseline_additions "${VDE_ROOT_DIR}" || true)"
     if [[ -n "${added}" ]]; then
         # Removed entries are the '-' lines of the hunks (skips the ---/+++ file headers).
         removed="$(git diff --cached --no-color -U0 -- "${baseline_rel}" | sed -n '/^@@/,$ s/^-//p' || true)"
         echo -e "\033[0;31m[ERROR] Rule C: the shibboleth baseline is shrink-only.\033[0m"
-        print -r -- "  Added to ${baseline_rel}:"
+        print -r -- "  Not allowed in ${baseline_rel}:"
         while IFS= read -r line; do
-            print -r -- "    + ${line}"
+            if [[ "${line}" == baseline\ file\ deleted* ]]; then
+                print -r -- "    ${line}"
+            else
+                print -r -- "    + ${line}"
+            fi
         done <<< "${added}"
         if [[ -n "${removed}" ]]; then
             print -r -- "  Removed from ${baseline_rel} (allowed):"

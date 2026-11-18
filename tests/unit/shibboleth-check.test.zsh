@@ -386,7 +386,9 @@ test_case16_baseline_is_not_git_ignored() {
     # Use the exit status, not the -v text: -v also prints a matching `!` exception
     # (a rule that UN-ignores the file). rc 0 = ignored, rc 1 = not ignored.
     local rel="${VDE_SHIBBOLETH_BASELINE_REL}" rc=0
-    git -C "${VDE_ROOT_DIR}" check-ignore -q -- "${rel}" 2>/dev/null || rc=$?
+    # --no-index: by default git skips TRACKED paths, so a tracked baseline would look
+    # "not ignored" even when a rule matches it (Sourcery, PR #635).
+    git -C "${VDE_ROOT_DIR}" check-ignore --no-index -q -- "${rel}" 2>/dev/null || rc=$?
     if (( rc == 1 )); then
         test_pass "case16 baseline path is not git-ignored"
     else
@@ -584,6 +586,254 @@ test_case26_precommit_fails_closed_without_the_lib() {
     expect_eq "case26 missing lib blocks the commit (rc)" "$HOOK_RC" 1
 }
 
+# --- Sourcery review of PR #635 (each case failed against the code it reviewed) ---
+
+test_case27_special_characters_in_filenames() {
+    test_start "27: a tracked zsh file whose name git would QUOTE (tab, backslash) is still swept"
+    local r
+    r="$(new_repo c27)"
+    mkdir -p "${r}/lib"
+    printf '#!/usr/bin/env zsh\necho a\necho b\n' > "${r}/lib/tab"$'\t'"name.zsh"
+    printf '#!/usr/bin/env zsh\necho a\necho b\n' > "${r}/lib/back\\slash.zsh"
+    stage_all "${r}"
+    sweep_into "${r}"
+    [[ "${SWEEP_OUT}" == *"MISSING lib/tab"$'\t'"name.zsh"* ]] && test_pass "case27 tab in the name is reported" || test_fail "case27 tab in the name is reported" "sweep said: [${SWEEP_OUT}]"
+    [[ "${SWEEP_OUT}" == *'MISSING lib/back\slash.zsh'* ]] && test_pass "case27 backslash in the name is reported" || test_fail "case27 backslash in the name is reported" "sweep said: [${SWEEP_OUT}]"
+}
+
+test_case28_deleted_baseline_is_growth() {
+    test_start "28: deleting the baseline (hook bypassed) is reported against the base ref"
+    local r out rc
+    r="$(make_baseline_repo c28)"
+    git -C "${r}" branch -M base
+    git -C "${r}" checkout -q -b feat
+    git -C "${r}" rm -q docs/governance/shibboleth-baseline.txt
+    git -C "${r}" -c user.email=t@t -c user.name=t commit -qm "delete baseline"
+    out="$(vde_shib_baseline_growth "${r}" base 2>&1)"; rc=$?
+    expect_eq "case28 deleted baseline rc" "$rc" 1
+    [[ "${out}" == *deleted* ]] && test_pass "case28 message says deleted" || test_fail "case28 message says deleted" "got [${out}]"
+}
+
+test_case29_include_guard_cannot_be_forged_by_the_environment() {
+    test_start "29: an exported _VDE_SHIBBOLETH_LOADED=1 must not stop the library from defining its functions"
+    local out
+    out="$(env _VDE_SHIBBOLETH_LOADED=1 zsh -c "source '${VDE_ROOT_DIR}/lib/vde-shibboleth'; typeset -f vde_shib_sweep >/dev/null && print DEFINED || print MISSING" 2>&1)"
+    expect_eq "case29 functions defined despite the forged guard" "$out" "DEFINED"
+}
+
+test_case30_ignore_rule_is_tested_even_when_tracked() {
+    test_start "30: the ignore check ignores TRACKED status, otherwise a tracked file hides a matching ignore rule"
+    local r rc_default=0 rc_noindex=0
+    r="$(new_repo c30)"
+    print -r -- '*.txt' > "${r}/.gitignore"
+    print -r -- x > "${r}/a.txt"
+    git -C "${r}" add -f a.txt .gitignore
+    git -C "${r}" check-ignore -q -- a.txt 2>/dev/null || rc_default=$?
+    git -C "${r}" check-ignore --no-index -q -- a.txt 2>/dev/null || rc_noindex=$?
+    expect_eq "case30 default check-ignore skips the tracked file (rc 1: the blind spot)" "$rc_default" 1
+    expect_eq "case30 --no-index sees the matching rule (rc 0)" "$rc_noindex" 0
+    # and case 16 must use the sensitive form (look only inside case 16's own body,
+    # otherwise this very test would satisfy the pin by mentioning the flag)
+    awk '/^test_case16_baseline_is_not_git_ignored\(\)/ { f = 1 } f { print } f && /^}/ { exit }' "${VDE_ROOT_DIR}/tests/unit/shibboleth-check.test.zsh" \
+        | grep -qE 'check-ignore --no-index -q' \
+        && test_pass "case30 case 16 uses check-ignore --no-index" \
+        || test_fail "case30 case 16 uses check-ignore --no-index" "case 16 still uses the default form that skips tracked files"
+}
+
+test_case31_base_branch_follows_the_configured_anvil() {
+    test_start "31: the enforcer's default base ref follows VDE_ANVIL_BRANCH, not a hard-coded develop"
+    local l; l="$(grep -m1 -E 'shib_base=' "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh")"
+    [[ "${l}" == *VDE_ANVIL_BRANCH* ]] && test_pass "default base ref uses VDE_ANVIL_BRANCH" || test_fail "default base ref uses VDE_ANVIL_BRANCH" "line is: ${l}"
+}
+
+test_case32_charter_states_what_the_enforcer_really_does_to_plans() {
+    test_start "32: the Sovereign Charter says the enforcer DELETES stray plans/ subfolders (it runs rm -rf there)"
+    local enf="${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" ch="${VDE_ROOT_DIR}/docs/governance/sovereign-charter.md" sub
+    # only the Forge-only subsection counts (the word "delete" appears elsewhere in the charter)
+    sub="$(awk '/^### Forge-only development artifacts/ { f = 1; next } f && /^(##|###) / { exit } f { print }' "${ch}")"
+    if grep -qE 'rm -rf "\$\{item\}"' "${enf}" && ! print -r -- "${sub}" | grep -qiE 'delet'; then
+        test_fail "charter describes the plans/ ghost-zone deletion" "the enforcer deletes plans/<subdir> (other than scripts and archive) but the charter only says it 'checks'"
+    else
+        test_pass "charter describes the plans/ ghost-zone deletion"
+    fi
+}
+
+# End to end: the REAL enforcer in a throwaway copy of the tracked tree. Only the
+# shibboleth lines are asserted (the other audits are not under test here).
+make_forge() {  # make_forge NAME -> prints a git repo holding a copy of this tree, branch "base"
+    local f="${TMP_ROOT}/$1"
+    mkdir -p "${f}"
+    ( cd "${VDE_ROOT_DIR}" && git ls-files -z | xargs -0 cp -a --parents -t "${f}" 2>/dev/null )
+    git -C "${f}" init -q
+    git -C "${f}" add -A
+    git -C "${f}" -c user.email=t@t -c user.name=t commit -qm base
+    git -C "${f}" branch -M base
+    print -r -- "${f}"
+}
+
+run_enforcer_in() {  # run_enforcer_in FORGE BASE_REF -> sets ENF_OUT
+    ENF_OUT="$(cd "$1" && VDE_SHIB_BASE_REF="$2" zsh bin/vde-enforce-uap.zsh 2>&1 | sed 's/\x1b\[[0-9;]*m//g')"
+}
+
+test_case33_enforcer_end_to_end() {
+    test_start "33: the REAL enforcer, end to end in a throwaway copy of the tree"
+    local f
+    f="$(make_forge e2e)"
+    run_enforcer_in "${f}" base
+    [[ "${ENF_OUT}" == *"Shibboleth sweep clean"* && "${ENF_OUT}" != *"[UAP-ERROR] Shibboleth"* ]] \
+        && test_pass "case33a unmodified tree: sweep clean, no shibboleth error" \
+        || test_fail "case33a unmodified tree: sweep clean, no shibboleth error" "$(print -r -- "${ENF_OUT}" | grep -i shibboleth | head -3)"
+    # new unlisted zsh file without the literal
+    printf '#!/usr/bin/env zsh\n# @forge (t)\necho hi\n' > "${f}/lib/zz-newfile"
+    git -C "${f}" add -A
+    run_enforcer_in "${f}" base
+    [[ "${ENF_OUT}" == *"[UAP-ERROR] Shibboleth MISSING in lib/zz-newfile"* ]] \
+        && test_pass "case33b a new unlisted file is reported by the enforcer" \
+        || test_fail "case33b a new unlisted file is reported by the enforcer" "$(print -r -- "${ENF_OUT}" | grep -i shibboleth | head -3)"
+    git -C "${f}" reset -q --hard
+    # base ref unavailable: the check must FAIL CLOSED, not skip silently
+    run_enforcer_in "${f}" no-such-ref
+    [[ "${ENF_OUT}" == *"[UAP-ERROR] Shibboleth baseline growth could not be checked"* ]] \
+        && test_pass "case33c an unavailable base ref is an error, not a skip" \
+        || test_fail "case33c an unavailable base ref is an error, not a skip" "$(print -r -- "${ENF_OUT}" | grep -i shibboleth | head -3)"
+    # a commit that grew the baseline (hook bypassed)
+    git -C "${f}" checkout -q -b feat
+    printf '#!/usr/bin/env zsh\n# @forge (t)\necho hi\n' > "${f}/lib/zz-grown"
+    print -r -- 'lib/zz-grown' >> "${f}/docs/governance/shibboleth-baseline.txt"
+    git -C "${f}" add -A
+    git -C "${f}" -c user.email=t@t -c user.name=t commit -qm grow
+    run_enforcer_in "${f}" base
+    [[ "${ENF_OUT}" == *"[UAP-ERROR] Shibboleth baseline GREW"* ]] \
+        && test_pass "case33d a baseline grown by a commit is reported" \
+        || test_fail "case33d a baseline grown by a commit is reported" "$(print -r -- "${ENF_OUT}" | grep -i shibboleth | head -3)"
+}
+
+# --- second review of the hardening (each case failed against the code it reviewed) ---
+
+test_case34_an_unreadable_index_is_an_error_not_clean() {
+    test_start "34: a corrupt git index makes the sweep fail (rc 2), it must not report clean"
+    local r out rc
+    r="$(new_repo c34)"
+    mk_zsh "${r}/lib/a.zsh" 3
+    stage_all "${r}"
+    head -c 10 "${r}/.git/index" > "${r}/.git/index.cut" && mv -f "${r}/.git/index.cut" "${r}/.git/index"
+    out="$(vde_shib_sweep "${r}" 2>&1)"; rc=$?
+    expect_eq "case34 corrupt index rc" "$rc" 2
+}
+
+test_case35_literal_on_an_unterminated_last_line() {
+    test_start "35: the literal on a final line WITHOUT a trailing newline still counts"
+    local r
+    r="$(new_repo c35)"
+    mkdir -p "${r}/lib"
+    printf '#!/usr/bin/env zsh\necho a\n%s' "${SHIB_LIT}" > "${r}/lib/nonl.zsh"
+    stage_all "${r}"
+    sweep_into "${r}"
+    [[ "${SWEEP_OUT}" != *"MISSING lib/nonl.zsh"* ]] && test_pass "case35 unterminated last line is accepted" || test_fail "case35 unterminated last line is accepted" "sweep said: [${SWEEP_OUT}]"
+}
+
+test_case36_an_unreadable_zsh_file_is_reported() {
+    test_start "36: a tracked *.zsh file that cannot be read is reported, not silently skipped"
+    if (( EUID == 0 )); then echo "[SKIP] running as root: chmod 000 does not stop root from reading"; return 0; fi
+    local r
+    r="$(new_repo c36)"
+    mk_zsh "${r}/lib/locked.zsh" 3
+    stage_all "${r}"
+    chmod 000 "${r}/lib/locked.zsh"
+    sweep_into "${r}"
+    chmod 644 "${r}/lib/locked.zsh"
+    [[ "${SWEEP_OUT}" == *"UNREADABLE lib/locked.zsh"* ]] && test_pass "case36 unreadable file is reported" || test_fail "case36 unreadable file is reported" "sweep said: [${SWEEP_OUT}] rc=${SWEEP_RC}"
+}
+
+test_case37_fetching_the_base_ref_never_truncates_history() {
+    test_start "37: ensuring the base ref keeps a FULL clone full and a SHALLOW clone shallow"
+    local o w full shallow
+    o="${TMP_ROOT}/c37-origin.git"
+    w="$(new_repo c37-work)"
+    git init -q --bare "${o}"
+    # The bare origin's HEAD must name the only branch we push, otherwise a clone checks
+    # out an unborn `main` and holds nothing to measure.
+    git --git-dir="${o}" symbolic-ref HEAD refs/heads/develop
+    mk_zsh "${w}/lib/a.zsh" 3
+    git -C "${w}" add -A
+    git -C "${w}" -c user.email=t@t -c user.name=t commit -qm one
+    echo 'echo more' >> "${w}/lib/a.zsh"
+    git -C "${w}" -c user.email=t@t -c user.name=t commit -qam two
+    echo 'echo more2' >> "${w}/lib/a.zsh"
+    git -C "${w}" -c user.email=t@t -c user.name=t commit -qam three
+    git -C "${w}" branch -M develop
+    git -C "${w}" remote add origin "file://${o}"
+    git -C "${w}" push -q origin develop
+    # (a) full clone, remote-tracking ref removed
+    full="${TMP_ROOT}/c37-full"
+    git clone -q "file://${o}" "${full}"
+    git -C "${full}" update-ref -d refs/remotes/origin/develop
+    vde_shib_ensure_base_ref "${full}" origin/develop; local rc_full=$?
+    expect_eq "case37a base ref resolves (rc)" "$rc_full" 0
+    expect_eq "case37a a full clone stays full" "$(git -C "${full}" rev-parse --is-shallow-repository)" "false"
+    expect_eq "case37a all 3 commits are still there" "$(git -C "${full}" rev-list --count HEAD)" "3"
+    # (b) shallow clone stays shallow (CI)
+    shallow="${TMP_ROOT}/c37-shallow"
+    git clone -q --depth=1 "file://${o}" "${shallow}"
+    git -C "${shallow}" update-ref -d refs/remotes/origin/develop
+    vde_shib_ensure_base_ref "${shallow}" origin/develop; local rc_sh=$?
+    expect_eq "case37b base ref resolves in a shallow clone (rc)" "$rc_sh" 0
+    expect_eq "case37b a shallow clone stays shallow" "$(git -C "${shallow}" rev-parse --is-shallow-repository)" "true"
+    # (c) a ref that cannot exist is rc 3
+    vde_shib_ensure_base_ref "${full}" origin/no-such-branch; local rc_missing=$?
+    expect_eq "case37c a missing ref is rc 3" "$rc_missing" 3
+}
+
+test_case38_enforcer_messages_keep_backslashes_in_file_names() {
+    test_start "38: the enforcer prints a file name containing a backslash exactly as it is (no echo -e mangling)"
+    local f
+    f="$(make_forge e2e-bs)"
+    printf '#!/usr/bin/env zsh\n# @forge (t)\necho hi\n' > "${f}/lib/zz-b\\nz.zsh"
+    git -C "${f}" add -A
+    run_enforcer_in "${f}" base
+    [[ "${ENF_OUT}" == *'Shibboleth MISSING in lib/zz-b\nz.zsh'* ]] \
+        && test_pass "case38 backslash-n in a file name is printed literally" \
+        || test_fail "case38 backslash-n in a file name is printed literally" "$(print -r -- "${ENF_OUT}" | grep -i 'zz-b' | head -2)"
+}
+
+# --- third review (each case failed against the code it reviewed) ---
+
+test_case39_a_stale_branch_is_not_blamed_for_the_base_shrinking() {
+    test_start "39: growth is measured from the MERGE-BASE, so a branch cut before the base shrank is not reported as growth"
+    local r out rc
+    r="$(make_baseline_repo c39)"
+    git -C "${r}" branch -M base
+    git -C "${r}" checkout -q -b feat
+    mk_zsh "${r}/lib/unrelated.zsh" 3 3
+    git -C "${r}" add -A
+    git -C "${r}" -c user.email=t@t -c user.name=t commit -qm "unrelated work on the feature branch"
+    git -C "${r}" checkout -q base
+    print -rl -- lib/b.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add -A
+    git -C "${r}" -c user.email=t@t -c user.name=t commit -qm "base shrinks the baseline (lib/a.zsh gained the line)"
+    git -C "${r}" checkout -q feat
+    out="$(vde_shib_baseline_growth "${r}" base 2>&1)"; rc=$?
+    expect_eq "case39 an untouched stale baseline is not growth (rc)" "$rc" 0
+    expect_eq "case39 nothing is reported" "$out" ""
+}
+
+test_case40_precommit_does_not_call_a_deletion_an_addition() {
+    test_start "40: the pre-commit message for a deleted baseline must not say a line was ADDED"
+    local r
+    r="$(make_baseline_repo c40)"
+    git -C "${r}" rm -q docs/governance/shibboleth-baseline.txt
+    run_hook_in "${r}"
+    expect_eq "case40 deleting the baseline is blocked (rc)" "$HOOK_RC" 1
+    [[ "${HOOK_OUT}" != *"Added to"* ]] && test_pass "case40 the message does not claim an addition" || test_fail "case40 the message does not claim an addition" "hook said: [${HOOK_OUT}]"
+}
+
+test_case41_the_base_fetch_never_prompts() {
+    test_start "41: the best-effort base fetch cannot hang on a credential prompt"
+    awk '/^vde_shib_ensure_base_ref\(\)/ { f = 1 } f { print } f && /^}/ { exit }' "${VDE_ROOT_DIR}/lib/vde-shibboleth" | grep -q 'GIT_TERMINAL_PROMPT=0' \
+        && test_pass "case41 the fetch sets GIT_TERMINAL_PROMPT=0" \
+        || test_fail "case41 the fetch sets GIT_TERMINAL_PROMPT=0" "a pre-push hook could block on a prompt"
+}
+
 # ---------------------------------------------------------------------------
 # Run
 # ---------------------------------------------------------------------------
@@ -614,6 +864,21 @@ test_case23_dot_zsh_without_shebang_is_in_scope
 test_case24_stale_line_survives_spaces_in_paths
 test_case25_suite_is_wired_into_the_ci_runner
 test_case26_precommit_fails_closed_without_the_lib
+test_case27_special_characters_in_filenames
+test_case28_deleted_baseline_is_growth
+test_case29_include_guard_cannot_be_forged_by_the_environment
+test_case30_ignore_rule_is_tested_even_when_tracked
+test_case31_base_branch_follows_the_configured_anvil
+test_case32_charter_states_what_the_enforcer_really_does_to_plans
+test_case33_enforcer_end_to_end
+test_case34_an_unreadable_index_is_an_error_not_clean
+test_case35_literal_on_an_unterminated_last_line
+test_case36_an_unreadable_zsh_file_is_reported
+test_case37_fetching_the_base_ref_never_truncates_history
+test_case38_enforcer_messages_keep_backslashes_in_file_names
+test_case39_a_stale_branch_is_not_blamed_for_the_base_shrinking
+test_case40_precommit_does_not_call_a_deletion_an_addition
+test_case41_the_base_fetch_never_prompts
 
 echo ""
 echo "Results: ${TESTS_PASSED} passed, ${TESTS_FAILED} failed"
