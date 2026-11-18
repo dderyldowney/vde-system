@@ -363,9 +363,9 @@ test_safe_move_tree_never_replaces_dangling_symlink() {
     [[ -f "${src}/report.txt" && "$(<"${src}/report.txt")" == "MINE" ]] \
         || { ok=0; why="${why:+${why}; }source report.txt moved or altered"; }
 
-    # The move must not have been counted.
-    [[ "${_SAFE_MOVE_COUNT:-0}" != 1 ]] \
-        || { ok=0; why="${why:+${why}; }counted a move that should not happen"; }
+    # Nothing moved, so nothing may be counted (exactly 0, not merely "not 1").
+    [[ "${_SAFE_MOVE_COUNT:-unset}" == 0 ]] \
+        || { ok=0; why="${why:+${why}; }expected count 0, got ${_SAFE_MOVE_COUNT:-unset}"; }
 
     rm -rf "${tmp}"
 
@@ -398,15 +398,23 @@ test_relocate_flags_gated_on_move_count() {
     local flag ok=1 why=""
     local -i i n=${#exec_lines}
     for flag in PROJECTS_RELOCATED=true DATA_RELOCATED=true; do
+        local -i found=0
         for (( i = 1; i <= n; i++ )); do
             [[ "${exec_lines[i]}" == *"${flag}"* ]] || continue
-            # Same line only: the guard must be the flag's own condition, not a
-            # neighbouring statement that merely mentions the counter.
-            if [[ "${exec_lines[i]}" != *'_SAFE_MOVE_COUNT > 0'*"${flag}"* ]]; then
+            (( ++found ))
+            # The whole statement must be exactly `(( _SAFE_MOVE_COUNT > 0 )) && FLAG`:
+            # same line, `&&` (an `||` would invert the guard), nothing else wrapped
+            # around it.
+            if [[ "${exec_lines[i]}" != '(( _SAFE_MOVE_COUNT > 0 )) && '"${flag}" ]]; then
                 ok=0
-                why="${why:+${why}; }${flag} is ungated (needs '_SAFE_MOVE_COUNT > 0' as its own condition on the same line)"
+                why="${why:+${why}; }${flag} is not exactly '(( _SAFE_MOVE_COUNT > 0 )) && ${flag}': ${exec_lines[i]}"
             fi
         done
+        # An assignment that vanished must fail the pin, not silently pass it.
+        if (( found == 0 )); then
+            ok=0
+            why="${why:+${why}; }${flag} assignment not found in bin/nuke-vde"
+        fi
     done
 
     for (( i = 1; i <= n; i++ )); do
@@ -426,6 +434,109 @@ test_relocate_flags_gated_on_move_count() {
 }
 
 # =============================================================================
+# TEST: offer_relocate_before_nuke itself reports only what really moved
+# =============================================================================
+# The counter and the wiring pin prove the pieces; this runs the REAL function
+# end to end. offer_relocate_before_nuke returns at once without a terminal
+# (`[[ -t 0 ]] || return 0`), so the harness runs it under `script`, which gives
+# it a pty, and answers its two prompts (relocate? / where to?) from stdin.
+# The function bodies are extracted from bin/nuke-vde, never copied, so the test
+# cannot drift from the code. The forge is a mktemp dir, never the real VDE root.
+# Sets OFFER_OUT (pty output, CRs stripped) and OFFER_RESULT ("projects=.. data=.. dest=..").
+_run_offer_relocate() {  # $1=forge root  $2=destination to type at the prompt
+    local forge="${1}" dest="${2}" harness="${1}.harness.zsh" fn
+    {
+        print -r -- "typeset -g VDE_ROOT_DIR='${forge}'"
+        print -r -- "source '${VDE_ROOT_DIR}/lib/vde-shell-compat'"
+        print -r -- "source '${VDE_ROOT_DIR}/lib/vde-constants'"
+        print -r -- "source '${VDE_ROOT_DIR}/lib/vde-errors'"
+        print -r -- "source '${VDE_ROOT_DIR}/lib/vde-path-utils'"
+        print -r -- "typeset -g DRY_RUN=false SKIP_CONFIRM=false PROJECTS_RELOCATED=false DATA_RELOCATED=false RELOCATE_DEST=''"
+        # Same stub as the rest of this file: only python/rust are VDE-owned.
+        print -r -- 'is_known_vm() { [[ "${1}" == python || "${1}" == rust ]] }'
+        for fn in print_warning print_success print_info ask_yes_no _safe_move_tree offer_relocate_before_nuke; do
+            awk "/^${fn}\\(\\) \\{/,/^\\}/" "${NUKE_SRC}"
+        done
+        print -r -- 'offer_relocate_before_nuke'
+        print -r -- 'print -r -- "RESULT projects=${PROJECTS_RELOCATED} data=${DATA_RELOCATED} dest=${RELOCATE_DEST}"'
+    } > "${harness}"
+    OFFER_OUT="$(printf 'y\n%s\n' "${dest}" | env -u VDE_PROJECTS_DIR script -qec "zsh '${harness}'" /dev/null 2>&1 | tr -d '\r')"
+    OFFER_RESULT="$(print -r -- "${OFFER_OUT}" | awk '/^RESULT /{sub(/^RESULT /,""); print}')"
+}
+
+test_offer_relocate_nothing_moved_reports_nothing() {
+    test_start "offer_relocate_before_nuke: pre-populated destination + nothing movable => 'Nothing needed moving'"
+    if ! command -v script >/dev/null 2>&1; then
+        echo "[SKIP] 'script' (util-linux) not installed; cannot give the function a pty"
+        return 0
+    fi
+    local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/vde-nuke-offer.XXXXXX")"
+    local forge="${tmp}/forge" dest="${tmp}/safe"
+    # Inside the forge: only the student's unrelated dir (not a VDE alias) and an
+    # EMPTY data tree, so there is genuinely nothing for nuke to move.
+    mkdir -p "${forge}/projects/mywork" "${forge}/data"
+    print -r -- "MINE" > "${forge}/projects/mywork/notes.md"
+    # The trap: the destination is already non-empty, which the old code mistook
+    # for "something moved".
+    mkdir -p "${dest}/projects/x"
+    print -r -- "pre-existing" > "${dest}/projects/x/f"
+
+    _run_offer_relocate "${forge}" "${dest}"
+
+    local ok=1 why=""
+    [[ "${OFFER_RESULT}" == "projects=false data=false dest=" ]] \
+        || { ok=0; why="flags/dest wrong: '${OFFER_RESULT:-<no RESULT line; harness did not run>}'"; }
+    [[ "${OFFER_OUT}" == *"Nothing needed moving"* ]] \
+        || { ok=0; why="${why:+${why}; }missing 'Nothing needed moving'"; }
+    [[ "${OFFER_OUT}" != *"Your work was moved under"* ]] \
+        || { ok=0; why="${why:+${why}; }claimed 'Your work was moved under' though nothing moved"; }
+    # Nothing of the student's was disturbed.
+    [[ "$(<"${forge}/projects/mywork/notes.md")" == "MINE" && -f "${dest}/projects/x/f" ]] \
+        || { ok=0; why="${why:+${why}; }a student file was disturbed"; }
+
+    rm -rf "${tmp}"
+    if (( ok )); then
+        test_pass "offer_relocate nothing-moved honesty"
+    else
+        test_fail "offer_relocate nothing-moved honesty" "${why}"
+    fi
+}
+
+# Positive control: the same harness must SEE a real relocate, otherwise the test
+# above could be passing only because the harness never reaches the move.
+test_offer_relocate_real_move_is_reported() {
+    test_start "offer_relocate_before_nuke: a registered alias really moves => reported with its destination"
+    if ! command -v script >/dev/null 2>&1; then
+        echo "[SKIP] 'script' (util-linux) not installed; cannot give the function a pty"
+        return 0
+    fi
+    local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/vde-nuke-offer.XXXXXX")"
+    local forge="${tmp}/forge" dest="${tmp}/safe"
+    mkdir -p "${forge}/projects/python" "${forge}/projects/mywork" "${forge}/data" "${dest}"
+    print -r -- "py"   > "${forge}/projects/python/main.py"
+    print -r -- "MINE" > "${forge}/projects/mywork/notes.md"
+
+    _run_offer_relocate "${forge}" "${dest}"
+
+    local ok=1 why=""
+    [[ "${OFFER_RESULT}" == "projects=true data=false dest=${dest}" ]] \
+        || { ok=0; why="flags/dest wrong: '${OFFER_RESULT:-<no RESULT line; harness did not run>}'"; }
+    [[ "${OFFER_OUT}" == *"Your work was moved under: ${dest}"* ]] \
+        || { ok=0; why="${why:+${why}; }missing 'Your work was moved under'"; }
+    [[ -f "${dest}/projects/python/main.py" && ! -e "${forge}/projects/python" ]] \
+        || { ok=0; why="${why:+${why}; }python not actually moved"; }
+    [[ "$(<"${forge}/projects/mywork/notes.md")" == "MINE" && ! -e "${dest}/projects/mywork" ]] \
+        || { ok=0; why="${why:+${why}; }unrelated student dir was moved or altered"; }
+
+    rm -rf "${tmp}"
+    if (( ok )); then
+        test_pass "offer_relocate real-move reporting"
+    else
+        test_fail "offer_relocate real-move reporting" "${why}"
+    fi
+}
+
+# =============================================================================
 # Run All Tests
 # =============================================================================
 echo "=============================================="
@@ -437,6 +548,8 @@ test_safe_move_tree_known_only_filters
 test_safe_move_tree_counts_moves
 test_safe_move_tree_never_replaces_dangling_symlink
 test_relocate_flags_gated_on_move_count
+test_offer_relocate_nothing_moved_reports_nothing
+test_offer_relocate_real_move_is_reported
 test_dirs_to_remove_excludes_student_data
 test_dirs_guard_detects_all_forms
 test_dirs_extraction_shapes
