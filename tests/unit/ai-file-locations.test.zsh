@@ -229,7 +229,10 @@ test_reading_blocks_are_identical() {
 
 test_suite_is_in_the_ci_runner() {
     test_start "11: this suite is listed in tests/run-sovereign-tests.zsh (otherwise CI never runs it)"
-    grep -qF 'ai-file-locations.test.zsh' "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" \
+    # Only an ACTIVE entry inside the UNIT_TESTS array counts: the name in a comment (or
+    # anywhere else in the runner) must not satisfy the pin (Sourcery, PR #636/#637/#638).
+    awk '/^UNIT_TESTS=\(/ { f = 1; next } f && /^\)/ { exit } f && !/^[[:space:]]*#/ { print }' "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" \
+        | grep -qF 'ai-file-locations.test.zsh' \
         && test_pass "suite is in the CI runner list" \
         || test_fail "suite is in the CI runner list" "tests/run-sovereign-tests.zsh uses an explicit list without it"
 }
