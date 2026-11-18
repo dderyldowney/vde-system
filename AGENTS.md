@@ -169,6 +169,10 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 | Compliance | `zsh bin/vde-enforce-uap.zsh` (procedure: `.gemini/COMMANDS/vde-enforce.md`) | `zsh bin/vde-enforce-uap.zsh` (procedure: `.gemini/COMMANDS/vde-enforce.md`) |
 | Review | the `/code-review` skill (procedure: `.gemini/COMMANDS/vde-review.md`) | follow `.gemini/COMMANDS/vde-review.md` |
 
+**Kilo** loads this rules file through `kilo.json` (which lists `.gemini/instructions.md`), so every rule here applies to it. No Kilo-specific plan, sub-agent, compliance or review mechanism is documented because none has been verified: Kilo is not installed in this environment. Follow the named procedure files like any other agent.
+
+**Where a platform has no sub-agent facility** (including Antigravity while `agy agents` lists none), do the role steps yourself, one after another, by reading and following the named file in `.gemini/SKILLS/` (for example `scout`, `security-auditor`, `reviewer`, `coder`). The Phase gates still apply and no step is skipped.
+
 **The `/vde-*` names used in these rules (`/vde-enforce`, `/vde-review`, `/vde-commit`, `/vde-plan` and the like) are procedures written in `.gemini/COMMANDS/`, and the role skills (`supervisor`, `reviewer` and the like) are written in `.gemini/SKILLS/`. They are not auto-discovered by any agent: verified 2026-11-18, Antigravity lists no skills or commands from this repository and Claude Code has none here. Read the named file and follow it.**
 
 **The Agent Directory is the single source of truth. Rules apply regardless of which agent platform is used.**
