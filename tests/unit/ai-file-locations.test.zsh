@@ -64,11 +64,16 @@ test_enforcer_mandatory_files() {
 
 test_sync_version_paths() {
     test_start "3: bin/vde-sync-version edits MEMORY.md at its NEW path"
-    local f="${VDE_ROOT_DIR}/bin/vde-sync-version" bad good
+    local f="${VDE_ROOT_DIR}/bin/vde-sync-version" bad targets reads
     bad="$(grep -cE '\./MEMORY\.md' "${f}")"
-    good="$(grep -cF "./${NEW_MEMORY}" "${f}")"
+    # Count REAL targets only, each ending exactly at the path. A loose substring count
+    # also matches comments, log lines and a nonexistent `...MEMORY.md.bak` path
+    # (Sourcery, PR #636): four sed targets aimed at .bak still left six matching lines.
+    targets="$(grep -cE 'vde_sed_inplace .*"\./\.gemini/STATE/MEMORY\.md"[[:space:]]*$' "${f}")"
+    reads="$(grep -cE 'sed -n .*"\./\.gemini/STATE/MEMORY\.md"' "${f}")"
     (( bad == 0 )) && test_pass "no './MEMORY.md' left" || test_fail "no './MEMORY.md' left" "${bad} stale occurrence(s)"
-    (( good >= 6 )) && test_pass "'./${NEW_MEMORY}' used (${good}x)" || test_fail "'./${NEW_MEMORY}' used" "only ${good} occurrence(s), expected the 6 sed targets and the highlights read"
+    (( targets == 5 )) && test_pass "all 5 vde_sed_inplace targets end exactly at ./${NEW_MEMORY}" || test_fail "all 5 vde_sed_inplace targets end exactly at ./${NEW_MEMORY}" "only ${targets} of 5 do"
+    (( reads == 1 )) && test_pass "the highlights read uses ./${NEW_MEMORY}" || test_fail "the highlights read uses ./${NEW_MEMORY}" "${reads} matching read(s), expected 1"
 }
 
 test_paired_update_enforcer_path() {
@@ -224,7 +229,10 @@ test_reading_blocks_are_identical() {
 
 test_suite_is_in_the_ci_runner() {
     test_start "11: this suite is listed in tests/run-sovereign-tests.zsh (otherwise CI never runs it)"
-    grep -qF 'ai-file-locations.test.zsh' "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" \
+    # Only an ACTIVE entry inside the UNIT_TESTS array counts: the name in a comment (or
+    # anywhere else in the runner) must not satisfy the pin (Sourcery, PR #636/#637/#638).
+    awk '/^UNIT_TESTS=\(/ { f = 1; next } f && /^\)/ { exit } f && !/^[[:space:]]*#/ { print }' "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" \
+        | grep -qF 'ai-file-locations.test.zsh' \
         && test_pass "suite is in the CI runner list" \
         || test_fail "suite is in the CI runner list" "tests/run-sovereign-tests.zsh uses an explicit list without it"
 }
