@@ -44,7 +44,7 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution**. 
 | `vde ssh-sync` | Sync VDE SSH public keys to the build context. | `vde ssh-sync` |
 | `vde networks` | Audit and manage the `vde-net` Docker bridges. | `vde networks` |
 | `vde validate` | Verify the integrity of the Beskar Registry (JSON schemas). | `vde validate` |
-| `vde prune` | **Repository Housekeeping**: Plan repository cleanup from a dry run (the default) and require `--apply --yes` for explicit deletion. Use `vde clean` for Docker disk cleanup. | `vde prune [--apply --yes]` |
+| `vde prune` | **Repository Housekeeping**: Default/dry-run plans only. `--apply` deletes old repository housekeeping files and archives old plans/scripts, prompting unless `--yes` is supplied. Timeframes: `7d` (default), `3d`, `24h`, `12h`. Use `vde clean` for Docker disk cleanup. | `vde prune [--timeframe 7d] [--dry-run | --apply] [--yes]` |
 | `vde rebuild-cache` | Force a re-smelt of the internal VM cache. | `vde rebuild-cache` |
 | `vde sync-version` | Synchronize versioning across the Hub and Spokes. | `vde sync-version` |
 | `vde port <alias>` | Retrieve the assigned SSH port for a Spoke. | `vde port python` |
@@ -71,7 +71,7 @@ These scripts provide specialized maintenance, automation, and development suppo
 | `vde-set-projects-dir` | **@armor Engine Core** (zsh): Re-point the Projects base — resolve/create/validate the new base, move per-alias subfolders (skipping collisions), update `.env` `VDE_PROJECTS_DIR`, and regenerate compose configs via `generate-all-configs`. |
 | `generate-all-configs` | Smelt all Spoke compose and SSH configurations. Invoked by `vde-set-projects-dir` after the base changes. |
 | `cleanup-ports` | Purge stale or orphaned entries from the port registry. |
-| `vde-prune.zsh` | Repository housekeeping maintenance: dry-run/default plan for cleanup targets; requires explicit `--apply --yes` to delete. Docker disk cleanup is handled by `vde clean`. |
+| `vde-prune.zsh` | Repository housekeeping maintenance: default/dry-run planning; interactive `--apply` or scripted `--apply --yes`; supported timeframes `7d`, `3d`, `24h`, `12h`. Docker disk cleanup is handled by `vde clean`. |
 | `validate-schemas.zsh` | Verify Beskar Registry integrity against JSON schemas. |
 | `vde-tactical-sweep.zsh` | Perform a project-wide cleanup of containers and locks. |
 | `vde-poll` | Continuous health monitoring of the Spoke ecosystem. |

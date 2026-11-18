@@ -14,7 +14,8 @@ DRY_RUN=0
 usage() {
     print -r -- "Usage: vde prune [--timeframe <7d|3d|24h|12h>] [--dry-run|--apply] [--yes]"
     print -r -- "  Default and --dry-run print a plan without changing files."
-    print -r -- "  --apply performs the plan; --yes skips confirmation."
+    print -r -- "  --apply deletes old repository housekeeping files and archives old plans/scripts."
+    print -r -- "  --apply prompts unless --yes is supplied; use vde clean for Docker disk cleanup."
 }
 
 while (( $# > 0)); do
@@ -53,9 +54,19 @@ CURRENT_BASELINE=""
 if [[ -f "${VDE_ROOT}/docs/governance/vde-spec.md" ]]; then
     CURRENT_BASELINE=$(awk '/^Version:/ {print $2; exit}' "${VDE_ROOT}/docs/governance/vde-spec.md")
 fi
+if [[ -z "$CURRENT_BASELINE" ]]; then
+    print -u2 -r -- "Refusing prune: cannot resolve the current baseline from docs/governance/vde-spec.md"
+    exit 2
+fi
 
 is_tracked() {
-    git -C "${VDE_ROOT}" ls-files --error-unmatch "${1#$VDE_ROOT/}" >/dev/null 2>&1
+    local relative="$1"
+    git -C "${VDE_ROOT}" ls-files --error-unmatch "$relative" >/dev/null 2>&1
+}
+
+is_clean_tracked() {
+    local relative="$1"
+    git -C "${VDE_ROOT}" diff --quiet -- "$relative" && git -C "${VDE_ROOT}" diff --cached --quiet -- "$relative"
 }
 
 is_protected() {
@@ -73,7 +84,7 @@ typeset -a DELETE_FILES MOVE_FILES
 DELETE_FILES=()
 MOVE_FILES=()
 
-for dir in logs plans plans/scripts backup docs/releases; do
+for dir in plans plans/scripts; do
     [[ -d "${VDE_ROOT}/${dir}" ]] || continue
     while IFS= read -r file; do
         [[ -n "$file" ]] || continue
@@ -83,7 +94,7 @@ for dir in logs plans plans/scripts backup docs/releases; do
     done < <(find "${VDE_ROOT}/${dir}" -maxdepth 1 -type f -mmin +${minutes} -print)
 done
 
-for dir in plans plans/scripts docs/releases; do
+for dir in plans plans/scripts; do
     [[ -d "${VDE_ROOT}/${dir}" ]] || continue
     while IFS= read -r file; do
         [[ -n "$file" ]] || continue
@@ -116,8 +127,13 @@ fi
 
 typeset deleted=0 moved=0 failures=0
 for file in "${DELETE_FILES[@]}"; do
-    if is_tracked "$file"; then
-        if git -C "${VDE_ROOT}" rm -q "${file#$VDE_ROOT/}"; then
+    typeset relative="${file[${#VDE_ROOT}+2,-1]}"
+    [[ -f "$file" && ! -L "$file" ]] || { (( failures++)); print -u2 -r -- "FAILED DELETE ${relative}: target changed or became a symlink"; continue; }
+    if [[ -z "$(find "$file" -maxdepth 0 -type f -mmin +${minutes} -print)" ]]; then
+        (( failures++)); print -u2 -r -- "FAILED DELETE ${relative}: target is no longer old enough"; continue
+    fi
+    if is_tracked "$relative"; then
+        if git -C "${VDE_ROOT}" rm -q "$relative"; then
             (( deleted++ ))
             print -r -- "DELETED ${file#$VDE_ROOT/}"
         else
@@ -136,16 +152,27 @@ for file in "${DELETE_FILES[@]}"; do
 done
 
 for file in "${MOVE_FILES[@]}"; do
+    typeset relative="${file[${#VDE_ROOT}+2,-1]}"
+    [[ -f "$file" && ! -L "$file" ]] || { (( failures++)); print -u2 -r -- "FAILED MOVE ${relative}: target changed or became a symlink"; continue; }
+    if [[ -z "$(find "$file" -maxdepth 0 -type f -mmin +1440 -mmin -${minutes} -print)" ]]; then
+        (( failures++)); print -u2 -r -- "FAILED MOVE ${relative}: target is outside the selected age window"; continue
+    fi
     typeset dest="${file:h}/archive"
     typeset destination="${dest}/${file:t}"
-    if [[ -e "$destination" ]]; then
+    [[ ! -L "$dest" ]] || { (( failures++)); print -u2 -r -- "FAILED MOVE ${relative}: archive path is a symlink"; continue; }
+    if [[ -e "$destination" || -L "$destination" ]]; then
         (( failures++))
         print -u2 -r -- "FAILED MOVE ${file#$VDE_ROOT/}: archive collision at ${destination#$VDE_ROOT/}"
         continue
     fi
     mkdir -p -- "$dest" || { (( failures++)); print -u2 -r -- "FAILED MOVE ${file#$VDE_ROOT/}: cannot create archive"; continue; }
-    if is_tracked "$file"; then
-        if git -C "${VDE_ROOT}" mv "${file#$VDE_ROOT/}" "$destination"; then
+    if is_tracked "$relative"; then
+        if ! is_clean_tracked "$relative"; then
+            (( failures++))
+            print -u2 -r -- "FAILED MOVE ${relative}: tracked file has local modifications"
+            continue
+        fi
+        if git -C "${VDE_ROOT}" mv "$relative" "$destination"; then
             (( moved++ ))
             print -r -- "MOVED ${file#$VDE_ROOT/} -> ${dest#$VDE_ROOT/}/${file:t}"
         else
@@ -153,7 +180,7 @@ for file in "${MOVE_FILES[@]}"; do
             print -u2 -r -- "FAILED MOVE ${file#$VDE_ROOT/}"
         fi
     else
-        if mv -- "$file" "$dest/"; then
+        if mv -n -- "$file" "$destination" && [[ -e "$destination" && ! -e "$file" ]]; then
             (( moved++ ))
             print -r -- "MOVED ${file#$VDE_ROOT/} -> ${dest#$VDE_ROOT/}/${file:t}"
         else

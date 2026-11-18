@@ -296,7 +296,7 @@ vde prune --apply
 vde prune --apply --yes
 ```
 
-**Details**:
+Supported timeframes are `7d` (default), `3d`, `24h`, and `12h`.
 
 - `vde prune` and `vde prune --dry-run` print a plan and change nothing.
 - `vde prune --apply` archives old plans and scripts and deletes old repository housekeeping files; it requires confirmation unless `--yes` is supplied.
