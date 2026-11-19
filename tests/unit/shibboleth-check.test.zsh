@@ -1114,6 +1114,17 @@ test_case45_committed_and_staged_content_is_judged_not_the_working_copy() {
     # Called plainly: errexit is suspended inside anything on the left of `||`, which would hide the abort.
     SNAP_OUT="$(zsh -e -c 'source "$1"; vde_shib_sweep_snapshot "$2" index' _ "${SHIB_LIB}" "${r}" 2>&1)"
     expect_eq "case45n under set -e the violator after a clean file is still reported" "${SNAP_OUT}" "STAGED lib/b.zsh"
+    # o: a tracked path may hold ANY byte but NUL, including the unit separator 0x1F. The listing must
+    # not split such a name into pieces that exist nowhere (the file would escape the sweep; security review)
+    r="$(new_repo c45o)"
+    local us=$'\037'
+    mkdir -p "${r}/lib"
+    printf '#!/usr/bin/env zsh\necho hi\n' > "${r}/lib/evil${us}x.zsh"
+    git -C "${r}" add -A
+    sweep_into "${r}"
+    expect_eq "case45o the working-tree sweep reports a violator whose name holds 0x1F" "${SWEEP_OUT}" "MISSING lib/evil${us}x.zsh"
+    snap_into "${r}" index
+    expect_eq "case45o the staged view reports it too" "${SNAP_OUT}" "STAGED lib/evil${us}x.zsh"
     # h: an unknown source is an error; an unborn HEAD has nothing committed to judge
     snap_into "${r}" bogus
     expect_eq "case45h an unknown source is rc 2" "${SNAP_RC}" 2

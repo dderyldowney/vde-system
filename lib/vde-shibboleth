@@ -63,10 +63,10 @@ _vde_shib_parse_baseline() {
     return 0
 }
 
-# _vde_shib_tracked ROOT -> fills _vde_shib_tracked_list from git ls-files -z. NUL is
-# mapped to the unit separator (\037), which cannot occur in a tracked path in practice,
-# so names survive intact. rc 2 when ROOT is not a git repository or ls-files fails
-# (a corrupt index must never look like an empty, clean tree).
+# _vde_shib_tracked ROOT -> fills _vde_shib_tracked_list from git ls-files -z. The names are
+# split on NUL, the one byte a path cannot contain, so they survive intact whatever else they hold.
+# rc 2 when ROOT is not a git repository or ls-files fails (a corrupt index must never look like
+# an empty, clean tree).
 _vde_shib_tracked() {
     if ! git -C "$1" rev-parse --git-dir >/dev/null 2>&1; then
         _vde_shib_tracked_list=()
@@ -76,8 +76,9 @@ _vde_shib_tracked() {
 }
 
 # _vde_shib_git_list ROOT GIT_ARGS... -> fills _vde_shib_tracked_list with the names printed by
-# `git -C ROOT GIT_ARGS`, which MUST end in -z. NUL is mapped to the unit separator (\037), which
-# cannot occur in a tracked path in practice, so names survive intact. core.quotepath=off: otherwise
+# `git -C ROOT GIT_ARGS`, which MUST end in -z. The output is split on NUL (${(@0)...}), the one byte
+# a path cannot contain: an in-band delimiter such as the unit separator (0x1F) CAN occur in a tracked
+# path, and a name split into pieces that exist nowhere would escape the sweep. core.quotepath=off: otherwise
 # git prints non-ASCII names as quoted octal escapes, no such file exists on disk, and the sweep would
 # silently skip it. rc 2 when git fails (a failing listing must never look like an empty, clean one).
 # The ONE place that turns a git name listing into a list: the tracked files, the files changed since
@@ -87,8 +88,8 @@ _vde_shib_git_list() {
     local root="$1" out
     shift
     _vde_shib_tracked_list=()
-    out="$(git -C "${root}" -c core.quotepath=off "$@" | tr '\0' '\037')" || return 2
-    _vde_shib_tracked_list=("${(@ps:\037:)out}")
+    out="$(git -C "${root}" -c core.quotepath=off "$@")" || return 2
+    _vde_shib_tracked_list=("${(@0)out}")
     return 0
 }
 
