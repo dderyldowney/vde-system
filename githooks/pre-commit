@@ -80,7 +80,7 @@ if [[ -n "${staged_any}" ]]; then
         while IFS= read -r line; do
             [[ -z "${line}" ]] && continue
             if [[ "${line}" == STAGED\ * ]]; then
-                print -r -- "  Missing in the STAGED version of ${line#STAGED }: add '${VDE_SHIBBOLETH_LITERAL}' as its own line within the first 20 lines, then stage the file again."
+                print -r -- "  Shibboleth MISSING in the STAGED version of ${line#STAGED }: add '${VDE_SHIBBOLETH_LITERAL}' as its own line within the first 20 lines (Mandate C), then stage the file again."
             else
                 print -r -- "  ${line}"
             fi

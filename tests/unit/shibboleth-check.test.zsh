@@ -1414,9 +1414,10 @@ test_case54_precommit_sweeps_the_staged_bytes() {
     git -C "${r}" add -A
     run_hook_in "${r}"
     expect_eq "case54a a staged violator blocks the commit (rc)" "${HOOK_RC}" 1
-    [[ "${HOOK_OUT}" == *"lib/foo.zsh"* && "${HOOK_OUT}" == *"STAGED"* && "${HOOK_OUT}" == *'typeset _ZSH_PURE'* ]] \
-        && test_pass "case54a the message names the staged file and the fix" \
-        || test_fail "case54a the message names the staged file and the fix" "hook said: [${HOOK_OUT}]"
+    # the same diagnostic the audit prints ("Shibboleth MISSING in <file>: add ... (Mandate C)"), so one grep finds both
+    [[ "${HOOK_OUT}" == *"Shibboleth MISSING in the STAGED version of lib/foo.zsh"* && "${HOOK_OUT}" == *'typeset _ZSH_PURE'* && "${HOOK_OUT}" == *"(Mandate C)"* ]] \
+        && test_pass "case54a the message uses the audit's MISSING wording, names the staged file and the fix" \
+        || test_fail "case54a the message uses the audit's MISSING wording, names the staged file and the fix" "hook said: [${HOOK_OUT}]"
     # b: with the literal staged, the commit passes
     mk_zsh "${r}/lib/foo.zsh" 3 2
     git -C "${r}" add -A
