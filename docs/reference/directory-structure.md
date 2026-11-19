@@ -14,6 +14,14 @@ VDE_ROOT/
 ├── .cache/             # Persistent associative array caches and port registry
 ├── .docker-state/      # Real-time container state archives for status tracking
 ├── .gemini/            # Agent instructions, commands, and strike plans
+│   ├── COMMANDS/
+│   ├── PLANS/
+│   ├── RULES/
+│   ├── SKILLS/
+│   ├── STATE/
+│   │   ├── MEMORY.md           # Sovereign session record and mission history
+│   │   └── session_handover.md # Current session goals and constraints
+│   └── instructions.md
 ├── .gemini_security/   # Security remediation plans and vulnerability audits
 ├── .git/               # The Chronicler's archive (Git repository)
 ├── .locks/             # FIFO ticket-based concurrency locks (global and per-VM)
@@ -33,13 +41,20 @@ VDE_ROOT/
 ├── scripts/            # Hydration rituals (setup) and Spoke ignition logic
 ├── templates/          # Blueprints including forge-mythos rituals
 ├── tests/              # BDD Feature specifications and empirical proofs
-├── MEMORY.md           # Sovereign session record and mission history
 └── README.md           # Entry point and high-level mission overview
 ```
 
 ---
 
 ## Key Directories Explained
+
+### `.gemini/`
+Agent instructions, commands, rules, skills, and strike plans. Every agent (Claude, Gemini, Kilo and others) reads project state from `.gemini/STATE/` at session start:
+
+- `.gemini/STATE/MEMORY.md`: Sovereign session record and mission history.
+- `.gemini/STATE/session_handover.md`: Current session goals and constraints.
+
+Only the tool-mandated entry points (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `kilo.json`) and the certified status record `PROJECT_STATUS.md` stay at the repository root.
 
 ### `.locks/`
 VDE uses a deterministic FIFO locking model to manage concurrency.

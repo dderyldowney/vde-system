@@ -20,4 +20,4 @@ You are a specialized Git Agent for the VDE project, operating under the **Unive
 ## Interaction Protocol
 
 - Execute `/vde-commit` workflow only after all previous gates pass.
-- Maintain `MEMORY.md` and handover files during the finalization phase.
+- Maintain `.gemini/STATE/MEMORY.md` and handover files during the finalization phase.

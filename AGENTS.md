@@ -8,6 +8,17 @@ This document defines the **MANDATORY** development lifecycle and behavioral con
 
 ---
 
+## READING LOCATIONS (where every agent looks)
+
+- **Project state (read at session start):** `.gemini/STATE/MEMORY.md` (standing watch, baseline, recent Strikes) and `.gemini/STATE/session_handover.md` (current session goals and constraints).
+- **Project rules:** `.gemini/RULES/` (one file per rule family), `STYLE_GUIDE.md` (repository root) and `.gemini/instructions.md`.
+- **Plans and remediation:** `plans/` (Forge development artifacts; the active remediation plan is `plans/session_handover_remediation.md`). Retired plans are archived under `.gemini/PLANS/archive/`.
+- **Certified status record:** `PROJECT_STATUS.md` (repository root; part of the version-sync and Gospel mechanism).
+- **Tool-mandated entry points (stay at the repository root):** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (a symlink to `.gemini/instructions.md`) and `kilo.json`.
+- Nothing AI-specific is added to the repository root: new agent-facing material goes under `.gemini/`.
+
+---
+
 ## 1. STOP: Mandatory Startup Checklist (Main Agent Only)
 
 **DO NOT EXECUTE ANY TASK OR WRITE ANY CODE UNTIL THIS CHECKLIST IS COMPLETE.**
@@ -16,8 +27,8 @@ The main agent MUST complete these 10 steps sequentially before doing *anything 
 *Note: Sub-agents inherit this context and MUST skip these steps to begin their assigned task immediately.*
 
 1.  **Read @.gemini/instructions.md**: Read and apply the file following all instructions.
-2.  **Read @MEMORY.md**: Understand the current project mission, recent achievements, and immediate focus.
-3.  **Read @session_handover.md**: Identify the specific goals and constraints of the current session.
+2.  **Read @.gemini/STATE/MEMORY.md**: Understand the current project mission, recent achievements, and immediate focus.
+3.  **Read @.gemini/STATE/session_handover.md**: Identify the specific goals and constraints of the current session.
 4.  **Read @plans/session_handover_remediation.md**: Identify strategic debt and pending fixes.
 5.  **Read @docs/governance/vde-spec.md**: Refresh knowledge of authoritative technical requirements and implementation priority.
 6.  **Read @PROJECT_STATUS.md**: Understand the current reliability, pass rates, and identified gaps.
@@ -131,7 +142,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 - **The Evidence Mandate**: The Chronicle (PR) body MUST include literal terminal output proof of successful test runs and lifecycle certification. Paraphrasing results is forbidden.
 - **Submit the Beskar**: The Chronicle (PR) MUST include: 1) High-level mission summary, 2) Complete list of modified files, 3) Rationale for refactoring, 4) Mandatory Red/Green evidence, and 5) The Unbreakable Link to the Signet. Execute `gh pr create` using the mandated template.
 - **Mandate**: Certification of the **Proof of Life** Heartbeat is mandatory before committing or pushing.
-- **Hygiene**: Update `MEMORY.md` and session handovers.
+- **Hygiene**: Update `.gemini/STATE/MEMORY.md` and session handovers.
 - **Cleanup Mandate (MANDATORY)**: Upon the successful conclusion of a Strike (PR merged and closed), the Alor MUST automatically purge the feature branch (**BOTH local and remote**) and return themselves to the Anvil (`develop`) before standing watch. Failure to clean both is a hygiene violation.
 - **Permanence**: The Production (`main`), `stable`, and Anvil (`develop`) branches are the foundational pillars of the Record; they are never removed.
 
@@ -139,7 +150,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ## 4. Swarm Orchestration Rules
 
-- **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `MEMORY.md`, and spawns swarms. **Does NOT write multi-file code UNLESS sub-agents are technically unavailable, in which case it may perform direct implementation provided every action is strictly supervised by the Enforcer.**
+- **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `.gemini/STATE/MEMORY.md`, and spawns swarms. **Does NOT write multi-file code UNLESS sub-agents are technically unavailable, in which case it may perform direct implementation provided every action is strictly supervised by the Enforcer.**
 - **Sub-Agents**: Specialized experts. They inherit context from the Main Agent and perform isolated, single-file tasks.
 - **Controlled Commits**: Sub-agents MUST NEVER make commits of their own accord. They operate strictly under the Orchestrator's intent. The Orchestrator may serialize commits using sub-agents, but the responsibility for the Record's integrity belongs to the Alor.
 - **Inheritance Mandate**: Sub-agents (Verd'ika) MUST inherit all context from the Alor (Main Agent). This includes the certification of the **Proof of Life** Heartbeat; sub-agents are strictly forbidden from executing this ritual themselves. Re-reading or freshly pulling files that are already present in the Main Agent's context (specifically those loaded via the `@` startup checklist) is strictly forbidden. This prevents infinite loops and context window crashes.

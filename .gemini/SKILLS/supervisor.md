@@ -34,7 +34,7 @@ You are the Supervisor — the primary authority for the **VDE Universal Agent P
 3.  **Phase 2 (Implementation)**: Did the agent follow TDD and the Pre-Edit Gate?
 4.  **Phase 3 (Audit)**: Is the Rule Enforcer being run now? (Mandatory)
 5.  **Phase 4 (Review)**: Was dual approval (Reviewer + User) obtained before commit?
-6.  **Phase 5 (Finalization)**: Are MEMORY.md and handovers updated?
+6.  **Phase 5 (Finalization)**: Are .gemini/STATE/MEMORY.md and handovers updated?
 
 ---
 

@@ -71,7 +71,7 @@ Because they are not product code they are deliberately outside the audit's stri
     *   **The Foundation (@shared-law)**
         *   **The Spinal Cord**: The foundational bridge and shared law defining the relationship between Armor and Forge.
         *   **Docs (The Gospel)**: `docs/architecture/overview.md`, `docs/architecture/data-flow.md`, `docs/changelogs/current.md`, `docs/governance/vde-spec.md`, `USE_CASES.md`, `VDE_ANALYSIS.md`, `PROJECT_STATUS.md`, `docs/governance/sovereign-charter.md`, `docs/api/library-api.md`.
-        *   **Records**: `MEMORY.md`.
+        *   **Records**: `.gemini/STATE/MEMORY.md`.
         *   **Infrastructure**: `Makefile`, `.gitignore`, `.editorconfig`.
 
 ---

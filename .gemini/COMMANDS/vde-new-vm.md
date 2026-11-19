@@ -61,4 +61,4 @@ python3 -m behave tests/features/core-infrastructure/vde-<name>.feature
 ./tests/run-docker-free-tests.zsh
 ```
 
-Update `MEMORY.md` with new VM details and port assignment.
+Update `.gemini/STATE/MEMORY.md` with new VM details and port assignment.

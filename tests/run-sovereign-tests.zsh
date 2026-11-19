@@ -89,6 +89,7 @@ UNIT_TESTS=(
     "${VDE_ROOT_DIR}/tests/unit/vm-types-source-parity.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/spine-git-env-isolation.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/gospel-audit-script-doc.test.zsh"
+    "${VDE_ROOT_DIR}/tests/unit/ai-file-locations.test.zsh"
 )
 
 for test in "${UNIT_TESTS[@]}"; do

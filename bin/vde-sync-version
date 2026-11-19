@@ -88,13 +88,13 @@ if [[ -f "./.gemini/instructions.md" ]]; then
     vde_log_success "Aligned .gemini/instructions.md" "forge"
 fi
 
-# 7. Strike MEMORY.md
-vde_sed_inplace "s/Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Version: ${NEW_VER}/" "./MEMORY.md"
-vde_sed_inplace "s/SYSTEM BENCHMARKS \(VDE [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?\)/SYSTEM BENCHMARKS (VDE ${NEW_VER})/" "./MEMORY.md"
-vde_sed_inplace "s/THE MILESTONE: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/THE MILESTONE: ${NEW_VER}/" "./MEMORY.md"
-vde_sed_inplace "s/THE VERDICT: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? READY/THE VERDICT: ${NEW_VER} READY/" "./MEMORY.md"
-vde_sed_inplace "s/Baseline Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/Baseline Version: ${NEW_VER} (The Sovereign Evolution)/" "./MEMORY.md"
-vde_log_success "Aligned MEMORY.md" "forge"
+# 7. Strike .gemini/STATE/MEMORY.md
+vde_sed_inplace "s/Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/Version: ${NEW_VER}/" "./.gemini/STATE/MEMORY.md"
+vde_sed_inplace "s/SYSTEM BENCHMARKS \(VDE [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?\)/SYSTEM BENCHMARKS (VDE ${NEW_VER})/" "./.gemini/STATE/MEMORY.md"
+vde_sed_inplace "s/THE MILESTONE: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?/THE MILESTONE: ${NEW_VER}/" "./.gemini/STATE/MEMORY.md"
+vde_sed_inplace "s/THE VERDICT: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? READY/THE VERDICT: ${NEW_VER} READY/" "./.gemini/STATE/MEMORY.md"
+vde_sed_inplace "s/Baseline Version: [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*/Baseline Version: ${NEW_VER} (The Sovereign Evolution)/" "./.gemini/STATE/MEMORY.md"
+vde_log_success "Aligned .gemini/STATE/MEMORY.md" "forge"
 
 # 8. Strike PROJECT_STATUS.md
 vde_sed_inplace "s/# PROJECT STATUS - VDE [0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)? .*\)/# PROJECT STATUS - VDE ${NEW_VER} (The Sovereign Baseline)/" "./PROJECT_STATUS.md"
@@ -192,9 +192,9 @@ typeset AUDIT_STATUS="🔴 PENDING"
 grep -q "100% GREEN" "./PROJECT_STATUS.md" && AUDIT_STATUS="🟢 CERTIFIED (100% GREEN)"
 
 if [[ ! -f "${RELEASE_RECORD}" ]]; then
-    # Extract version-specific highlights from MEMORY.md
+    # Extract version-specific highlights from .gemini/STATE/MEMORY.md
     # Uses portable sed to get content between version header and next header
-    local HIGHLIGHTS=$(sed -n "/## SYSTEM EVOLUTION.*${NEW_VER}/,/^## /p" "./MEMORY.md" | sed '1d;$d')
+    local HIGHLIGHTS=$(sed -n "/## SYSTEM EVOLUTION.*${NEW_VER}/,/^## /p" "./.gemini/STATE/MEMORY.md" | sed '1d;$d')
     
     # Create initial record
     cat <<EOF > "${RELEASE_RECORD}"
@@ -206,7 +206,7 @@ if [[ ! -f "${RELEASE_RECORD}" ]]; then
 
 ## 🛡️ Core Highlights
 
-${HIGHLIGHTS:-"Highlights pending documentation in MEMORY.md"}
+${HIGHLIGHTS:-"Highlights pending documentation in .gemini/STATE/MEMORY.md"}
 
 ## 🏗️ The System Spine
 

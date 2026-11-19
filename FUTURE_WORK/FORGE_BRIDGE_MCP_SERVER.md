@@ -87,7 +87,7 @@ Both transports are supported from day one.
 ### Forge Gospel Tools
 | Tool | Description | Hints |
 |------|-------------|-------|
-| `gospel_read` | Read a named Gospel file (MEMORY.md, CLAUDE.md, etc.) | readOnly |
+| `gospel_read` | Read a named Gospel file (.gemini/STATE/MEMORY.md, CLAUDE.md, etc.) | readOnly |
 | `gospel_write` | Write/update a Gospel file | destructive |
 | `gospel_diff` | Diff local Gospel against remote (GitHub) | readOnly, openWorld |
 | `gospel_audit` | Run a full Gospel consistency check | readOnly |
@@ -95,7 +95,7 @@ Both transports are supported from day one.
 ### Session / Handover Tools
 | Tool | Description | Hints |
 |------|-------------|-------|
-| `session_read_handover` | Read current session_handover.md | readOnly |
+| `session_read_handover` | Read current .gemini/STATE/session_handover.md | readOnly |
 | `session_write_handover` | Write session handover state | destructive |
 | `session_phase_status` | Read PROJECT_STATUS.md phase summary | readOnly |
 

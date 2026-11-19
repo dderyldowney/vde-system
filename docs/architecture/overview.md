@@ -60,6 +60,10 @@ VDE enforces a strict branch-based release lifecycle to maintain the purity of t
 4.  **The Ritual**: Work flows: `develop` → `stable` → `main`. Only `main` receives version tags and GitHub releases.
 5.  **X.X.X Releases**: Step and milestone releases are applied against `main` only after merging from `stable`.
 
+## See also
+
+- [Lineage of a Strike](lineage-of-a-strike.md): the path one `vde start <target>` command takes through the system, layer by layer.
+
 ---
 Version: 1.5.6
 Status: SOVEREIGN BASELINE CERTIFIED

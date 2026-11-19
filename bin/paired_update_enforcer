@@ -2,7 +2,7 @@
 # @armor (Engine Core)
 set -euo pipefail
 
-HANDOVER="session_handover.md"
+HANDOVER=".gemini/STATE/session_handover.md"
 REMED=".gemini/PLANS/session_handover_remediation.md"
 
 echo "Running paired-update enforcer..."
@@ -16,7 +16,7 @@ fi
 if ! grep -q "session_handover_remediation.md" "${HANDOVER}"; then
   echo "ERROR: Handover missing cross-link to remediation plan"; exit ${VDE_ERR_GENERAL}
 fi
-if ! grep -q "session_handover.md" "${REMED}"; then
+if ! grep -qF "${HANDOVER}" "${REMED}"; then
   echo "ERROR: Remediation plan missing cross-link to handover"; exit ${VDE_ERR_GENERAL}
 fi
 
