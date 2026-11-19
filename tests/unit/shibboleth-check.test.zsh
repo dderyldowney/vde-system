@@ -1557,7 +1557,7 @@ test_case69_the_charter_states_the_base_ref_prerequisite() {
     test_start "69: docs/governance/sovereign-charter.md states the committed-bytes rule, the base-ref prerequisite and the commit-time sweep (Signet #646, #647)"
     local t
     t="$(grep -m1 -F 'zsh shibboleth check' "${VDE_ROOT_DIR}/docs/governance/sovereign-charter.md")"
-    [[ "${t}" == *'COMMITTED bytes'* && "${t}" == *'origin/develop'* && "${t}" == *'VDE_SHIB_BASE_REF'* && "${t}" == *'STAGED zsh files'* && "${t}" == *'shallow'* ]] \
+    [[ "${t}" == *'COMMITTED bytes'* && "${t}" == *'origin/develop'* && "${t}" == *'VDE_SHIB_BASE_REF'* && "${t}" == *'STAGED zsh files'* && "${t}" == *'shallow'* && "${t}" == *'deepens the clone until it finds one'* && "${t}" == *'falls back to comparing against the base tip'* ]] \
         && test_pass "the charter paragraph names the committed bytes, origin/develop, VDE_SHIB_BASE_REF and the staged sweep" \
         || test_fail "the charter paragraph names the committed bytes, origin/develop, VDE_SHIB_BASE_REF and the staged sweep" "the shibboleth paragraph says: ${t[1,300]}"
 }
@@ -1817,7 +1817,7 @@ test_case51_the_docs_state_the_base_ref_prerequisite() {
     local f t
     for f in AGENTS.md .gemini/instructions.md; do
         t="$(grep -m1 -F 'shrink-only baseline' "${VDE_ROOT_DIR}/${f}")"
-        [[ "${t}" == *'VDE_SHIB_BASE_REF'* && "${t}" == *'origin/develop'* && "${t}" == *'COMMITTED bytes'* && "${t}" == *'local ref'* && "${t}" == *'shallow'* ]] \
+        [[ "${t}" == *'VDE_SHIB_BASE_REF'* && "${t}" == *'origin/develop'* && "${t}" == *'COMMITTED bytes'* && "${t}" == *'local ref'* && "${t}" == *'shallow'* && "${t}" == *'deepens the clone until it finds one'* && "${t}" == *'falls back to comparing against the base tip'* ]] \
             && test_pass "${f}: the rule names origin/develop, VDE_SHIB_BASE_REF and the committed bytes" \
             || test_fail "${f}: the rule names origin/develop, VDE_SHIB_BASE_REF and the committed bytes" "the Mandate C line does not mention all three (Signets #645, #646)"
     done
