@@ -1,6 +1,9 @@
 # VDE Session Handover: 2026-10-05
 # @shared-law (Forge Component)
 
+## Paired Update Policy
+This file is one half of a pair with [plans/session_handover_remediation.md](../../plans/session_handover_remediation.md). A change that touches either file MUST touch the other in the same PR, so accomplishments (here) and outstanding debt (there) cannot drift apart. `bin/paired_update_enforcer` (CI workflow "Paired Update Check") compares the files a PR changed against its base and fails when only one of the two changed.
+
 ## SOVEREIGN STATE
 - **Baseline**: 1.5.6 (Sovereign Baseline) — CERTIFIED
 - **develop**: `2fe4cbb0` (Merge PR #536)

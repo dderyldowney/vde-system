@@ -13,7 +13,6 @@ bin/install-githooks
 bin/list-vms
 bin/migrate-configs-to-categories.zsh
 bin/nuke-vde
-bin/paired_update_enforcer
 bin/remediate-installation-ambiguity.zsh
 bin/remediate-phase24-sleep.zsh
 bin/ssh-agent-setup

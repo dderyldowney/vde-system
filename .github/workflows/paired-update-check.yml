@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Install dependencies
         shell: bash
         run: sudo apt-get update && sudo apt-get install -y zsh && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
@@ -30,6 +32,11 @@ jobs:
         run: ./bin/vde-enforce-uap.zsh
       - name: Run paired update enforcer
         shell: zsh {0}
+        env:
+          # skip the diff only for same-repository promotions (stable <- develop, main <- stable; a fork branch merely NAMED develop or stable does not count) and pushes to stable/main or of a release tag: their changes were paired when they entered develop
+          VDE_PAIRED_DIFF: ${{ ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && ((github.base_ref == 'stable' && github.head_ref == 'develop') || (github.base_ref == 'main' && github.head_ref == 'stable'))) || (github.event_name == 'push' && (github.ref_name == 'stable' || github.ref_name == 'main' || github.ref_type == 'tag'))) && 'skip' || 'on' }}
+          # a PR is compared with its own base branch, a push to develop with the previous tip; anything else with origin/develop (the enforcer default, selected by an empty value)
+          VDE_PAIRED_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || (github.event_name == 'push' && github.ref_name == 'develop' && github.event.before) || '' }}
+        # the enforcer MUST stay the LAST command: zsh {0} has no errexit, so a trailing echo would hide its failure
         run: |
           ./bin/paired_update_enforcer
-          echo "Paired update check passed."

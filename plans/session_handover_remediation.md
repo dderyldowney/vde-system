@@ -1,5 +1,8 @@
 # Remediation Plan: Session Handover
 
+## Paired Update Policy
+This file is one half of a pair with [.gemini/STATE/session_handover.md](../.gemini/STATE/session_handover.md). A change that touches either file MUST touch the other in the same PR, so accomplishments (there) and outstanding debt (here) cannot drift apart. `bin/paired_update_enforcer` (CI workflow "Paired Update Check") compares the files a PR changed against its base and fails when only one of the two changed.
+
 ## High-Priority Architectural Debt
 - **Documentation Migration Complete**: All 40+ documentation files migrated to industry-standard category structure (guides/, reference/, architecture/, development/, operations/, api/, governance/, changelogs/).
 - **Cross-Reference Audit**: All code paths (bin/, lib/, tests/, .gemini/) updated to reference new documentation locations.
