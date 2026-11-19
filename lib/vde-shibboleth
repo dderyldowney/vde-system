@@ -29,7 +29,10 @@ fi
 typeset -g VDE_SHIBBOLETH_LITERAL='typeset _ZSH_PURE=${(%):-%x}'
 typeset -g VDE_SHIBBOLETH_WINDOW=20
 typeset -g VDE_SHIBBOLETH_BASELINE_REL='docs/governance/shibboleth-baseline.txt'
-typeset -ga VDE_SHIBBOLETH_EXCLUDED_PREFIXES=(docs/ bin/archive/ tests/docker/ .github/ plans/ conductor/)
+# Out of scope: bin/archive/ (retired code) and the Forge development artifacts plans/ and conductor/.
+# docs/, tests/docker/ and .github/ are swept: they hold no zsh file today, and one added later must be
+# covered, not silently exempt (Clan Leader decision, 2026-11-18).
+typeset -ga VDE_SHIBBOLETH_EXCLUDED_PREFIXES=(bin/archive/ plans/ conductor/)
 
 # Scratch globals used to return values without command substitution.
 typeset -ga _vde_shib_tracked_list=()

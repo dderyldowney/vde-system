@@ -188,21 +188,34 @@ test_case6_uniformity_short_file() {
 }
 
 test_case7_exclusions() {
-    test_start "7: exclusions - out-of-scope zsh files lacking the literal are silent"
+    test_start "7: exclusions - only plans/, conductor/ and bin/archive/ are out of scope; docs/, tests/docker/ and .github/ are swept"
     local r f p rc
     r="$(new_repo c7)"
-    for f in plans/p.zsh conductor/c.zsh docs/d.zsh bin/archive/x/a.zsh tests/docker/t.zsh .github/g.zsh; do
+    for f in plans/p.zsh conductor/c.zsh bin/archive/x/a.zsh; do
         mk_zsh "${r}/${f}" 5
     done
     stage_all "${r}"
     sweep_into "${r}"
     expect_eq "case7 sweep output" "$SWEEP_OUT" ""
     expect_eq "case7 sweep rc" "$SWEEP_RC" 0
-    for p in docs/x.zsh bin/archive/x/y.zsh tests/docker/x.zsh .github/x.yml plans/x.zsh conductor/x.zsh; do
+    # Clan Leader decision (2026-11-18): docs/, tests/docker/ and .github/ hold no zsh file
+    # today, so excluding them hid nothing now but would silently exempt any zsh file added
+    # there later. A zsh file in those folders must be reported like any other.
+    r="$(new_repo c7b)"
+    for f in docs/d.zsh tests/docker/t.zsh .github/g.zsh; do
+        mk_zsh "${r}/${f}" 5
+    done
+    stage_all "${r}"
+    sweep_into "${r}"
+    # Compared as a sorted set: the sweep's own ordering follows the locale, so the test must not depend on it.
+    local -a got_lines=("${(@f)SWEEP_OUT}") want_lines=("MISSING .github/g.zsh" "MISSING docs/d.zsh" "MISSING tests/docker/t.zsh")
+    expect_eq "case7 swept-folder output" "${(j:|:)${(@o)got_lines}}" "${(j:|:)${(@o)want_lines}}"
+    expect_eq "case7 swept-folder rc" "$SWEEP_RC" 1
+    for p in bin/archive/x/y.zsh plans/x.zsh conductor/x.zsh; do
         vde_shib_excluded "$p"; rc=$?
         expect_eq "case7 excluded rc for ${p}" "$rc" 0
     done
-    for p in bin/vde lib/x; do
+    for p in docs/x.zsh tests/docker/x.zsh .github/x.zsh bin/vde lib/x; do
         vde_shib_excluded "$p"; rc=$?
         expect_eq "case7 not-excluded rc for ${p}" "$rc" 1
     done
@@ -658,6 +671,20 @@ test_case32_charter_states_what_the_enforcer_really_does_to_plans() {
     fi
 }
 
+test_case42_no_doc_calls_the_swept_folders_out_of_scope() {
+    test_start "42: no governance doc or library comment lists tests/docker/ (and so docs/, .github/) as out of scope"
+    local f line msg=""
+    # Clan Leader decision (2026-11-18): docs/, tests/docker/ and .github/ are swept. The old
+    # exclusion list was restated in five places and one was missed in review, so every line that
+    # names tests/docker (it only ever appeared in that list) must say the folder is swept.
+    for f in AGENTS.md .gemini/instructions.md docs/governance/sovereign-charter.md docs/governance/shibboleth-baseline.txt lib/vde-shibboleth; do
+        while IFS= read -r line; do
+            [[ "${line}" == *swept* ]] || msg+="${f}: ${line[1,60]} | "
+        done < <(grep -F 'tests/docker' "${VDE_ROOT_DIR}/${f}")
+    done
+    expect_eq "case42 stale out-of-scope wording" "${msg}" ""
+}
+
 # End to end: the REAL enforcer in a throwaway copy of the tracked tree. Only the
 # shibboleth lines are asserted (the other audits are not under test here).
 make_forge() {  # make_forge NAME -> prints a git repo holding a copy of this tree, branch "base"
@@ -879,6 +906,7 @@ test_case38_enforcer_messages_keep_backslashes_in_file_names
 test_case39_a_stale_branch_is_not_blamed_for_the_base_shrinking
 test_case40_precommit_does_not_call_a_deletion_an_addition
 test_case41_the_base_fetch_never_prompts
+test_case42_no_doc_calls_the_swept_folders_out_of_scope
 
 echo ""
 echo "Results: ${TESTS_PASSED} passed, ${TESTS_FAILED} failed"
