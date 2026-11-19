@@ -14,6 +14,8 @@ VDE_ROOT/
 ├── .agents/            # Antigravity native skills (symlinks to .gemini/SKILLS and .gemini/COMMANDS)
 │   └── skills/         # One folder per skill or /vde-* command, each holding a SKILL.md symlink
 ├── .cache/             # Persistent associative array caches and port registry
+├── .claude/            # Claude Code native skills (symlinks to .gemini/SKILLS and .gemini/COMMANDS)
+│   └── skills/         # One folder per skill or /vde-* command, each holding a SKILL.md symlink
 ├── .docker-state/      # Real-time container state archives for status tracking
 ├── .gemini/            # Agent instructions, commands, and strike plans
 │   ├── COMMANDS/

@@ -15,7 +15,7 @@ This document defines the **MANDATORY** development lifecycle and behavioral con
 - **Procedures (the `/vde-*` commands and role skills named in these rules):** `.gemini/COMMANDS/` and `.gemini/SKILLS/`. Antigravity discovers them natively through `.agents/skills` and Claude Code through `.claude/skills` (both folders hold only symlinks to these files); for every other agent they are not auto-discovered: read the named file and follow it.
 - **Plans and remediation:** `plans/` (Forge development artifacts; the active remediation plan is `plans/session_handover_remediation.md`). Retired plans are archived under `.gemini/PLANS/archive/`.
 - **Certified status record:** `PROJECT_STATUS.md` (repository root; part of the version-sync and Gospel mechanism).
-- **Tool-mandated entry points (stay at the repository root):** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (a symlink to `.gemini/instructions.md`) and `kilo.json`.
+- **Tool-mandated entry points (stay at the repository root):** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (a symlink to `.gemini/instructions.md`) and `kilo.json`, plus the two native-skill discovery folders `.agents/skills` (Antigravity) and `.claude/skills` (Claude Code), which hold only symlinks to `.gemini/SKILLS` and `.gemini/COMMANDS`.
 - Nothing AI-specific is added to the repository root: new agent-facing material goes under `.gemini/`.
 
 ---
@@ -165,7 +165,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 | Capability | Claude Code | Antigravity (`agy`) |
 |------------|-------------|---------------------|
 | Plan Mode | `EnterPlanMode` | `agy --mode plan` |
-| Sub-Agents | the `Agent` tool (for example the `worker` type); the role skills are also native skills (`.claude/skills`) | the role skills `scout`, `security-auditor`, `reviewer` and `coder` are native skills (`.agents/skills`); `agy agents` lists configured agents (this repository defines none) |
+| Sub-Agents | the `Agent` tool (for example the `worker` type); the role skills are also native skills (`.claude/skills`), but they are single-agent procedures, not sub-agents | the role skills `scout`, `security-auditor`, `reviewer` and `coder` are native skills (`.agents/skills`); `agy agents` lists configured agents (this repository defines none) |
 | Compliance | `/vde-enforce` (native skill) or `zsh bin/vde-enforce-uap.zsh` (procedure: `.gemini/COMMANDS/vde-enforce.md`) | `/vde-enforce` (native skill) or `zsh bin/vde-enforce-uap.zsh` |
 | Review | the `/code-review` skill, or `/vde-review` (native skill; procedure: `.gemini/COMMANDS/vde-review.md`) | `/vde-review` (native skill) |
 

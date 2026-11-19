@@ -62,13 +62,36 @@ test_frontmatter_valid() {
     (( bad == 0 )) && test_pass "all ${#CANON} files have valid frontmatter" || test_fail "all files have valid frontmatter" "${bad} problems: ${msg[1,300]}"
 }
 
+# repo_ignores REL -> rc 0 when the REPOSITORY's own .gitignore ignores REL. It runs in a throwaway
+# repo with global, system, env and info excludes all out of the picture: `git check-ignore` in the
+# real repo also consults core.excludesFile and .git/info/exclude, so a developer's machine-wide
+# rule could fail the suite for a valid link, or hide a missing rule (Sourcery, PR #644). The parent
+# folder is created because a negated rule such as `!.claude/skills/` only applies to a directory
+# that exists.
+repo_ignores() {
+    local rel="$1" t rc
+    local -a clean=(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_COMMON_DIR -u GIT_INDEX_FILE GIT_CONFIG_COUNT=0 GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null)
+    t="$(mktemp -d)" || return 2
+    cp "${VDE_ROOT_DIR}/.gitignore" "${t}/.gitignore" || { rm -rf -- "${t:?}"; return 2; }
+    mkdir -p "${t}/${rel:h}"
+    : > "${t}/${rel}"
+    # The git environment is scrubbed too: under a hook launched from a linked worktree git exports
+    # GIT_DIR, and an unscrubbed `git init` would re-initialise THAT gitdir (see
+    # tests/unit/spine-git-env-isolation.test.zsh; Sourcery/review, PR #644).
+    "${clean[@]}" git -C "${t}" init -q 2>/dev/null || { rm -rf -- "${t:?}"; return 2; }
+    "${clean[@]}" git -C "${t}" check-ignore -q -- "${rel}"
+    rc=$?
+    rm -rf -- "${t:?}"
+    return ${rc}   # 0 ignored, 1 not ignored, anything else: the check itself failed
+}
+
 # The folders each agent discovers skills in. Antigravity reads .agents/skills (Signet #634);
 # Claude Code reads .claude/skills (Signet #642). Both hold ONLY symlinks to the canonical files.
 typeset -a SKILL_DIRS=(.agents/skills .claude/skills)
 
 test_symlinks_resolve() {
     test_start "2: every canonical file has a <skill dir>/<name>/SKILL.md symlink that resolves to it (${SKILL_DIRS[*]})"
-    local rel name link want got sdir bad=0 msg=""
+    local rel name link want got sdir rc bad=0 msg=""
     for sdir in "${SKILL_DIRS[@]}"; do
     for rel in "${CANON[@]}"; do
         name="${${rel:t}%.md}"
@@ -84,10 +107,12 @@ test_symlinks_resolve() {
         # everyone who clones the repository. The same trap exists for .claude/ (Signet #642).
         git -C "${VDE_ROOT_DIR}" ls-files --error-unmatch -- "${sdir}/${name}/SKILL.md" >/dev/null 2>&1 \
             || { (( ++bad )); msg+="${sdir}/${name}: link is not tracked by git | "; }
-        # --no-index: by default git skips TRACKED paths, so a tracked link would look "not
-        # ignored" even when a rule matches it (Sourcery, PR #635/#638).
-        git -C "${VDE_ROOT_DIR}" check-ignore --no-index -q -- "${sdir}/${name}/SKILL.md" 2>/dev/null \
-            && { (( ++bad )); msg+="${sdir}/${name}: link is git-ignored | "; }
+        # Judged on the repository's own rules in isolation (see repo_ignores): by default git skips
+        # TRACKED paths, so a tracked link would look "not ignored" even when a rule matches it
+        # (Sourcery, PR #635/#638), and global excludes must not change the verdict (PR #644).
+        repo_ignores "${sdir}/${name}/SKILL.md"; rc=$?
+        (( rc == 0 )) && { (( ++bad )); msg+="${sdir}/${name}: link is git-ignored | "; }
+        (( rc > 1 )) && { (( ++bad )); msg+="${sdir}/${name}: the ignore check itself failed (rc ${rc}) | "; }
     done
     done
     (( bad == 0 )) && test_pass "all ${#CANON} symlinks resolve to their canonical file in ${#SKILL_DIRS} folders" || test_fail "all symlinks resolve" "${bad} problems: ${msg[1,300]}"
@@ -108,17 +133,28 @@ test_no_orphans_or_collisions() {
         [[ -n "${seen[${name}]:-}" ]] || { (( ++bad )); msg+="orphan ${sdir}/${name} | "; }
     done
     done
-    (( bad == 0 )) && test_pass "no orphans, no duplicate names" || test_fail "no orphans, no duplicate names" "${msg}"
+    # The docs promise these folders hold ONLY symlinks. Git cannot see an untracked stray file here
+    # (the .gitignore exception unignores the whole folder), so look at the filesystem: everything
+    # that is not a directory must be a <name>/SKILL.md symlink.
+    local stray
+    for sdir in "${SKILL_DIRS[@]}"; do
+        for stray in "${VDE_ROOT_DIR}/${sdir}"/**/*(ND^/); do
+            [[ "${stray:t}" == SKILL.md && -L "${stray}" && "${stray:h:h}" == "${VDE_ROOT_DIR}/${sdir}" ]] \
+                || { (( ++bad )); msg+="stray non-symlink entry ${stray#${VDE_ROOT_DIR}/} | "; }
+        done
+    done
+    (( bad == 0 )) && test_pass "no orphans, no duplicate names, no stray files" || test_fail "no orphans, no duplicate names, no stray files" "${msg}"
 }
 
 test_claude_local_files_stay_ignored() {
     test_start "10: only .claude/skills is tracked; Claude's personal settings, backups and hooks stay git-ignored"
-    local p bad=0 msg=""
+    local p rc bad=0 msg=""
     # Unignoring .claude/skills must not unignore the rest of .claude/ (settings.local.json
-    # holds personal permissions). --no-index so an existing tracked path cannot hide a rule.
+    # holds personal permissions). Judged on the repository's own rules in isolation (repo_ignores),
+    # so a machine-wide ignore cannot make this pass when the repository rule is removed.
     for p in .claude/settings.local.json .claude/settings.json .claude/hooks/direnv-session-env.zsh .claude/settings.json.bak.1; do
-        git -C "${VDE_ROOT_DIR}" check-ignore --no-index -q -- "${p}" 2>/dev/null \
-            || { (( ++bad )); msg+="${p} is NOT ignored | "; }
+        repo_ignores "${p}"; rc=$?
+        (( rc == 0 )) || { (( ++bad )); msg+="${p} is NOT ignored (check rc ${rc}) | "; }
     done
     # Nothing but skill symlinks may be tracked under .claude/.
     local tracked
@@ -151,6 +187,60 @@ test_docs_state_the_new_truth() {
             && test_pass "${f} block states native Antigravity discovery" \
             || test_fail "${f} block states native Antigravity discovery" "the READING LOCATIONS block must contain both 'discovers them natively' and '.agents/skills'"
     done
+}
+
+test_tool_mandated_bullet_names_the_discovery_folders() {
+    test_start "12: the 'Tool-mandated entry points' rule names .agents/skills and .claude/skills, so the root folders do not contradict 'nothing AI-specific at the root'"
+    local f b
+    for f in AGENTS.md .gemini/instructions.md; do
+        b="$(grep -m1 -F 'Tool-mandated entry points' "${VDE_ROOT_DIR}/${f}")"
+        [[ "${b}" == *'.agents/skills'* && "${b}" == *'.claude/skills'* ]] \
+            && test_pass "${f}: the tool-mandated bullet names both discovery folders" \
+            || test_fail "${f}: the tool-mandated bullet names both discovery folders" "the bullet says: ${b[1,200]} (Sourcery, PR #644)"
+    done
+}
+
+test_root_tree_lists_claude() {
+    test_start "13: the root structure tree in docs/reference/directory-structure.md lists .claude/"
+    local tree
+    tree="$(awk '/^## Root Structure/ { f = 1 } f && /^```/ { n++ ; next } f && n == 1 { print } n == 2 { exit }' "${VDE_ROOT_DIR}/docs/reference/directory-structure.md")"
+    [[ "${tree}" == *'.claude/'* && "${tree}" == *'.agents/'* ]] \
+        && test_pass "the root tree lists .agents/ and .claude/" \
+        || test_fail "the root tree lists .agents/ and .claude/" "the 'complete directory layout' omits a discovery folder (Sourcery, PR #644)"
+}
+
+test_debug_procedure_cannot_inject_a_shell_command() {
+    test_start "14: /vde-debug validates the feature, library and tag names and never passes them to a shell unquoted"
+    local f="${VDE_ROOT_DIR}/.gemini/COMMANDS/vde-debug.md"
+    # Sourcery (PR #644): the procedure builds `python3 -m behave tests/.../<feature>.feature` and
+    # `zsh tests/unit/<libname>.test.zsh` from $ARGUMENTS or an error log, so a crafted value such as
+    # $(cmd) would run. Same class as /vde-new-vm (PR #638): validate first, then pass quoted.
+    grep -qF '^[A-Za-z0-9][A-Za-z0-9_-]*$' "${f}" \
+        && test_pass "the procedure states the allowed name pattern" \
+        || test_fail "the procedure states the allowed name pattern" "no validation rule before a name reaches a shell"
+    # The rule must come BEFORE the first step that acts on the input: Step 1 classifies it and
+    # Step 2 spawns agents that look the value up, so validating only at Step 3 is too late.
+    local vline sline
+    vline="$(grep -n -F '^[A-Za-z0-9][A-Za-z0-9_-]*$' "${f}" | head -1 | cut -d: -f1)"
+    sline="$(grep -n -m1 -E '^\*\*Step 1' "${f}" | cut -d: -f1)"
+    [[ -n "${vline}" && -n "${sline}" ]] && (( vline < sline )) \
+        && test_pass "the validation rule comes before Step 1" \
+        || test_fail "the validation rule comes before Step 1" "rule at line '${vline}', Step 1 at line '${sline}' (review, PR #644)"
+    grep -qE "(behave|zsh) tests/" "${f}" \
+        && test_fail "no unquoted test path built from a name remains" "an unquoted '(behave|zsh) tests/...' command is still in the procedure" \
+        || test_pass "no unquoted test path built from a name remains"
+    grep -qF "'tests/features/core-infrastructure/<feature>.feature'" "${f}" && grep -qF "'tests/unit/<libname>.test.zsh'" "${f}" \
+        && test_pass "the commands pass the paths single-quoted" \
+        || test_fail "the commands pass the paths single-quoted" "expected single-quoted test paths in the reproduce commands"
+}
+
+test_claude_row_does_not_present_skills_as_subagents() {
+    test_start "15: section 5's Claude Code Sub-Agents cell calls the role skills single-agent procedures, not sub-agents"
+    local row
+    row="$(awk '/^## 5\. Agent-Platform Mapping/ { f = 1 } f && /^\| Sub-Agents/ { print; exit }' "${VDE_ROOT_DIR}/AGENTS.md")"
+    [[ "${row}" == *'.claude/skills'* && "${row}" == *'single-agent'* ]] \
+        && test_pass "the Claude cell says the role skills are single-agent procedures" \
+        || test_fail "the Claude cell says the role skills are single-agent procedures" "row says: ${row[1,240]} (review, PR #644)"
 }
 
 test_suite_is_in_the_ci_runner() {
@@ -225,6 +315,10 @@ test_other_agents_unaffected
 test_docs_state_the_new_truth
 test_claude_local_files_stay_ignored
 test_docs_name_the_claude_skills_folder
+test_tool_mandated_bullet_names_the_discovery_folders
+test_root_tree_lists_claude
+test_debug_procedure_cannot_inject_a_shell_command
+test_claude_row_does_not_present_skills_as_subagents
 test_suite_is_in_the_ci_runner
 
 echo ""
