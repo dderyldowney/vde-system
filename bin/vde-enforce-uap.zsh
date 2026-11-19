@@ -9,6 +9,7 @@ set -e
 # 2. Forbidden Patterns (No sleep, No bash-isms)
 # 3. Structural Integrity (Mandatory Configs)
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 VDE_ROOT_DIR="${0:h:h}"
 
@@ -192,12 +193,13 @@ if [[ ! -f "${VDE_ROOT_DIR}/lib/vde-shibboleth" ]]; then
     errors=$((errors + 1))
 else
     source "${VDE_ROOT_DIR}/lib/vde-shibboleth"
-    if ! typeset -f vde_shib_sweep >/dev/null || ! typeset -f vde_shib_baseline_growth >/dev/null || ! typeset -f vde_shib_ensure_base_ref >/dev/null; then
+    if ! typeset -f vde_shib_sweep >/dev/null || ! typeset -f vde_shib_sweep_snapshot >/dev/null || ! typeset -f vde_shib_baseline_growth >/dev/null || ! typeset -f vde_shib_ensure_base_ref >/dev/null; then
         echo -e "${RED}[UAP-ERROR]${NC} lib/vde-shibboleth did not define its functions; the shibboleth cannot be enforced (Mandate C)."
         errors=$((errors + 1))
     else
     # `|| shib_rc=$?`: this script runs under `set -e`, and a bare assignment from a
     # failing command substitution would end the audit silently with no report.
+    typeset -A shib_missing_set=()
     shib_rc=0
     shib_out="$(vde_shib_sweep "${VDE_ROOT_DIR}")" || shib_rc=$?
     if [[ $shib_rc -ne 0 ]]; then
@@ -207,6 +209,7 @@ else
                 MISSING\ *)
                     shib_rel="${shib_line#MISSING }"
                     shib_error "Shibboleth MISSING in ${shib_rel}: add '${VDE_SHIBBOLETH_LITERAL}' as its own line within the first 20 lines (Mandate C)."
+                    shib_missing_set[${shib_rel}]=1
                     ;;
                 UNREADABLE\ *)
                     shib_rel="${shib_line#UNREADABLE }"
@@ -230,7 +233,36 @@ else
             esac
             errors=$((errors + 1))
         done <<< "${shib_out}"
-    else
+    fi
+    # Signet #645: the sweep above judges the WORKING copy, but the bytes a push carries are the
+    # COMMITTED ones. A file the working-copy sweep already reported is not reported twice.
+    shib_snap_rc=0
+    shib_snap_out="$(vde_shib_sweep_snapshot "${VDE_ROOT_DIR}" head)" || shib_snap_rc=$?
+    shib_snap_errors=0
+    if [[ $shib_snap_rc -ne 0 ]]; then
+        while IFS= read -r shib_line; do
+            [[ -z "${shib_line}" ]] && continue
+            case "${shib_line}" in
+                COMMITTED\ *)
+                    shib_rel="${shib_line#COMMITTED }"
+                    [[ -n "${shib_missing_set[${shib_rel}]:-}" ]] && continue
+                    shib_error "Shibboleth MISSING in the COMMITTED version of ${shib_rel}: HEAD has no shibboleth line in that file (a working-copy fix does not count until it is committed); add '${VDE_SHIBBOLETH_LITERAL}' as its own line within the first 20 lines and commit it (Mandate C)."
+                    ;;
+                *)
+                    shib_error "${shib_line}"
+                    ;;
+            esac
+            errors=$((errors + 1))
+            shib_snap_errors=$((shib_snap_errors + 1))
+        done <<< "${shib_snap_out}"
+    fi
+    # Fail closed: rc 2 (git could not answer) with no message must still fail the audit.
+    if [[ $shib_snap_rc -ge 2 && $shib_snap_errors -eq 0 ]]; then
+        shib_error "Shibboleth committed-content check failed (rc ${shib_snap_rc}) without a message; the bytes a push carries were not verified."
+        errors=$((errors + 1))
+        shib_snap_errors=$((shib_snap_errors + 1))
+    fi
+    if [[ $shib_rc -eq 0 && $shib_snap_errors -eq 0 ]]; then
         [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-CHECK]${NC} Shibboleth sweep clean"
     fi
 
