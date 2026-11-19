@@ -119,7 +119,11 @@ plans/scripts/git-test/
 tests/.test-tmp/
 .tmp.drivedownload/
 .tmp.driveupload/
-.claude/
+# Claude Code's personal settings, backups and hooks stay local; its native skills
+# (symlinks to .gemini/SKILLS and .gemini/COMMANDS, Signet #642) are committed so a
+# fresh clone has them. Same pattern as .agents/ above.
+.claude/*
+!.claude/skills/
 plans/matrix-audit-report.md
 plans/scripts/fifo_test.log
 /pretty.output

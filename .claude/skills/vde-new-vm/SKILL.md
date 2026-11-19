@@ -1,0 +1,1 @@
+../../../.gemini/COMMANDS/vde-new-vm.md
