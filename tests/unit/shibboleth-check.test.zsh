@@ -704,8 +704,11 @@ make_forge() {  # make_forge NAME -> prints a git repo holding a copy of this tr
     print -r -- "${f}"
 }
 
-run_enforcer_in() {  # run_enforcer_in FORGE BASE_REF -> sets ENF_OUT
-    ENF_OUT="$(cd "$1" && VDE_SHIB_BASE_REF="$2" zsh bin/vde-enforce-uap.zsh 2>&1 | sed 's/\x1b\[[0-9;]*m//g')"
+run_enforcer_in() {  # run_enforcer_in FORGE BASE_REF -> sets ENF_OUT (colours stripped) and ENF_RC (the audit's own exit status)
+    local raw
+    raw="$(cd "$1" && VDE_SHIB_BASE_REF="$2" zsh bin/vde-enforce-uap.zsh 2>&1; print -r -- "ENFRC=$?")"
+    ENF_RC="${raw##*ENFRC=}"
+    ENF_OUT="$(print -r -- "${raw%ENFRC=*}" | sed 's/\x1b\[[0-9;]*m//g')"
 }
 
 test_case33_enforcer_end_to_end() {
@@ -932,8 +935,8 @@ snap_into() {  # snap_into ROOT SOURCE [BASELINE_REL] -> sets SNAP_OUT, SNAP_RC
 test_case43_shebang_matches_the_interpreter_not_a_substring() {
     test_start "43: the shebang test matches the zsh INTERPRETER, not the word zsh anywhere on line 1"
     local line f rc r n=0
-    local -a yes=('#!/usr/bin/env zsh' '#!/bin/zsh' '#!/usr/bin/zsh' '#!/usr/bin/env -S zsh -f' '#! /bin/zsh -f' '#!/opt/homebrew/bin/zsh' '#!/usr/bin/env zsh -f' '#!/usr/bin/env -- zsh' '#!/usr/bin/env ZDOTDIR=/tmp zsh' '#!/usr/bin/env -S ZDOTDIR=/tmp zsh -f' '#!/usr/local/bin/zsh-5.9' '#!/usr/bin/zsh5' '#!/usr/bin/env zsh5' '#!/usr/bin/zsh-static')
-    local -a no=('#!/bin/bash # zsh is not used here' '#!/usr/bin/env bash' '#!/bin/sh' '#!/usr/bin/env python3 # zsh' '#!/bin/zshfoo' '#!/usr/bin/env bash -c zsh' '#!/usr/bin/env zshfoo' '#!/usr/bin/env FOO=bar bash')
+    local -a yes=('#!/usr/bin/env zsh' '#!/bin/zsh' '#!/usr/bin/zsh' '#!/usr/bin/env -S zsh -f' '#! /bin/zsh -f' '#!/opt/homebrew/bin/zsh' '#!/usr/bin/env zsh -f' '#!/usr/bin/env -- zsh' '#!/usr/bin/env ZDOTDIR=/tmp zsh' '#!/usr/bin/env -S ZDOTDIR=/tmp zsh -f' '#!/usr/local/bin/zsh-5.9' '#!/usr/bin/zsh5' '#!/usr/bin/env zsh5' '#!/usr/bin/zsh-static' '#!/usr/bin/env -u FOO zsh' '#!/usr/bin/env -C /tmp zsh' "#!/usr/bin/env -S 'zsh -f'" '#!/usr/bin/env -S "zsh -f"')
+    local -a no=('#!/bin/bash # zsh is not used here' '#!/usr/bin/env bash' '#!/bin/sh' '#!/usr/bin/env python3 # zsh' '#!/bin/zshfoo' '#!/usr/bin/env bash -c zsh' '#!/usr/bin/env zshfoo' '#!/usr/bin/env FOO=bar bash' '#!/usr/bin/env -u FOO bash' "#!/usr/bin/env -S 'bash -c zsh'")
     for line in "${yes[@]}"; do
         f="${TMP_ROOT}/sb43-${n}"; (( ++n ))
         printf '%s\necho hi\n' "${line}" > "${f}"
@@ -1132,6 +1135,43 @@ test_case45_committed_and_staged_content_is_judged_not_the_working_copy() {
     expect_eq "case45o the working-tree sweep reports a violator whose name holds 0x1F" "${SWEEP_OUT}" "MISSING lib/evil${us}x.zsh"
     snap_into "${r}" index
     expect_eq "case45o the staged view reports it too" "${SNAP_OUT}" "STAGED lib/evil${us}x.zsh"
+    # p: a staged TYPE CHANGE (symlink -> regular zsh file) is judged (git status T)
+    r="$(new_repo c45p)"
+    mk_zsh "${r}/lib/other.zsh" 3 2
+    ln -s other.zsh "${r}/lib/x.zsh"
+    commit_all "${r}" base
+    command rm -- "${r}/lib/x.zsh"
+    mk_zsh "${r}/lib/x.zsh" 3
+    git -C "${r}" add -A
+    snap_into "${r}" index
+    expect_eq "case45p a symlink replaced by a violating regular file is reported" "${SNAP_OUT}" "STAGED lib/x.zsh"
+    # q: a gitlink (submodule) at a *.zsh path is not file content
+    r="$(new_repo c45q)"
+    print -r -- readme > "${r}/README"
+    commit_all "${r}" base
+    git -C "${r}" update-index --add --cacheinfo 160000,"$(git -C "${r}" rev-parse HEAD)",lib/sub.zsh
+    snap_into "${r}" index
+    expect_eq "case45q a staged gitlink at a .zsh path is not judged as a file" "${SNAP_OUT}" ""
+    # r: git pathspec magic in a file NAME must not match another entry (a violator hiding behind a symlink)
+    r="$(new_repo c45r)"
+    mk_zsh "${r}/other.zsh" 3 2
+    ln -s other.zsh "${r}/z-a.zsh"
+    mk_zsh "${r}/:(glob)z*.zsh" 3
+    commit_all "${r}" base
+    mk_zsh "${r}/:(glob)z*.zsh" 3 2
+    snap_into "${r}" head
+    expect_eq "case45r a name with pathspec magic is judged by its own bytes" "${SNAP_OUT}" "COMMITTED :(glob)z*.zsh"
+    # s: a baseline whose blob exists in the tree but cannot be read is an ERROR, never "no baseline"
+    r="$(make_baseline_repo c45s)"
+    local bsha
+    bsha="$(git -C "${r}" rev-parse HEAD:docs/governance/shibboleth-baseline.txt)"
+    mk_zsh "${r}/lib/a.zsh" 4
+    command rm -f -- "${r}/.git/objects/${bsha[1,2]}/${bsha[3,-1]}"
+    snap_into "${r}" head
+    expect_eq "case45s an unreadable committed baseline: rc 2" "${SNAP_RC}" 2
+    [[ "${SNAP_OUT}" == *ERROR* ]] \
+        && test_pass "case45s an unreadable committed baseline: an ERROR line is printed" \
+        || test_fail "case45s an unreadable committed baseline: an ERROR line is printed" "output [${SNAP_OUT}]"
     # h: an unknown source is an error; an unborn HEAD has nothing committed to judge
     snap_into "${r}" bogus
     expect_eq "case45h an unknown source is rc 2" "${SNAP_RC}" 2
@@ -1140,6 +1180,7 @@ test_case45_committed_and_staged_content_is_judged_not_the_working_copy() {
     git -C "${r}" add -A
     snap_into "${r}" head
     expect_eq "case45h unborn HEAD: nothing committed to judge" "${SNAP_RC}" 0
+    expect_eq "case45h unborn HEAD: and nothing printed" "${SNAP_OUT}" ""
     snap_into "${r}" index
     expect_eq "case45h unborn HEAD: the staged file is still judged" "${SNAP_OUT}" "STAGED lib/u.zsh"
 }
@@ -1154,7 +1195,8 @@ test_case46_the_audit_reports_a_violation_only_the_commit_has() {
     printf '#!/usr/bin/env zsh\n# @forge (t)\n%s\necho hi\n' "${SHIB_LIT}" > "${f}/lib/zz-committed.zsh"
     run_enforcer_in "${f}" base
     [[ "${ENF_OUT}" == *"[UAP-ERROR] Shibboleth MISSING in the COMMITTED version of lib/zz-committed.zsh"* && "${ENF_OUT}" != *"Shibboleth sweep clean"* ]] \
-        && test_pass "case46a an uncommitted fix does not hide the committed violation" \
+        && (( ENF_RC != 0 )) \
+        && test_pass "case46a an uncommitted fix does not hide the committed violation (text AND exit status)" \
         || test_fail "case46a an uncommitted fix does not hide the committed violation" "$(print -r -- "${ENF_OUT}" | grep -i shibboleth | head -3)"
     commit_all "${f}" "fix"
     run_enforcer_in "${f}" base
@@ -1171,10 +1213,14 @@ test_case46_the_audit_reports_a_violation_only_the_commit_has() {
     expect_eq "case46c a violator in both the working copy and the commit is reported once" "${seen}" 1
     # the committed-bytes check cannot run (no temp dir): the audit must fail, never print "clean"
     f="$(make_forge e2e46d)"
-    ENF_OUT="$(cd "${f}" && TMPDIR=/nonexistent-dir VDE_SHIB_BASE_REF=base zsh bin/vde-enforce-uap.zsh 2>&1 | sed 's/\x1b\[[0-9;]*m//g')"
+    local raw
+    raw="$(cd "${f}" && TMPDIR=/nonexistent-dir VDE_SHIB_BASE_REF=base zsh bin/vde-enforce-uap.zsh 2>&1; print -r -- "ENFRC=$?")"
+    ENF_RC="${raw##*ENFRC=}"
+    ENF_OUT="$(print -r -- "${raw%ENFRC=*}" | sed 's/\x1b\[[0-9;]*m//g')"
     # Either layer may report it: the library's own ERROR line, or the audit's guard for a silent rc 2.
     [[ ( "${ENF_OUT}" == *"[UAP-ERROR] ERROR"* || "${ENF_OUT}" == *"[UAP-ERROR] Shibboleth committed-content check failed"* ) && "${ENF_OUT}" != *"Shibboleth sweep clean"* ]] \
-        && test_pass "case46d a committed-bytes check that cannot run fails the audit" \
+        && (( ENF_RC != 0 )) \
+        && test_pass "case46d a committed-bytes check that cannot run fails the audit (text AND exit status)" \
         || test_fail "case46d a committed-bytes check that cannot run fails the audit" "$(print -r -- "${ENF_OUT}" | grep -i -E 'shibboleth|ERROR' | head -3)"
 }
 
