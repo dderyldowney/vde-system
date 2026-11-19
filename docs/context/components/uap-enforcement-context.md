@@ -186,23 +186,19 @@ detect_tagging_compliance() {
 
 ### Ghost Detection Pattern
 ```zsh
-# Detect "Ghost Zones" (unauthorized root directories)
-detect_ghost_zones() {
-    local unauthorized_dirs=(
-        "/tmp"
-        "/var/tmp"
-        "$HOME/Downloads"
-    )
-    
-    for dir in "${unauthorized_dirs[@]}"; do
-        if [[ -f "$dir/vde-*.zsh" ]] || [[ -d "$dir/.vde" ]]; then
-            echo "VIOLATION: Ghost Zone detected in $dir"
-            return 1
-        fi
+# Rule 3: plans/ subdirectory lock (report-only; nothing is ever deleted)
+typeset -a ghost_zones=()
+for item in plans/*(DN/); do        # (D) also matches hidden directories
+    sub_name="${item:t}"
+    [[ "${sub_name}" == "scripts" || "${sub_name}" == "archive" ]] && continue
+    ghost_zones+=("${sub_name}")
+done
+if (( ${#ghost_zones} > 0 )); then
+    for sub_name in "${ghost_zones[@]}"; do
+        echo "Ghost Zone 'plans/${sub_name}/' detected. Nothing was deleted."
     done
-    
-    return 0
-}
+    exit 1
+fi
 
 # Detect runtime apt calls (Born Ready violation)
 detect_runtime_apt() {
@@ -273,12 +269,11 @@ detect_runtime_apt() {
 **Violations**: Class-B (serious)
 
 ### 4. Ghost Zone Detection
-**Purpose**: Prevent unauthorized file locations  
+**Purpose**: Keep unauthorized working directories out of `plans/` without destroying anything  
 **Checks**:
-- No VDE files in /tmp, /var/tmp, Downloads
-- No .vde directories in unauthorized locations
+- Any `plans/<subdir>` (hidden directories included) other than `scripts` and `archive` is an offender
 
-**Violations**: Class-B (serious)
+**Behaviour**: report-only; names each offender, never deletes, fails the audit (exit 1)
 
 ### 5. Four Pillars Verification
 **Purpose**: Verify Tetrad dependencies  
@@ -396,8 +391,8 @@ fi
 ## Operational Considerations
 
 ### Enforcement Severity
-- **Class-A Violations**: Block operations immediately (ZSH purity, Four Pillars)
-- **Class-B Violations**: Log warnings but allow continuation (Ghost zones, runtime apt)
+- **Class-A Violations**: Block operations immediately (ZSH purity, Four Pillars, Ghost Zones)
+- **Class-B Violations**: Log warnings but allow continuation (runtime apt)
 - **Class-C Violations**: Informational only (style issues, minor inconsistencies)
 
 ### Remediation Workflow

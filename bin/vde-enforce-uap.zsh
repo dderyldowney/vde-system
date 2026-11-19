@@ -34,18 +34,26 @@ warnings=0
 # GHOST ZONE CHECK (Zero-Tolerance)
 #===============================================================================
 
-# Rule 3 Enforcement: plans/ Subdirectory Lock
+# Rule 3 Enforcement: plans/ Subdirectory Lock (REPORT-ONLY, Signet #643)
+# The audit fails (zero tolerance) and names every offending directory, but it
+# NEVER deletes anything: an untracked file under an offender has no way back.
+# Hidden directories (plans/.<name>/) count: the (D) glob qualifier matches them.
 if [[ -d "plans" ]]; then
-    for item in plans/*(N/); do
+    typeset -a ghost_zones=()
+    for item in plans/*(DN/); do
         local sub_name="${item:t}"
         if [[ "${sub_name}" != "scripts" && "${sub_name}" != "archive" ]]; then
-            echo "\033[1;31m[CRITICAL FAILURE]\033[0m Ghost Zone 'plans/${sub_name}/' detected."
-            echo "Protocol Violation: Rule 3 (Ghost Zone Prohibition)."
-            echo "Purging unauthorized artifacts and halting session..."
-            rm -rf "${item}"
-            exit 1
+            ghost_zones+=("${sub_name}")
         fi
     done
+    if (( ${#ghost_zones} > 0 )); then
+        for sub_name in "${ghost_zones[@]}"; do
+            echo "\033[1;31m[CRITICAL FAILURE]\033[0m Ghost Zone 'plans/${sub_name}/' detected."
+            echo "Protocol Violation: Rule 3 (Ghost Zone Prohibition)."
+            echo "Nothing was deleted. Move 'plans/${sub_name}/' under plans/archive/ or remove it deliberately, then re-run the audit."
+        done
+        exit 1
+    fi
 fi
 
 # Mandatory config files (Mandate 0 & 14 integration)

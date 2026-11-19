@@ -70,7 +70,7 @@ The Universal Agent Protocol Sentinel runs automated security audits on every ac
 - **CodeQL Scan** — Detects high/critical vulnerabilities in pushed code
 - **Privacy Leak Audit** — Scans for absolute path leaks and credential exposure
 - **Shebang Purity** — Enforces ZSH-only execution (no bash/sh)
-- **Ghost Zone Detection** — Identifies unauthorized file creation
+- **Ghost Zone Detection** — Reports any unauthorized subdirectory of `plans/` (anything other than `scripts/` and `archive/`) and fails the audit; it never deletes anything
 
 ### Pre-Push Security Hook
 
