@@ -1552,6 +1552,15 @@ test_case60_an_unreadable_staged_baseline_is_an_error_not_a_pass() {
         || test_fail "case60 an unreadable staged baseline: an ERROR line is printed" "output [${out}]"
 }
 
+test_case69_the_charter_states_the_base_ref_prerequisite() {
+    test_start "69: docs/governance/sovereign-charter.md states the committed-bytes rule, the base-ref prerequisite and the commit-time sweep (Signet #646, #647)"
+    local t
+    t="$(grep -m1 -F 'zsh shibboleth check' "${VDE_ROOT_DIR}/docs/governance/sovereign-charter.md")"
+    [[ "${t}" == *'COMMITTED bytes'* && "${t}" == *'origin/develop'* && "${t}" == *'VDE_SHIB_BASE_REF'* && "${t}" == *'STAGED zsh files'* ]] \
+        && test_pass "the charter paragraph names the committed bytes, origin/develop, VDE_SHIB_BASE_REF and the staged sweep" \
+        || test_fail "the charter paragraph names the committed bytes, origin/develop, VDE_SHIB_BASE_REF and the staged sweep" "the shibboleth paragraph says: ${t[1,300]}"
+}
+
 test_case61_security_review_of_the_commit_time_guard() {
     test_start "61: an entry that merely STARTS with ++ or -- is still an entry, and removing an entry judges its file"
     local r out rc
@@ -1637,6 +1646,7 @@ test_case63_precommit_stage_check_and_creation_message() {
     print -rl -- bin/old.zsh bin/new.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
     git -C "${r}" add docs/governance/shibboleth-baseline.txt bin/new.zsh
     run_hook_in "${r}"
+    expect_eq "case63b the rejected first creation BLOCKS the commit (rc), not only prints a message" "${HOOK_RC}" 1
     [[ "${HOOK_OUT}" == *"already violate"* && "${HOOK_OUT}" != *"may only shrink"* && "${HOOK_OUT}" != *"is shrink-only"* ]] \
         && test_pass "case63b the message says the baseline may only list files that already violate" \
         || test_fail "case63b the message says the baseline may only list files that already violate" "hook said: [${HOOK_OUT}]"
@@ -1747,6 +1757,7 @@ test_case60_an_unreadable_staged_baseline_is_an_error_not_a_pass
 test_case61_security_review_of_the_commit_time_guard
 test_case62_the_hook_fails_closed_when_git_cannot_list_the_staged_files
 test_case63_precommit_stage_check_and_creation_message
+test_case69_the_charter_states_the_base_ref_prerequisite
 test_case64_growth_judges_the_committed_baseline_too
 test_case65_an_unreadable_merge_base_baseline_is_an_error
 test_case66_an_unreadable_working_baseline_is_an_error
