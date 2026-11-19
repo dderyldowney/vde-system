@@ -20,7 +20,8 @@ typeset RESET='\033[0m'
 
 typeset _SENTINEL=${(U):-"sentinel active"}
 echo "[${_SENTINEL}] Running Sovereign Audit (Rule A)..."
-if ! zsh "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" --quiet; then
+# The push gate refreshes origin/develop (one best-effort, non-prompting fetch) so the shrink-only baseline check is judged against the real base, not a stale cached ref (Signet #646).
+if ! VDE_SHIB_REFRESH_BASE=1 zsh "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" --quiet; then
     echo -e "${RED}[ERROR] Sovereign Audit Failed. Push blocked.${RESET}"
     exit 1
 fi
