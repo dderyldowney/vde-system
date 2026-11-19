@@ -183,6 +183,87 @@ check_dir "${VDE_ROOT_DIR}/githooks"
 check_dir "${VDE_ROOT_DIR}/.github"
 check_dir "${VDE_ROOT_DIR}/.gemini_security"
 
+# Prints one shibboleth error line; `print -r` keeps backslashes in file names raw.
+shib_error() { printf '%b' "${RED}[UAP-ERROR]${NC} "; print -r -- "$*"; }
+
+# 3b. Shibboleth sweep (Mandate C, Signet #626): every tracked zsh file must carry the literal line; shrink-only baseline.
+if [[ ! -f "${VDE_ROOT_DIR}/lib/vde-shibboleth" ]]; then
+    echo -e "${RED}[UAP-ERROR]${NC} lib/vde-shibboleth missing; cannot enforce the shibboleth (Mandate C)."
+    errors=$((errors + 1))
+else
+    source "${VDE_ROOT_DIR}/lib/vde-shibboleth"
+    if ! typeset -f vde_shib_sweep >/dev/null || ! typeset -f vde_shib_baseline_growth >/dev/null || ! typeset -f vde_shib_ensure_base_ref >/dev/null; then
+        echo -e "${RED}[UAP-ERROR]${NC} lib/vde-shibboleth did not define its functions; the shibboleth cannot be enforced (Mandate C)."
+        errors=$((errors + 1))
+    else
+    # `|| shib_rc=$?`: this script runs under `set -e`, and a bare assignment from a
+    # failing command substitution would end the audit silently with no report.
+    shib_rc=0
+    shib_out="$(vde_shib_sweep "${VDE_ROOT_DIR}")" || shib_rc=$?
+    if [[ $shib_rc -ne 0 ]]; then
+        while IFS= read -r shib_line; do
+            [[ -z "${shib_line}" ]] && continue
+            case "${shib_line}" in
+                MISSING\ *)
+                    shib_rel="${shib_line#MISSING }"
+                    shib_error "Shibboleth MISSING in ${shib_rel}: add '${VDE_SHIBBOLETH_LITERAL}' as its own line within the first 20 lines (Mandate C)."
+                    ;;
+                UNREADABLE\ *)
+                    shib_rel="${shib_line#UNREADABLE }"
+                    shib_error "Shibboleth UNREADABLE ${shib_rel}: the file cannot be read, so the shibboleth cannot be verified (fix its permissions)."
+                    ;;
+                STALE\ *)
+                    # Contract: `STALE <rel> :: <reason>`; split on the first ` :: ` (rel may contain spaces).
+                    shib_rest="${shib_line#STALE }"
+                    if [[ "${shib_rest}" == *" :: "* ]]; then
+                        shib_rel="${shib_rest%% :: *}"
+                        shib_reason="${shib_rest#* :: }"
+                    else
+                        shib_rel="${shib_rest}"
+                        shib_reason="unspecified"
+                    fi
+                    shib_error "Shibboleth baseline entry ${shib_rel} is stale (${shib_reason}); remove it from docs/governance/shibboleth-baseline.txt."
+                    ;;
+                *)
+                    shib_error "${shib_line}"
+                    ;;
+            esac
+            errors=$((errors + 1))
+        done <<< "${shib_out}"
+    else
+        [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-CHECK]${NC} Shibboleth sweep clean"
+    fi
+
+    # Shrink-only growth check: baseline entries absent from the base ref are errors.
+    shib_base="${VDE_SHIB_BASE_REF:-origin/${VDE_ANVIL_BRANCH:-develop}}"
+    # Best-effort, at most one fetch (never truncates history); a failed fetch is judged below.
+    vde_shib_ensure_base_ref "${VDE_ROOT_DIR}" "${shib_base}" || true
+    shib_grow_rc=0
+    shib_growth="$(vde_shib_baseline_growth "${VDE_ROOT_DIR}" "${shib_base}")" || shib_grow_rc=$?
+    case $shib_grow_rc in
+        0) ;;
+        1)
+            while IFS= read -r shib_grow_line; do
+                [[ -z "${shib_grow_line}" ]] && continue
+                shib_error "Shibboleth baseline GREW versus ${shib_base}: ${shib_grow_line}. The baseline is shrink-only: add the shibboleth to that file instead of listing it."
+                errors=$((errors + 1))
+            done <<< "${shib_growth}"
+            ;;
+        2)
+            # rc 2: the library's own read/parse error text is the first line of its output.
+            shib_grow_first="${shib_growth%%$'\n'*}"
+            shib_error "Shibboleth baseline growth could not be checked: ${shib_grow_first}"
+            errors=$((errors + 1))
+            ;;
+        *)
+            # Fail closed: rc 3 (base ref unresolvable) or anything unexpected.
+            shib_error "Shibboleth baseline growth could not be checked: base ref '${shib_base}' is unavailable (fetch it, or set VDE_SHIB_BASE_REF)."
+            errors=$((errors + 1))
+            ;;
+    esac
+    fi
+fi
+
 # 4. Continuous Security & Privacy Audit
 if [[ -f "${VDE_ROOT_DIR}/bin/vde-security-audit.zsh" ]]; then
     zsh "${VDE_ROOT_DIR}/bin/vde-security-audit.zsh" || errors=$((errors + 1))
