@@ -380,6 +380,16 @@ vde_shib_sweep_snapshot() {
         done
     fi
 
+    # Removing an entry takes the file's grandfathering away, so a commit that only deletes an entry
+    # must still judge that file's staged bytes (index only: for head the working-tree sweep already
+    # sees the entry, and an uncommitted re-add is handled above).
+    if [[ "${mode}" == index ]] && git -C "${root}" cat-file -e "HEAD:${baseline_rel}" 2>/dev/null; then
+        _vde_shib_parse_baseline < <(git -C "${root}" show "HEAD:${baseline_rel}" 2>/dev/null)
+        for line in "${_vde_shib_entries[@]}"; do
+            [[ -n "${baseline[${line}]:-}" ]] || names+=("${line}")
+        done
+    fi
+
     tmp="$(mktemp -d 2>/dev/null)" || { print -r -- "ERROR cannot create a temporary directory for the snapshot sweep"; return 2; }
     for rel in "${names[@]}"; do
         [[ -n "${rel}" ]] || continue
@@ -449,15 +459,24 @@ vde_shib_baseline_print() {
 # nothing is, 2 when git fails.
 vde_shib_staged_baseline_additions() {
     local root="$1" baseline_rel="${2:-${VDE_SHIBBOLETH_BASELINE_REL}}"
-    local diff_out name_status line body
-    local -i found=0
+    local diff_out name_status line body staged_text
+    local -i found=0 in_hunk=0
 
-    # The baseline is shrink-only, but it must be created once. When HEAD holds no
-    # copy of it (a new repo, or the commit that first adds it) there is nothing to
-    # shrink from, so creation is allowed and nothing is reported. Later commits
-    # are compared against HEAD and may only remove lines.
+    # The baseline is shrink-only, but it must be created once. When HEAD holds no copy of it, the
+    # commit that first adds it has nothing to shrink from, yet it may still list only files that
+    # ALREADY violate at HEAD: a file new in this commit would otherwise be grandfathered by the very
+    # change that creates the baseline (Signet #647; the push-time twin is #646). A brand-new repository
+    # (no HEAD) has no violator yet, so its first commit cannot create the baseline either: one rule, no
+    # special case, and the baseline is created in the next commit. Later commits are compared against
+    # HEAD and may only remove lines.
     if ! git -C "${root}" cat-file -e "HEAD:${baseline_rel}" 2>/dev/null; then
-        return 0
+        if ! staged_text="$(git -C "${root}" show ":${baseline_rel}" 2>/dev/null)"; then
+            print -r -- "ERROR cannot read the staged ${baseline_rel} in ${root}"
+            return 2
+        fi
+        _vde_shib_parse_baseline <<< "${staged_text}"
+        _vde_shib_creation_growth "${root}" HEAD HEAD
+        return $?
     fi
 
     # A staged deletion of the baseline is the delete-then-recreate bypass: refuse it.
@@ -478,9 +497,16 @@ vde_shib_staged_baseline_additions() {
         return 2
     fi
 
+    # Only hunk bodies hold entries. The header lines before the first @@ (`--- a/...`, `+++ b/...`) are
+    # skipped by POSITION, never by prefix: an entry such as `++evil.zsh` is itself the line `+++evil.zsh`
+    # and a prefix test would drop it (security review, Signet #647).
     while IFS= read -r line; do
+        if [[ "${line}" == '@@'* ]]; then
+            in_hunk=1
+            continue
+        fi
+        (( in_hunk )) || continue
         [[ "${line}" == '+'* ]] || continue
-        [[ "${line}" == '+++'* ]] && continue
         body="${line#+}"
         _vde_shib_trim "${body}"
         body="${_vde_shib_trimmed}"
@@ -496,6 +522,75 @@ vde_shib_staged_baseline_additions() {
     return 0
 }
 
+# _vde_shib_creation_growth ROOT REV WHERE -> for the entries already parsed into _vde_shib_entries
+# (the caller ran _vde_shib_parse_baseline), prints every entry that is NOT already a violator at REV
+# (a file that is new, or already carries the shibboleth). rc 0 when none, 1 when any, 2 on an error.
+# The ONE rule for a baseline created from nothing: it may only grandfather files that already violate
+# at the base, so the change that creates the baseline cannot launder a fresh violator. Used by the
+# push-time growth check (REV = the merge-base, Signet #646) and the commit-time guard (REV = HEAD,
+# Signet #647). WHERE only names the base in error text.
+_vde_shib_creation_growth() {
+    local root="$1" rev="$2" where="$3" tmp entry
+    local -i brc=0 grew=0
+    local -A seen=()
+    tmp="$(mktemp -d 2>/dev/null)" || { print -r -- "ERROR cannot create a temporary directory for the baseline check"; return 2; }
+    for entry in "${_vde_shib_entries[@]}"; do
+        [[ -n "${seen[${entry}]:-}" ]] && continue
+        seen[${entry}]=1
+        brc=0
+        _vde_shib_blob_violates "${root}" "${rev}:${entry}" "${tmp}" || brc=$?
+        case ${brc} in
+            0) ;;
+            2)
+                print -r -- "ERROR cannot read ${entry} at ${where} in ${root}"
+                rm -rf -- "${tmp:?}"
+                return 2
+                ;;
+            *)
+                print -r -- "${entry}"
+                grew=1
+                ;;
+        esac
+    done
+    rm -rf -- "${tmp:?}"
+    if (( grew == 1 )); then
+        return 1
+    fi
+    return 0
+}
+
+# vde_shib_staged_baseline_removals ROOT [BASELINE_REL]
+# Prints the non-blank, non-comment lines REMOVED from the staged baseline (the allowed direction),
+# so the pre-commit hook can show them next to a rejected addition. The ONE parser for the removed
+# lines, next to vde_shib_staged_baseline_additions, which owns the added ones (Signet #647).
+# rc 0 (also when HEAD holds no baseline: nothing can be removed), 2 when git fails.
+vde_shib_staged_baseline_removals() {
+    local root="$1" baseline_rel="${2:-${VDE_SHIBBOLETH_BASELINE_REL}}"
+    local diff_out line body
+    local -i in_hunk=0
+
+    git -C "${root}" cat-file -e "HEAD:${baseline_rel}" 2>/dev/null || return 0
+    if ! diff_out="$(git -C "${root}" -c color.ui=never -c color.diff=never diff --cached --no-color --no-ext-diff -U0 -- "${baseline_rel}" 2>/dev/null)"; then
+        print -r -- "ERROR cannot read staged diff for ${baseline_rel} in ${root}"
+        return 2
+    fi
+    while IFS= read -r line; do
+        if [[ "${line}" == '@@'* ]]; then
+            in_hunk=1
+            continue
+        fi
+        (( in_hunk )) || continue
+        [[ "${line}" == '-'* ]] || continue
+        body="${line#-}"
+        _vde_shib_trim "${body}"
+        body="${_vde_shib_trimmed}"
+        [[ -n "${body}" ]] || continue
+        [[ "${body}" == '#'* ]] && continue
+        print -r -- "${body}"
+    done <<< "${diff_out}"
+    return 0
+}
+
 # vde_shib_baseline_growth ROOT BASE_REF [BASELINE_REL]
 # Prints, in working-tree file order, every baseline entry present in the working-tree
 # baseline but absent from the baseline at the MERGE-BASE of HEAD and BASE_REF (the base
@@ -506,10 +601,10 @@ vde_shib_staged_baseline_additions() {
 # when BASE_REF cannot be resolved, 2 when git cannot read the merge-base baseline.
 vde_shib_baseline_growth() {
     local root="$1" base_ref="$2" baseline_rel="${3:-${VDE_SHIBBOLETH_BASELINE_REL}}"
-    local base_text entry mb='' tmp=''
+    local base_text entry mb=''
     local -a work_entries=()
     local -A seen=()
-    local -i grew=0 brc=0
+    local -i grew=0
 
     if ! git -C "${root}" rev-parse --verify -q "${base_ref}^{commit}" >/dev/null 2>&1; then
         return 3
@@ -526,31 +621,8 @@ vde_shib_baseline_growth() {
         # grandfather a fresh violator (Signet #646).
         [[ -f "${root}/${baseline_rel}" ]] || return 0
         _vde_shib_parse_baseline < "${root}/${baseline_rel}"
-        work_entries=("${_vde_shib_entries[@]}")
-        tmp="$(mktemp -d 2>/dev/null)" || { print -r -- "ERROR cannot create a temporary directory for the baseline check"; return 2; }
-        for entry in "${work_entries[@]}"; do
-            [[ -n "${seen[${entry}]:-}" ]] && continue
-            seen[${entry}]=1
-            brc=0
-            _vde_shib_blob_violates "${root}" "${mb}:${entry}" "${tmp}" || brc=$?
-            case ${brc} in
-                0) ;;
-                2)
-                    print -r -- "ERROR cannot read ${entry} at ${base_ref} in ${root}"
-                    rm -rf -- "${tmp:?}"
-                    return 2
-                    ;;
-                *)
-                    print -r -- "${entry}"
-                    grew=1
-                    ;;
-            esac
-        done
-        rm -rf -- "${tmp:?}"
-        if (( grew == 1 )); then
-            return 1
-        fi
-        return 0
+        _vde_shib_creation_growth "${root}" "${mb}" "${base_ref}"
+        return $?
     fi
     if ! base_text="$(git -C "${root}" show "${mb}:${baseline_rel}" 2>/dev/null)"; then
         print -r -- "ERROR cannot read ${baseline_rel} at ${base_ref} in ${root}"

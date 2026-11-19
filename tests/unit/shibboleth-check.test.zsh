@@ -362,15 +362,18 @@ test_case14_baseline_first_creation_is_allowed() {
     print -rl -- lib/a.zsh lib/b.zsh lib/c.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
     stage_all "${r}"
     out="$(vde_shib_staged_baseline_additions "${r}" 2>&1)"; rc=$?
-    expect_eq "case14a first creation (no HEAD) output" "$out" ""
-    expect_eq "case14a first creation (no HEAD) rc" "$rc" 0
+    # With no HEAD nothing is a violator yet, so the first commit of a repository cannot create a baseline
+    # either (one rule, no special case; the baseline is created in the next commit; security review, #647).
+    expect_eq "case14a first creation (no HEAD) lists every entry as not-yet-violating" "$out" $'lib/a.zsh\nlib/b.zsh\nlib/c.zsh'
+    expect_eq "case14a first creation (no HEAD) rc" "$rc" 1
     # 14b: repo already has commits, baseline absent from HEAD, added now
     r="$(new_repo c14b)"
     mk_zsh "${r}/lib/a.zsh" 3
     git -C "${r}" add -A
     git -C "${r}" -c user.email=t@t -c user.name=t commit -qm base
+    # an entry that ALREADY violates at HEAD is a legitimate first entry (a new file is not: case 58)
     mkdir -p "${r}/docs/governance"
-    print -rl -- lib/a.zsh lib/b.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    print -rl -- lib/a.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
     stage_all "${r}"
     out="$(vde_shib_staged_baseline_additions "${r}" 2>&1)"; rc=$?
     expect_eq "case14b creation after other commits output" "$out" ""
@@ -455,7 +458,9 @@ test_case18_precommit_hook_blocks_baseline_growth() {
     # 18b: removing an entry is the intended direction and must pass
     r="$(make_baseline_repo c18b)"
     print -rl -- lib/a.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
-    git -C "${r}" add docs/governance/shibboleth-baseline.txt
+    # the entry leaves the baseline because the file was FIXED (a removal that leaves it violating is case 61)
+    mk_zsh "${r}/lib/b.zsh" 3 2
+    git -C "${r}" add docs/governance/shibboleth-baseline.txt lib/b.zsh
     run_hook_in "${r}"
     expect_eq "case18b removal is allowed (rc)" "$HOOK_RC" 0
     # 18c: first creation of the baseline must pass
@@ -464,10 +469,10 @@ test_case18_precommit_hook_blocks_baseline_growth() {
     git -C "${r}" add -A
     git -C "${r}" -c user.email=t@t -c user.name=t commit -qm base
     mkdir -p "${r}/docs/governance"
-    print -rl -- lib/a.zsh lib/b.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    print -rl -- lib/a.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
     git -C "${r}" add docs/governance/shibboleth-baseline.txt
     run_hook_in "${r}"
-    expect_eq "case18c first creation is allowed (rc)" "$HOOK_RC" 0
+    expect_eq "case18c first creation of an entry that already violates at HEAD is allowed (rc)" "$HOOK_RC" 0
 }
 
 test_case19_guard_survives_color_config() {
@@ -1309,6 +1314,249 @@ test_case53_a_deleted_baseline_is_not_reported_as_growth() {
         || test_fail "case53 the deletion is named as a deletion, with the remedy" "$(print -r -- "${ENF_OUT}" | grep -i 'shibboleth baseline' | head -3)"
 }
 
+# ---------------------------------------------------------------------------
+# Signet #647: the pre-commit hook
+# ---------------------------------------------------------------------------
+
+test_case54_precommit_sweeps_the_staged_bytes() {
+    test_start "54: the REAL pre-commit hook rejects a staged zsh file that lacks the shibboleth in the STAGED bytes"
+    local r
+    # a: a new staged zsh file without the literal is blocked, with its name and the fix
+    r="$(new_repo c54a)"
+    print -r -- readme > "${r}/README"
+    commit_all "${r}" base
+    mk_zsh "${r}/lib/foo.zsh" 3
+    git -C "${r}" add -A
+    run_hook_in "${r}"
+    expect_eq "case54a a staged violator blocks the commit (rc)" "${HOOK_RC}" 1
+    [[ "${HOOK_OUT}" == *"lib/foo.zsh"* && "${HOOK_OUT}" == *"STAGED"* && "${HOOK_OUT}" == *'typeset _ZSH_PURE'* ]] \
+        && test_pass "case54a the message names the staged file and the fix" \
+        || test_fail "case54a the message names the staged file and the fix" "hook said: [${HOOK_OUT}]"
+    # b: with the literal staged, the commit passes
+    mk_zsh "${r}/lib/foo.zsh" 3 2
+    git -C "${r}" add -A
+    run_hook_in "${r}"
+    expect_eq "case54b the staged fix passes (rc)" "${HOOK_RC}" 0
+    # c: the literal only in the WORKING copy does not count: the commit records the index
+    r="$(new_repo c54c)"
+    print -r -- readme > "${r}/README"
+    commit_all "${r}" base
+    mk_zsh "${r}/lib/foo.zsh" 3
+    git -C "${r}" add -A
+    mk_zsh "${r}/lib/foo.zsh" 3 2
+    run_hook_in "${r}"
+    expect_eq "case54c an unstaged fix does not satisfy the hook (rc)" "${HOOK_RC}" 1
+    # d: non-zsh and excluded files are never asked for the literal
+    r="$(new_repo c54d)"
+    print -r -- readme > "${r}/README"
+    commit_all "${r}" base
+    print -r -- notes > "${r}/NOTES.md"
+    mk_zsh "${r}/plans/p.zsh" 3
+    git -C "${r}" add -A
+    run_hook_in "${r}"
+    expect_eq "case54d a markdown file and an excluded path pass (rc)" "${HOOK_RC}" 0
+}
+
+test_case55_precommit_fails_closed_without_the_lib_for_any_commit() {
+    test_start "55: pre-commit blocks ANY staged change when lib/vde-shibboleth is missing (the staged bytes cannot be verified)"
+    local r hook="${SHIB_TEST_HOOK:-${VDE_ROOT_DIR}/githooks/pre-commit}"
+    r="$(new_repo c55)"
+    print -r -- readme > "${r}/README"
+    commit_all "${r}" base
+    mk_zsh "${r}/lib/foo.zsh" 3
+    git -C "${r}" add -A
+    HOOK_OUT="$(cd "${r}" && zsh "${hook}" 2>&1)"; HOOK_RC=$?
+    expect_eq "case55 a staged zsh file with no library to judge it blocks the commit (rc)" "${HOOK_RC}" 1
+}
+
+test_case56_the_library_owns_the_removed_lines() {
+    test_start "56: vde_shib_staged_baseline_removals lists the removed entries (one parser for both directions)"
+    local r out rc
+    r="$(make_baseline_repo c56)"
+    print -r -- lib/a.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add docs/governance/shibboleth-baseline.txt
+    out="$(vde_shib_staged_baseline_removals "${r}" 2>&1)"; rc=$?
+    expect_eq "case56 the removed entry" "${out}" "lib/b.zsh"
+    expect_eq "case56 rc" "${rc}" 0
+    # a comment or blank line that disappears is not an entry
+    r="$(make_baseline_repo c56b)"
+    printf '# header\n\nlib/a.zsh\nlib/b.zsh\n' > "${r}/docs/governance/shibboleth-baseline.txt"
+    commit_all "${r}" "with a header"
+    printf 'lib/a.zsh\nlib/b.zsh\n' > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add docs/governance/shibboleth-baseline.txt
+    out="$(vde_shib_staged_baseline_removals "${r}" 2>&1)"; rc=$?
+    expect_eq "case56b removed comment and blank lines are not entries" "${out}" ""
+}
+
+test_case57_a_git_failure_is_not_called_a_baseline_addition() {
+    test_start "57: when git cannot read the staged baseline diff the hook says so, instead of listing an ERROR line as an added entry"
+    local r shim real
+    r="$(make_baseline_repo c57)"
+    print -rl -- lib/a.zsh lib/b.zsh lib/c.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add docs/governance/shibboleth-baseline.txt
+    # a git that fails only for the additions diff (-U0) and delegates everything else
+    real="$(command -v git)"
+    shim="${TMP_ROOT}/shim57"
+    mkdir -p "${shim}"
+    printf '#!/usr/bin/env zsh\ntypeset _ZSH_PURE=${(%%):-%%x}\nif [[ "$*" == *" -U0 "* ]]; then exit 1; fi\nexec %s "$@"\n' "${real}" > "${shim}/git"
+    chmod +x "${shim}/git"
+    mkdir -p "${r}/lib"
+    cp "${VDE_ROOT_DIR}/lib/vde-shibboleth" "${r}/lib/vde-shibboleth"
+    HOOK_OUT="$(cd "${r}" && PATH="${shim}:${PATH}" zsh "${VDE_ROOT_DIR}/githooks/pre-commit" 2>&1)"; HOOK_RC=$?
+    expect_eq "case57 still blocked (fail closed)" "${HOOK_RC}" 1
+    [[ "${HOOK_OUT}" != *"+ ERROR"* && "${HOOK_OUT}" != *"Not allowed in"* && "${HOOK_OUT}" == *"could not be verified"* ]] \
+        && test_pass "case57 the message says the guard could not run, not that an entry was added" \
+        || test_fail "case57 the message says the guard could not run, not that an entry was added" "hook said: [${HOOK_OUT}]"
+}
+
+test_case58_a_first_baseline_commit_cannot_grandfather_a_new_violator() {
+    test_start "58: at commit time a first-created baseline may list only files that already violate at HEAD"
+    local r out rc
+    r="$(new_repo c58)"
+    mk_zsh "${r}/bin/old.zsh" 3
+    commit_all "${r}" base
+    mk_zsh "${r}/bin/new.zsh" 3
+    mkdir -p "${r}/docs/governance"
+    print -rl -- bin/old.zsh bin/new.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add -A
+    out="$(vde_shib_staged_baseline_additions "${r}" 2>&1)"; rc=$?
+    expect_eq "case58a a file new in this commit is not a legitimate first entry" "${out}" "bin/new.zsh"
+    expect_eq "case58a rc" "${rc}" 1
+    # a brand-new repository (no HEAD): nothing is a violator yet, so the very first commit cannot create it
+    r="$(new_repo c58b)"
+    mk_zsh "${r}/bin/a.zsh" 3
+    mkdir -p "${r}/docs/governance"
+    print -r -- bin/a.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add -A
+    out="$(vde_shib_staged_baseline_additions "${r}" 2>&1)"; rc=$?
+    expect_eq "case58b the very first commit of a repository cannot grandfather a file" "${out}" "bin/a.zsh"
+    expect_eq "case58b rc" "${rc}" 1
+}
+
+test_case59_the_docs_name_the_commit_time_sweep() {
+    test_start "59: AGENTS.md and .gemini/instructions.md say the pre-commit hook sweeps the staged zsh files"
+    local f t
+    for f in AGENTS.md .gemini/instructions.md; do
+        t="$(grep -m1 -F 'shrink-only baseline' "${VDE_ROOT_DIR}/${f}")"
+        [[ "${t}" == *'sweeps the STAGED zsh files'* ]] \
+            && test_pass "${f}: the rule says the pre-commit hook sweeps the staged zsh files" \
+            || test_fail "${f}: the rule says the pre-commit hook sweeps the staged zsh files" "the Mandate C line does not say so (Signet #647)"
+    done
+}
+
+test_case60_an_unreadable_staged_baseline_is_an_error_not_a_pass() {
+    test_start "60: if git cannot read the staged baseline during a first creation, the guard fails closed (rc 2), never 'no additions'"
+    local r shim real out rc
+    r="$(new_repo c60)"
+    mk_zsh "${r}/bin/old.zsh" 3
+    commit_all "${r}" base
+    mk_zsh "${r}/bin/new.zsh" 3
+    mkdir -p "${r}/docs/governance"
+    print -rl -- bin/old.zsh bin/new.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add -A
+    # a git whose `show :<baseline>` fails and which delegates everything else
+    real="$(command -v git)"
+    shim="${TMP_ROOT}/shim60"
+    mkdir -p "${shim}"
+    printf '#!/usr/bin/env zsh\ntypeset _ZSH_PURE=${(%%):-%%x}\nif [[ "$*" == *" show :docs/governance"* ]]; then exit 1; fi\nexec %s "$@"\n' "${real}" > "${shim}/git"
+    chmod +x "${shim}/git"
+    out="$(PATH="${shim}:${PATH}" vde_shib_staged_baseline_additions "${r}" 2>&1)"; rc=$?
+    expect_eq "case60 an unreadable staged baseline: rc 2" "${rc}" 2
+    [[ "${out}" == *"ERROR"* ]] \
+        && test_pass "case60 an unreadable staged baseline: an ERROR line is printed" \
+        || test_fail "case60 an unreadable staged baseline: an ERROR line is printed" "output [${out}]"
+}
+
+test_case61_security_review_of_the_commit_time_guard() {
+    test_start "61: an entry that merely STARTS with ++ or -- is still an entry, and removing an entry judges its file"
+    local r out rc
+    # a: "+++x" must not be mistaken for the "+++ b/<path>" diff header
+    r="$(make_baseline_repo c61a)"
+    print -rl -- lib/a.zsh lib/b.zsh ++evil.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add docs/governance/shibboleth-baseline.txt
+    out="$(vde_shib_staged_baseline_additions "${r}" 2>&1)"; rc=$?
+    expect_eq "case61a an added entry beginning with ++ is reported" "${out}" "++evil.zsh"
+    expect_eq "case61a rc" "${rc}" 1
+    # b: "--old" must not be mistaken for the "--- a/<path>" header
+    r="$(new_repo c61b)"
+    mk_zsh "${r}/lib/a.zsh" 3
+    mkdir -p "${r}/docs/governance"
+    print -rl -- lib/a.zsh --old.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    commit_all "${r}" base
+    print -rl -- lib/a.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add docs/governance/shibboleth-baseline.txt
+    out="$(vde_shib_staged_baseline_removals "${r}" 2>&1)"
+    expect_eq "case61b a removed entry beginning with -- is listed" "${out}" "--old.zsh"
+    # c: removing an entry while its file still violates must not pass the commit
+    r="$(make_baseline_repo c61c)"
+    print -r -- lib/b.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add docs/governance/shibboleth-baseline.txt
+    run_hook_in "${r}"
+    expect_eq "case61c dropping an entry whose file still violates is blocked (rc)" "${HOOK_RC}" 1
+    [[ "${HOOK_OUT}" == *"lib/a.zsh"* ]] \
+        && test_pass "case61c the message names the file that lost its grandfathering" \
+        || test_fail "case61c the message names the file that lost its grandfathering" "hook said: [${HOOK_OUT}]"
+    # d: the same removal is fine when the file is FIXED in the same commit
+    r="$(make_baseline_repo c61d)"
+    print -r -- lib/b.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    mk_zsh "${r}/lib/a.zsh" 3 2
+    git -C "${r}" add -A
+    run_hook_in "${r}"
+    expect_eq "case61d removing an entry and fixing its file in one commit passes (rc)" "${HOOK_RC}" 0
+}
+
+test_case62_the_hook_fails_closed_when_git_cannot_list_the_staged_files() {
+    test_start "62: if git cannot list the staged files the hook blocks the commit instead of skipping every check"
+    local r shim real
+    r="$(new_repo c62)"
+    print -r -- readme > "${r}/README"
+    commit_all "${r}" base
+    mk_zsh "${r}/lib/foo.zsh" 3
+    git -C "${r}" add -A
+    real="$(command -v git)"
+    shim="${TMP_ROOT}/shim62"
+    mkdir -p "${shim}"
+    printf '#!/usr/bin/env zsh\ntypeset _ZSH_PURE=${(%%):-%%x}\nif [[ "$*" == "diff --cached --name-only" ]]; then exit 1; fi\nexec %s "$@"\n' "${real}" > "${shim}/git"
+    chmod +x "${shim}/git"
+    mkdir -p "${r}/lib"
+    cp "${VDE_ROOT_DIR}/lib/vde-shibboleth" "${r}/lib/vde-shibboleth"
+    HOOK_OUT="$(cd "${r}" && PATH="${shim}:${PATH}" zsh "${VDE_ROOT_DIR}/githooks/pre-commit" 2>&1)"; HOOK_RC=$?
+    expect_eq "case62 git failing to list the staged files blocks the commit (rc)" "${HOOK_RC}" 1
+    [[ "${HOOK_OUT}" == *"could not list the staged files"* ]] \
+        && test_pass "case62 the message says so" \
+        || test_fail "case62 the message says so" "hook said: [${HOOK_OUT}]"
+}
+
+test_case63_precommit_stage_check_and_creation_message() {
+    test_start "63: the hook fails closed when git cannot tell whether the baseline is staged, and a first-creation rejection says what to do"
+    local r shim real
+    # a: the baseline-staged probe fails -> block, do not skip the shrink-only guard
+    r="$(make_baseline_repo c63a)"
+    print -rl -- lib/a.zsh lib/b.zsh lib/c.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add docs/governance/shibboleth-baseline.txt
+    real="$(command -v git)"
+    shim="${TMP_ROOT}/shim63"
+    mkdir -p "${shim}"
+    printf '#!/usr/bin/env zsh\ntypeset _ZSH_PURE=${(%%):-%%x}\nif [[ "$*" == "diff --cached --name-only -- docs/governance/shibboleth-baseline.txt" ]]; then exit 1; fi\nexec %s "$@"\n' "${real}" > "${shim}/git"
+    chmod +x "${shim}/git"
+    mkdir -p "${r}/lib"
+    cp "${VDE_ROOT_DIR}/lib/vde-shibboleth" "${r}/lib/vde-shibboleth"
+    HOOK_OUT="$(cd "${r}" && PATH="${shim}:${PATH}" zsh "${VDE_ROOT_DIR}/githooks/pre-commit" 2>&1)"; HOOK_RC=$?
+    expect_eq "case63a an unanswerable 'is the baseline staged' blocks the commit (rc)" "${HOOK_RC}" 1
+    # b: a rejected FIRST creation is not described as a shrink-only violation
+    r="$(new_repo c63b)"
+    mk_zsh "${r}/bin/old.zsh" 3
+    commit_all "${r}" base
+    mk_zsh "${r}/bin/new.zsh" 3
+    mkdir -p "${r}/docs/governance"
+    print -rl -- bin/old.zsh bin/new.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    git -C "${r}" add docs/governance/shibboleth-baseline.txt bin/new.zsh
+    run_hook_in "${r}"
+    [[ "${HOOK_OUT}" == *"already violate"* && "${HOOK_OUT}" != *"may only shrink"* && "${HOOK_OUT}" != *"is shrink-only"* ]] \
+        && test_pass "case63b the message says the baseline may only list files that already violate" \
+        || test_fail "case63b the message says the baseline may only list files that already violate" "hook said: [${HOOK_OUT}]"
+}
+
 test_case50_the_push_gate_turns_the_refresh_on() {
     test_start "50: githooks/proof-of-life-hook.zsh runs the audit with VDE_SHIB_REFRESH_BASE=1 (an ACTIVE line, not a comment)"
     local active
@@ -1336,6 +1584,16 @@ test_case50_the_push_gate_turns_the_refresh_on
 test_case51_the_docs_state_the_base_ref_prerequisite
 test_case52_the_base_fetch_cannot_prompt_or_stall
 test_case53_a_deleted_baseline_is_not_reported_as_growth
+test_case54_precommit_sweeps_the_staged_bytes
+test_case55_precommit_fails_closed_without_the_lib_for_any_commit
+test_case56_the_library_owns_the_removed_lines
+test_case57_a_git_failure_is_not_called_a_baseline_addition
+test_case58_a_first_baseline_commit_cannot_grandfather_a_new_violator
+test_case59_the_docs_name_the_commit_time_sweep
+test_case60_an_unreadable_staged_baseline_is_an_error_not_a_pass
+test_case61_security_review_of_the_commit_time_guard
+test_case62_the_hook_fails_closed_when_git_cannot_list_the_staged_files
+test_case63_precommit_stage_check_and_creation_message
 
 echo ""
 echo "Results: ${TESTS_PASSED} passed, ${TESTS_FAILED} failed"
