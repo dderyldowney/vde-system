@@ -33,10 +33,9 @@ jobs:
       - name: Run paired update enforcer
         shell: zsh {0}
         env:
-          # skip the diff only for same-repository promotions (stable <- develop, main <- stable; a fork branch merely NAMED develop or stable does not count) and pushes to stable/main or of a release tag: their changes were paired when they entered develop
-          VDE_PAIRED_DIFF: ${{ ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && ((github.base_ref == 'stable' && github.head_ref == 'develop') || (github.base_ref == 'main' && github.head_ref == 'stable'))) || (github.event_name == 'push' && (github.ref_name == 'stable' || github.ref_name == 'main' || github.ref_type == 'tag'))) && 'skip' || 'on' }}
-          # a PR is compared with its own base branch, a push to develop with the previous tip; anything else with origin/develop (the enforcer default, selected by an empty value)
-          VDE_PAIRED_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || (github.event_name == 'push' && github.ref_name == 'develop' && github.event.before) || '' }}
+          # raw values only: the enforcer decides skip and base itself (Actions string comparison is case-insensitive, zsh's is not)
+          VDE_PAIRED_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          VDE_PAIRED_EVENT_BEFORE: ${{ github.event.before }}
         # the enforcer MUST stay the LAST command: zsh {0} has no errexit, so a trailing echo would hide its failure
         run: |
           ./bin/paired_update_enforcer

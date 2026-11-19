@@ -60,7 +60,10 @@ good_remediation() {
 
 # scrubbed like tests/unit/native-skills.test.zsh: a GIT_DIR inherited from a hook or a linked
 # worktree must never make a fixture act on the enclosing repository
-typeset -a GIT_SCRUB=( -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null )
+typeset -a GIT_SCRUB=( -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR
+    -u GITHUB_ACTIONS -u GITHUB_EVENT_NAME -u GITHUB_BASE_REF -u GITHUB_HEAD_REF -u GITHUB_REF_NAME -u GITHUB_REF_TYPE -u GITHUB_REPOSITORY
+    -u VDE_PAIRED_HEAD_REPO -u VDE_PAIRED_EVENT_BEFORE -u VDE_PAIRED_DIFF
+    GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null )   # every -u BEFORE the first NAME=value: env stops parsing options there
 git_in() { env "${GIT_SCRUB[@]}" git -C "$1" -c user.email=t@t -c user.name=t "${@:2}"; }
 
 make_tree() {  # make_tree NAME -> a repo with the real enforcer and a good committed base (ref "base"); prints its path
@@ -246,6 +249,9 @@ test_case11_the_ci_step_can_fail() {
     [[ "${last}" == "./bin/paired_update_enforcer" ]] \
         && test_pass "case11a the step's LAST command is the enforcer (no trailing echo)" \
         || test_fail "case11a the step's LAST command is the enforcer (no trailing echo)" "last line is [${last}] of: ${blk}"
+    grep -q 'continue-on-error' "${WORKFLOW}" \
+        && test_fail "case11c nothing in the workflow may swallow the enforcer's failure" "continue-on-error appears in ${WORKFLOW}" \
+        || test_pass "case11c nothing in the workflow may swallow the enforcer's failure (no continue-on-error)"
     t="$(make_tree c11)"
     print -r -- "- update" >> "${t}/${H}"; commit_all "${t}" handover-only      # the deliberately broken tree
     print -r -- "${blk}" > "${TMP_ROOT}/step.zsh"
@@ -257,66 +263,103 @@ test_case11_the_ci_step_can_fail() {
         || test_fail "case11b the exact step logic exits non-zero on the broken tree and prints no success line" "rc=${RC} out: ${OUT[1,300]}"
 }
 
-test_case12_the_ci_job_has_the_history_the_diff_needs() {
-    test_start "12: the CI job checks out full history and skips the diff only for main and stable promotions"
+test_case12_the_enforcer_decides_skip_and_base_not_the_yaml() {
+    test_start "12: the workflow passes raw context values; the REAL enforcer decides skip and base, case-sensitively"
     grep -qE 'fetch-depth:[[:space:]]*0' "${WORKFLOW}" \
         && test_pass "case12a checkout uses fetch-depth: 0" \
         || test_fail "case12a checkout uses fetch-depth: 0" "merge-base needs the history; the default checkout is shallow"
-    local res
-    # NOTE: this evaluates a Python MODEL of the two expressions (and/or, format()), not the real
-    # Actions evaluator; an expression using a function the model lacks fails loudly below.
-    res="$(python3 -I - "${WORKFLOW}" 2>&1 <<'INNEREOF'
-import re, sys
-text = open(sys.argv[1]).read()
-def expr(key):
-    m = re.search(r"^\s*" + key + r":\s*\$\{\{(.*)\}\}\s*$", text, re.M)
-    if not m:
-        sys.exit("no expression for " + key)
-    e = m.group(1).strip()
-    e = re.sub(r"format\('([^']*)\{0\}',\s*([^)]+)\)", r"('\1' + \2)", e)
-    for a, b in (("github.event.pull_request.head.repo.full_name", "head_repo"), ("github.repository", "repo"), ("github.ref_type", "ref_type"), ("github.event.before", "ev_before"), ("github.event_name", "ev_name"), ("github.base_ref", "base_ref"), ("github.head_ref", "head_ref"), ("github.ref_name", "ref_name")):
-        e = e.replace(a, b)
-    return e.replace("&&", " and ").replace("||", " or ")
-def ev(e, **k):
-    return eval(e, {"__builtins__": {}}, k)
-d = expr("VDE_PAIRED_DIFF"); b = expr("VDE_PAIRED_BASE")
-Z = "0" * 40
-cases = [
- ("diff", dict(ev_name="pull_request", base_ref="stable", head_ref="develop", ref_name="1/merge"), "skip"),
- ("diff", dict(ev_name="pull_request", base_ref="main", head_ref="stable", ref_name="2/merge"), "skip"),
- ("diff", dict(ev_name="pull_request", base_ref="stable", head_ref="develop", ref_name="9/merge", head_repo="fork/r"), "on"),
- ("diff", dict(ev_name="pull_request", base_ref="main", head_ref="stable", ref_name="10/merge", head_repo="fork/r"), "on"),
- ("diff", dict(ev_name="pull_request", base_ref="stable", head_ref="develop", ref_name="11/merge", head_repo=None), "on"),
- ("diff", dict(ev_name="pull_request", base_ref="develop", head_ref="fix/x", ref_name="3/merge"), "on"),
- ("diff", dict(ev_name="pull_request", base_ref="stable", head_ref="fix/x", ref_name="4/merge"), "on"),
- ("diff", dict(ev_name="pull_request", base_ref="main", head_ref="develop", ref_name="5/merge"), "on"),
- ("diff", dict(ev_name="pull_request", base_ref="main", head_ref="fix/x", ref_name="6/merge"), "on"),
- ("diff", dict(ev_name="push", base_ref="", head_ref="", ref_name="develop"), "on"),
- ("diff", dict(ev_name="push", base_ref="", head_ref="", ref_name="stable"), "skip"),
- ("diff", dict(ev_name="push", base_ref="", head_ref="", ref_name="main"), "skip"),
- ("diff", dict(ev_name="push", base_ref="", head_ref="", ref_name="1.5.7", ref_type="tag"), "skip"),
- ("diff", dict(ev_name="push", base_ref="", head_ref="", ref_name="fix/x"), "on"),
- ("base", dict(ev_name="pull_request", base_ref="develop", head_ref="fix/x", ref_name="7/merge", ev_before=""), "origin/develop"),
- ("base", dict(ev_name="pull_request", base_ref="fix/stack", head_ref="fix/y", ref_name="8/merge", ev_before=""), "origin/fix/stack"),
- ("base", dict(ev_name="push", base_ref="", head_ref="", ref_name="develop", ev_before="abc123"), "abc123"),
- ("base", dict(ev_name="push", base_ref="", head_ref="", ref_name="fix/x", ev_before="abc123"), ""),
- ("base", dict(ev_name="push", base_ref="", head_ref="", ref_name="develop", ev_before=Z), Z),
-]
-bad = []
-for kind, env, want in cases:
-    env.setdefault("ev_before", "")
-    env.setdefault("repo", "o/r")
-    env.setdefault("ref_type", "branch")
-    env.setdefault("head_repo", "o/r")
-    got = ev(d if kind == "diff" else b, **env)
-    if got != want:
-        bad.append("%s %s -> %r wanted %r" % (kind, {k: v for k, v in env.items() if v is not None and v != ""}, got, want))
-print("OK" if not bad else "; ".join(bad))
-INNEREOF
-)"
-    [[ "${res}" == OK ]] \
-        && test_pass "case12b the workflow expressions give skip only for same-repo stable<-develop, main<-stable and pushes to main/stable or a tag, and the right base for PRs and develop pushes" \
-        || test_fail "case12b the workflow expressions give skip only for same-repo stable<-develop, main<-stable and pushes to main/stable or a tag, and the right base for PRs and develop pushes" "${res[-400,-1]}"
+    if grep -qE 'VDE_PAIRED_HEAD_REPO:[[:space:]]*\$\{\{[[:space:]]*github\.event\.pull_request\.head\.repo\.full_name[[:space:]]*\}\}' "${WORKFLOW}" \
+        && grep -qE 'VDE_PAIRED_EVENT_BEFORE:[[:space:]]*\$\{\{[[:space:]]*github\.event\.before[[:space:]]*\}\}' "${WORKFLOW}"; then
+        test_pass "case12b the workflow passes the head repository and the previous tip as raw values"
+    else
+        test_fail "case12b the workflow passes the head repository and the previous tip as raw values" "VDE_PAIRED_HEAD_REPO / VDE_PAIRED_EVENT_BEFORE not found as plain expressions"
+    fi
+    if grep -qE 'VDE_PAIRED_[A-Z_]+:.*(&&|\|\|)' "${WORKFLOW}" || grep -qE '^[[:space:]]*VDE_PAIRED_(DIFF|BASE):' "${WORKFLOW}"; then
+        test_fail "case12c no decision logic (and no VDE_PAIRED_DIFF/BASE override) in the workflow YAML" "Actions string comparison is case-insensitive; the decision belongs in the enforcer"
+    else
+        test_pass "case12c no decision logic (and no VDE_PAIRED_DIFF/BASE override) in the workflow YAML"
+    fi
+
+    local t sha r row want cmp ev base head refn rtype hrepo before raw
+    local -a f
+    t="$(make_tree c12)"
+    sha="$(git_in "${t}" rev-parse base)"
+    for r in develop stable main Stable Main fix/stack; do git_in "${t}" update-ref "refs/remotes/origin/${r}" "${sha}"; done
+    print -r -- "- update" >> "${t}/${H}"; commit_all "${t}" handover-only      # unpaired on purpose
+    local -a rows=(
+        "pull_request|stable|develop|1/merge|branch|o/r||-|skip"
+        "pull_request|main|stable|2/merge|branch|o/r||-|skip"
+        "pull_request|stable|develop|3/merge|branch|O/R||-|skip"
+        "pull_request|develop|fix/x|4/merge|branch|o/r||origin/develop|viol"
+        "pull_request|stable|fix/x|5/merge|branch|o/r||origin/stable|viol"
+        "pull_request|main|develop|6/merge|branch|o/r||origin/main|viol"
+        "pull_request|stable|develop|7/merge|branch|fork/r||origin/stable|viol"
+        "pull_request|stable|develop|8/merge|branch|||origin/stable|viol"
+        "pull_request|Stable|develop|9/merge|branch|o/r||origin/Stable|viol"
+        "pull_request|stable|Develop|10/merge|branch|o/r||origin/stable|viol"
+        "pull_request|main|Stable|11/merge|branch|o/r||origin/main|viol"
+        "pull_request|Main|stable|12/merge|branch|o/r||origin/Main|viol"
+        "pull_request|fix/stack|fix/y|13/merge|branch|o/r||origin/fix/stack|viol"
+        "push|||develop|branch||SHA|SHA|viol"
+        "push|||develop|tag||SHA|origin/develop|viol"
+        "push|||stable|branch|||-|skip"
+        "push|||main|branch|||-|skip"
+        "push|||Stable|branch|||origin/develop|viol"
+        "push|||1.5.7|tag|||-|skip"
+        "push|||1.5.7|branch|||origin/develop|viol"
+        "push|||v1.5.7|tag|||origin/develop|viol"
+        "push|||1.5.7-rc1|tag|||origin/develop|viol"
+        "push|||1.5|tag|||origin/develop|viol"
+        "push|||main|tag|||origin/develop|viol"
+        "push|||fix/x|branch|||origin/develop|viol"
+    )
+    for row in "${rows[@]}"; do
+        f=( "${(@s:|:)row}" )
+        ev="${f[1]}" base="${f[2]}" head="${f[3]}" refn="${f[4]}" rtype="${f[5]}" hrepo="${f[6]}" before="${f[7]}" cmp="${f[8]}" want="${f[9]}"
+        [[ "${before}" == SHA ]] && before="${sha}"
+        [[ "${cmp}" == SHA ]] && cmp="${sha}"
+        raw="$(cd "${t}" && env -u VDE_PAIRED_BASE -u VDE_PAIRED_DIFF "${GIT_SCRUB[@]}" GITHUB_ACTIONS=true GITHUB_EVENT_NAME="${ev}" GITHUB_BASE_REF="${base}" GITHUB_HEAD_REF="${head}" GITHUB_REF_NAME="${refn}" GITHUB_REF_TYPE="${rtype}" GITHUB_REPOSITORY=o/r VDE_PAIRED_HEAD_REPO="${hrepo}" VDE_PAIRED_EVENT_BEFORE="${before}" zsh bin/paired_update_enforcer 2>&1; print -r -- "ENFRC=$?")"
+        RC="${raw##*ENFRC=}"; OUT="${raw%ENFRC=*}"
+        case "${want}" in
+            skip)   [[ "${RC}" == 0 && "${OUT}" == *"SKIPPED"* ]] ;;
+            viol)   [[ "${RC}" == 1 && "${OUT}" == *"Paired Update violated"* && ( "${cmp}" == - || "${OUT}" == *"compared with ${cmp}"* ) ]] ;;
+        esac \
+            && test_pass "case12 [${want}] ${ev} base=${base:--} head=${head:--} ref=${refn:--} type=${rtype} headrepo=${hrepo:--}" \
+            || test_fail "case12 [${want}] ${ev} base=${base:--} head=${head:--} ref=${refn:--} type=${rtype} headrepo=${hrepo:--}" "rc=${RC} out: ${OUT[1,260]}"
+    done
+
+    # an explicit setting beats the derived one, both ways
+    raw="$(cd "${t}" && env -u VDE_PAIRED_BASE "${GIT_SCRUB[@]}" GITHUB_ACTIONS=true GITHUB_EVENT_NAME=push GITHUB_REF_NAME=fix/x VDE_PAIRED_DIFF=skip zsh bin/paired_update_enforcer 2>&1; print -r -- "ENFRC=$?")"
+    RC="${raw##*ENFRC=}"; OUT="${raw%ENFRC=*}"
+    [[ "${RC}" == 0 && "${OUT}" == *"SKIPPED"* ]] \
+        && test_pass "case12d an explicit VDE_PAIRED_DIFF=skip beats the derived 'on' in CI" \
+        || test_fail "case12d an explicit VDE_PAIRED_DIFF=skip beats the derived 'on' in CI" "rc=${RC} out: ${OUT[1,260]}"
+    raw="$(cd "${t}" && env -u VDE_PAIRED_BASE "${GIT_SCRUB[@]}" GITHUB_ACTIONS=true GITHUB_EVENT_NAME=pull_request GITHUB_BASE_REF=stable GITHUB_HEAD_REF=develop GITHUB_REPOSITORY=o/r VDE_PAIRED_HEAD_REPO=o/r VDE_PAIRED_DIFF=on zsh bin/paired_update_enforcer 2>&1; print -r -- "ENFRC=$?")"
+    RC="${raw##*ENFRC=}"; OUT="${raw%ENFRC=*}"
+    [[ "${RC}" == 1 && "${OUT}" == *"Paired Update violated"* && "${OUT}" != *"SKIPPED"* ]] \
+        && test_pass "case12e an explicit VDE_PAIRED_DIFF=on beats the derived 'skip' in CI" \
+        || test_fail "case12e an explicit VDE_PAIRED_DIFF=on beats the derived 'skip' in CI" "rc=${RC} out: ${OUT[1,260]}"
+    raw="$(cd "${t}" && env -u VDE_PAIRED_DIFF "${GIT_SCRUB[@]}" GITHUB_ACTIONS=true GITHUB_EVENT_NAME=pull_request GITHUB_BASE_REF=develop GITHUB_HEAD_REF=fix/x GITHUB_REPOSITORY=o/r VDE_PAIRED_HEAD_REPO=o/r VDE_PAIRED_BASE=base zsh bin/paired_update_enforcer 2>&1; print -r -- "ENFRC=$?")"
+    RC="${raw##*ENFRC=}"; OUT="${raw%ENFRC=*}"
+    [[ "${RC}" == 1 && "${OUT}" == *"compared with base)"* ]] \
+        && test_pass "case12f an explicit VDE_PAIRED_BASE beats the base derived from the PR" \
+        || test_fail "case12f an explicit VDE_PAIRED_BASE beats the base derived from the PR" "rc=${RC} out: ${OUT[1,260]}"
+    raw="$(cd "${t}" && env -u VDE_PAIRED_BASE -u VDE_PAIRED_DIFF "${GIT_SCRUB[@]}" GITHUB_ACTIONS=true GITHUB_EVENT_NAME=pull_request GITHUB_BASE_REF=stable GITHUB_HEAD_REF=develop GITHUB_REPOSITORY= VDE_PAIRED_HEAD_REPO= zsh bin/paired_update_enforcer 2>&1; print -r -- "ENFRC=$?")"
+    RC="${raw##*ENFRC=}"; OUT="${raw%ENFRC=*}"
+    [[ "${RC}" == 1 && "${OUT}" == *"compared with origin/stable)"* && "${OUT}" != *"SKIPPED"* ]] \
+        && test_pass "case12g two empty repository names are not 'the same repository'" \
+        || test_fail "case12g two empty repository names are not 'the same repository'" "rc=${RC} out: ${OUT[1,260]}"
+}
+
+test_case12h_an_ambient_ci_context_cannot_decide_a_case() {
+    test_start "12h: the harness scrubs the runner's own GITHUB_* context, so a case never depends on where the suite runs"
+    local t out
+    t="$(make_tree c12h)"
+    print -r -- "- update" >> "${t}/${H}"; commit_all "${t}" handover-only      # unpaired on purpose
+    out="$( export GITHUB_ACTIONS=true GITHUB_EVENT_NAME=push GITHUB_REF_NAME=main GITHUB_REF_TYPE=branch VDE_PAIRED_DIFF=skip; run_enf "${t}"; print -r -- "RC=${RC}"; print -r -- "${OUT}" )"
+    [[ "${out}" == *"RC=1"* && "${out}" == *"Paired Update violated"* && "${out}" != *"SKIPPED"* ]] \
+        && test_pass "case12h a runner that looks like a push to main does not turn a violation into a skip" \
+        || test_fail "case12h a runner that looks like a push to main does not turn a violation into a skip" "out: ${out[1,300]}"
 }
 
 test_case13_the_real_files_satisfy_the_static_policy() {
@@ -340,7 +383,8 @@ test_case9_the_default_base_is_origin_develop
 test_case9b_an_all_zero_base_means_no_base
 test_case10_skip_is_explicit_and_loud_and_typos_fail
 test_case11_the_ci_step_can_fail
-test_case12_the_ci_job_has_the_history_the_diff_needs
+test_case12_the_enforcer_decides_skip_and_base_not_the_yaml
+test_case12h_an_ambient_ci_context_cannot_decide_a_case
 test_case13_the_real_files_satisfy_the_static_policy
 
 echo
