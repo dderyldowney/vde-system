@@ -1846,6 +1846,32 @@ test_case65_an_unreadable_merge_base_baseline_is_an_error
 test_case66_an_unreadable_working_baseline_is_an_error
 test_case67_a_shallow_checkout_does_not_report_a_fixed_entry_as_growth
 test_case68_when_history_cannot_be_deepened_the_check_stays_strict
+test_case70_deepening_never_mixes_a_sha_and_a_branch_in_one_fetch() {
+    test_start "70: deepening fetches the branch and HEAD in SEPARATE commands (git 2.56 deepens only one tip of a mixed fetch, so CI never found a merge-base)"
+    local c="${TMP_ROOT}/c70-shallow" real shim rec out line
+    local -i mixed=0 sha_deepen=0 br_deepen=0
+    shallow_fixture c70
+    git clone -q --depth 1 --branch feat-benign "file://${TMP_ROOT}/c70-remote.git" "${c}" 2>/dev/null
+    vde_shib_ensure_base_ref "${c}" origin/develop
+    real="$(command -v git)"; shim="${TMP_ROOT}/shim70"; rec="${TMP_ROOT}/rec70"
+    mkdir -p "${shim}"; : > "${rec}"
+    # A git that appends the arguments of every FETCH to a file, then really runs it.
+    printf '#!/usr/bin/env zsh\ntypeset _ZSH_PURE=${(%%):-%%x}\nif [[ " $* " == *" fetch "* ]]; then print -r -- "ARGS=$*" >> %s; fi\nexec %s "$@"\n' "${rec}" "${real}" > "${shim}/git"
+    chmod +x "${shim}/git"
+    GROW_OUT="$(PATH="${shim}:${PATH}" vde_shib_baseline_growth "${c}" origin/develop 2>&1)"; GROW_RC=$?
+    while IFS= read -r line; do
+        [[ "${line}" == *--deepen=* ]] || continue
+        if [[ "${line}" =~ ' [0-9a-f]{40}( |$)' && "${line}" == *'+develop:'* ]]; then mixed+=1
+        elif [[ "${line}" =~ ' [0-9a-f]{40}( |$)' ]]; then sha_deepen+=1
+        elif [[ "${line}" == *'+develop:'* ]]; then br_deepen+=1; fi
+    done < "${rec}"
+    expect_eq "case70a no single deepen fetch names both HEAD's sha and the branch" "${mixed}" "0"
+    (( sha_deepen >= 1 && br_deepen >= 1 )) \
+        && test_pass "case70b HEAD and the branch are each deepened by their own fetch" \
+        || test_fail "case70b HEAD and the branch are each deepened by their own fetch" "sha=${sha_deepen} branch=${br_deepen}: $(<"${rec}")"
+    expect_eq "case70c the result is still correct (nothing grew)" "${GROW_RC}:${GROW_OUT}" "0:"
+}
+test_case70_deepening_never_mixes_a_sha_and_a_branch_in_one_fetch
 
 echo ""
 echo "Results: ${TESTS_PASSED} passed, ${TESTS_FAILED} failed"
