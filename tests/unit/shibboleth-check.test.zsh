@@ -1557,7 +1557,7 @@ test_case69_the_charter_states_the_base_ref_prerequisite() {
     test_start "69: docs/governance/sovereign-charter.md states the committed-bytes rule, the base-ref prerequisite and the commit-time sweep (Signet #646, #647)"
     local t
     t="$(grep -m1 -F 'zsh shibboleth check' "${VDE_ROOT_DIR}/docs/governance/sovereign-charter.md")"
-    [[ "${t}" == *'COMMITTED bytes'* && "${t}" == *'origin/develop'* && "${t}" == *'VDE_SHIB_BASE_REF'* && "${t}" == *'STAGED zsh files'* ]] \
+    [[ "${t}" == *'COMMITTED bytes'* && "${t}" == *'origin/develop'* && "${t}" == *'VDE_SHIB_BASE_REF'* && "${t}" == *'STAGED zsh files'* && "${t}" == *'shallow'* ]] \
         && test_pass "the charter paragraph names the committed bytes, origin/develop, VDE_SHIB_BASE_REF and the staged sweep" \
         || test_fail "the charter paragraph names the committed bytes, origin/develop, VDE_SHIB_BASE_REF and the staged sweep" "the shibboleth paragraph says: ${t[1,300]}"
 }
