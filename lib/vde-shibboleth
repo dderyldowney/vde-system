@@ -20,7 +20,7 @@ typeset _ZSH_PURE=${(%):-%x}
 #
 # Read-only except vde_shib_ensure_base_ref, the one function that may fetch the base ref
 # (a remote-tracking ref only, never the index, worktree or history of a shallow clone).
-# Dependencies: git, grep, tr and the zsh builtins.
+# Dependencies: git, mktemp, rm and the zsh builtins.
 
 if typeset -f vde_shib_sweep >/dev/null 2>&1; then
     return 0 2>/dev/null || exit 0
@@ -121,9 +121,9 @@ vde_shib_is_zsh() {
     [[ -n "${first}" ]] || return 1
     # Match the INTERPRETER, not the word zsh anywhere on the line: `#!/bin/bash # zsh is not
     # used here` is a bash script (Signet #645). Accepts `#!/bin/zsh`, `#!/usr/bin/env zsh`,
-    # `#!/usr/bin/env -S zsh -f`, `#! /opt/homebrew/bin/zsh -f` and versioned names such as
+    # `#!/usr/bin/env -S zsh -f` (also `-u VAR`, `-C dir` and a quoted `-S 'zsh -f'`), `#! /opt/homebrew/bin/zsh -f` and versioned names such as
     # `zsh-5.9`, `zsh5` or `zsh-static`; rejects `zshfoo` and every other interpreter.
-    local re='^#![[:space:]]*(([^[:space:]]*/)?env[[:space:]]+((-[^[:space:]]+|[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*)[[:space:]]+)*)?([^[:space:]]*/)?zsh([-.0-9][^[:space:]]*)?([[:space:]]|$)'
+    local re='^#![[:space:]]*(([^[:space:]]*/)?env[[:space:]]+((-[uC][[:space:]]+[^[:space:]]+|-[^[:space:]]+|[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*)[[:space:]]+)*)?'"[\"']?"'([^[:space:]]*/)?zsh([-.0-9][^[:space:]]*)?([[:space:]]|$)'
     [[ "${first}" =~ ${re} ]]
 }
 
@@ -307,8 +307,9 @@ _vde_shib_blob_violates() {
     else
         fmode="$(git -C "${root}" ls-tree "${revpath%%:*}" -- "${revpath#*:}" 2>/dev/null)"
     fi
-    # A symlink's blob is its link TEXT, not file content: its target is judged as its own path.
-    [[ "${fmode}" == 120000* ]] && return 1
+    # A symlink's blob is its link TEXT and a gitlink (submodule) is a commit id: neither is file
+    # content. A symlink's target is judged as its own path.
+    [[ "${fmode}" == 120000* || "${fmode}" == 160000* ]] && return 1
     if ! git -C "${root}" show "${revpath}" > "${f}" 2>/dev/null; then
         rm -f -- "${f}"
         # Absent from the tree is fine (rc 1); present but unreadable is an error (rc 2).
@@ -357,7 +358,7 @@ vde_shib_sweep_snapshot() {
         _vde_shib_git_list "${root}" diff --no-renames --name-only -z HEAD -- \
             || { print -r -- "ERROR cannot list the files changed since HEAD in ${root}"; return 2; }
     else
-        _vde_shib_git_list "${root}" diff --cached --no-renames --name-only -z --diff-filter=ACMR \
+        _vde_shib_git_list "${root}" diff --cached --no-renames --name-only -z --diff-filter=ACMRT \
             || { print -r -- "ERROR cannot list the staged files in ${root}"; return 2; }
     fi
     names=("${_vde_shib_tracked_list[@]}")
@@ -368,6 +369,9 @@ vde_shib_sweep_snapshot() {
         for line in "${_vde_shib_entries[@]}"; do
             baseline[${line}]=1
         done
+    elif git -C "${root}" rev-parse -q --verify "${rev}${baseline_rel}" >/dev/null 2>&1; then
+        print -r -- "ERROR cannot read the ${what} ${baseline_rel} in ${root}"
+        return 2
     fi
 
     # An uncommitted baseline entry must not hide a committed violator: its file did not change, so the
