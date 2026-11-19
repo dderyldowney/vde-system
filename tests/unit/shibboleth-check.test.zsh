@@ -666,14 +666,15 @@ test_case31_base_branch_follows_the_configured_anvil() {
 }
 
 test_case32_charter_states_what_the_enforcer_really_does_to_plans() {
-    test_start "32: the Sovereign Charter says the enforcer DELETES stray plans/ subfolders (it runs rm -rf there)"
-    local enf="${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" ch="${VDE_ROOT_DIR}/docs/governance/sovereign-charter.md" sub
-    # only the Forge-only subsection counts (the word "delete" appears elsewhere in the charter)
+    test_start "32: the Sovereign Charter says the audit REPORTS stray plans/ subfolders and never deletes them (Signet #643)"
+    local ch="${VDE_ROOT_DIR}/docs/governance/sovereign-charter.md" sub
+    # only the Forge-only subsection counts
     sub="$(awk '/^### Forge-only development artifacts/ { f = 1; next } f && /^(##|###) / { exit } f { print }' "${ch}")"
-    if grep -qE 'rm -rf "\$\{item\}"' "${enf}" && ! print -r -- "${sub}" | grep -qiE 'delet'; then
-        test_fail "charter describes the plans/ ghost-zone deletion" "the enforcer deletes plans/<subdir> (other than scripts and archive) but the charter only says it 'checks'"
+    # one line of the subsection must carry the Ghost Zone rule, say it reports, and say it never deletes
+    if print -r -- "${sub}" | grep -qiE 'Ghost Zone.*report.*never delet'; then
+        test_pass "charter describes the plans/ ghost-zone as report-only"
     else
-        test_pass "charter describes the plans/ ghost-zone deletion"
+        test_fail "charter describes the plans/ ghost-zone as report-only" "the Forge-only subsection must say the audit reports a stray plans/<subdir> and never deletes it (the rule is report-only since Signet #643)"
     fi
 }
 

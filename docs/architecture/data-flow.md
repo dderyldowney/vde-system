@@ -14,7 +14,7 @@ The Virtual Development Environment is governed by the **Universal Agent Protoco
 - **Shebang Purity**: Recursively audits `bin/`, `lib/`, and `scripts/` to ensure `#!/usr/bin/env zsh` is the universal entry point.
 - **The Use-Case Anchor**: Mandates that every technical refactor or infrastructure hardening strike is justified by its improvement to the **Foundling** (Student) or **Reinforcement** (New Hire) cohorts.
 - **The Armorer’s Toolset**: Explicitly authorizes the use of research swarms, self-augmentation tools, and parallel sub-agent orchestration to ensure the highest quality strike.
-- **Ghost Detection**: Monitors for "Ghost Zones" (unauthorized root directories) and ensures build-time artifacts (`apt` lists) are purged.
+- **Ghost Detection**: Reports "Ghost Zones" (any subdirectory of `plans/` other than `scripts/` and `archive/`) and fails the audit without deleting anything, and ensures build-time artifacts (`apt` lists) are purged.
 - **Supervised Execution**: Every CLI strike is wrapped in the Enforcer to maintain architectural integrity.
 
 ## 2. Advanced Orchestration (The Heartbeat)

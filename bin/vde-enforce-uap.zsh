@@ -11,7 +11,8 @@ set -e
 #===============================================================================
 typeset _ZSH_PURE=${(%):-%x}
 
-VDE_ROOT_DIR="${0:h:h}"
+# Absolute on purpose (:A): a relative root such as "." would make every rule below depend on the caller's directory.
+VDE_ROOT_DIR="${0:A:h:h}"
 
 # 0. Technical Integrity Gate (Project 1 Dependency)
 # The Forge cannot be lit without the Unyielding Tetrad.
@@ -34,18 +35,29 @@ warnings=0
 # GHOST ZONE CHECK (Zero-Tolerance)
 #===============================================================================
 
-# Rule 3 Enforcement: plans/ Subdirectory Lock
-if [[ -d "plans" ]]; then
-    for item in plans/*(N/); do
+# Rule 3 Enforcement: plans/ Subdirectory Lock (REPORT-ONLY, Signet #643)
+# The audit fails (zero tolerance) and names every offending directory, but it
+# NEVER deletes anything: an untracked file under an offender has no way back.
+# Hidden directories (plans/.<name>/) count: the (D) glob qualifier matches them.
+# The rule reads plans/ under the absolute VDE_ROOT_DIR, so it audits the repository the
+# enforcer lives in whatever the caller's working directory is.
+typeset plans_dir="${VDE_ROOT_DIR}/plans"
+if [[ -d "${plans_dir}" ]]; then
+    typeset -a ghost_zones=()
+    for item in "${plans_dir}"/*(DN/); do
         local sub_name="${item:t}"
         if [[ "${sub_name}" != "scripts" && "${sub_name}" != "archive" ]]; then
-            echo "\033[1;31m[CRITICAL FAILURE]\033[0m Ghost Zone 'plans/${sub_name}/' detected."
-            echo "Protocol Violation: Rule 3 (Ghost Zone Prohibition)."
-            echo "Purging unauthorized artifacts and halting session..."
-            rm -rf "${item}"
-            exit 1
+            ghost_zones+=("${sub_name}")
         fi
     done
+    if (( ${#ghost_zones} > 0 )); then
+        for sub_name in "${ghost_zones[@]}"; do
+            echo "\033[1;31m[CRITICAL FAILURE]\033[0m Ghost Zone 'plans/${sub_name}/' detected."
+            echo "Protocol Violation: Rule 3 (Ghost Zone Prohibition)."
+            echo "Nothing was deleted. Move 'plans/${sub_name}/' under plans/archive/ or remove it deliberately, then re-run the audit."
+        done
+        exit 1
+    fi
 fi
 
 # Mandatory config files (Mandate 0 & 14 integration)
