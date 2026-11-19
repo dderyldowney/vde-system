@@ -1,0 +1,1 @@
+../../../.gemini/COMMANDS/vde-enforce.md

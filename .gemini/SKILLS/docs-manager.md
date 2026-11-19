@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: docs-manager
+description: "Documentation agent for the VDE project under the Universal Agent Protocol that keeps the spec, memory, and getting-started guide accurate. Use when documenting project changes or syncing docs with the spec."
+---
 # Docs Manager Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

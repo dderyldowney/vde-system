@@ -6,8 +6,10 @@ typeset _ZSH_PURE=${(%):-%x}
 # Unit tests for Signet #633: the agent rules describe the agent platforms that
 # actually exist (Claude Code and Antigravity's `agy`), not the retired Gemini
 # CLI, and they say plainly that .gemini/COMMANDS and .gemini/SKILLS are
-# procedures an agent is pointed at, not natively discovered commands/skills
-# (verified 2026-11-18: `agy` lists none of them, Claude has none).
+# procedures an agent is pointed at; Antigravity also discovers them natively
+# through .agents/skills (Signet #634, verified 2026-11-18 with `agy`), while
+# Claude Code and every other agent read the named file (Claude Code has no
+# commands or skills folder here).
 #
 # Read-only: it inspects tracked files and never writes anywhere.
 
@@ -65,6 +67,12 @@ test_section5_names_the_real_platforms() {
     done
 }
 
+# cited_paths -> reads text on stdin and prints every path it cites: a backtick token that contains a slash, or
+# a bare file name with a known extension (kilo.json, CLAUDE.md). Absolute paths and options are skipped.
+cited_paths() {
+    grep -oE '`[^`]+`' | tr -d '`' | tr ' ' '\n' | grep -E '/|\.(json|md|zsh)$' | grep -vE '^/|^-'
+}
+
 test_section5_paths_exist() {
     test_start "3: every path section 5 cites exists in the repository"
     local tok bad=0 n=0 msg=""
@@ -72,9 +80,19 @@ test_section5_paths_exist() {
         [[ -n "${tok}" ]] || continue
         (( ++n ))
         [[ -e "${VDE_ROOT_DIR}/${tok}" ]] || { (( ++bad )); msg+="${tok} | "; }
-    done < <(section5 | grep -oE '`[^`]+`' | tr -d '`' | tr ' ' '\n' | grep '/' | grep -vE '^/|^-')
+    done < <(section5 | cited_paths)
     (( n > 0 )) || { test_fail "section 5 cites paths" "none extracted: either the table lost its paths or the extraction broke"; return; }
     (( bad == 0 )) && test_pass "all ${n} cited paths exist" || test_fail "all cited paths exist" "${bad} missing: ${msg}"
+}
+
+test_cited_paths_include_bare_file_names() {
+    test_start "3b: the cited-path extraction also yields bare file names with a known extension (kilo.json), not only tokens that contain a slash"
+    local got want
+    got="$(print -r -- 'see `kilo.json`, `lib/x`, `zsh`, `CLAUDE.md`, `/abs`, `--flag` and `a.md b/c`' | cited_paths | tr '\n' ' ')"
+    want="kilo.json lib/x CLAUDE.md a.md b/c "
+    [[ "${got}" == "${want}" ]] \
+        && test_pass "extraction yields: ${got}" \
+        || test_fail "extraction yields the bare file names too" "got [${got}] want [${want}]"
 }
 
 test_section5_is_honest_about_discovery() {
@@ -127,6 +145,7 @@ test_section5_covers_kilo_and_platforms_without_subagents() {
 test_retired_cli_not_named_as_a_platform
 test_section5_names_the_real_platforms
 test_section5_paths_exist
+test_cited_paths_include_bare_file_names
 test_section5_is_honest_about_discovery
 test_reading_block_points_at_procedures
 test_suite_is_in_the_ci_runner

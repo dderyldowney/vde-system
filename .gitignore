@@ -94,7 +94,10 @@ test_run_report.txt
 
 # Session and agent files
 SESSION_STATE.md
-.agents/
+# Antigravity session files stay local; its native skills (symlinks to .gemini/SKILLS and
+# .gemini/COMMANDS, Signet #634) are committed so a fresh clone has them.
+.agents/*
+!.agents/skills/
 .gemini/settings.json
 .gemini/settings.local.json
 .worktrees/

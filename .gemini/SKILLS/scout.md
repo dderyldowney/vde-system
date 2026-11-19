@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: scout
+description: "Read-only Discovery Agent for the VDE project under the Universal Agent Protocol. Gathers precise codebase facts to establish Ground Truth before planning; use it to explore and trace code, never to edit."
+---
 # Scout Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

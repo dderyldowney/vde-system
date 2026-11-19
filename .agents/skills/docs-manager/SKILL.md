@@ -1,0 +1,1 @@
+../../../.gemini/SKILLS/docs-manager.md

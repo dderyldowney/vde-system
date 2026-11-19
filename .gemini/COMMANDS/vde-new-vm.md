@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: vde-new-vm
+description: "Guided workflow to add a new VM type (lang or service) following docs/governance/vde-spec.md, with port assignment, template discovery, and a hard stop for user approval before any files are created."
+---
 # VDE-NEW-VM
 <!-- @forge (Governance Sentinel) -->
 Guided workflow to add a new VM type following docs/governance/vde-spec.md.
@@ -14,10 +19,11 @@ Guided workflow to add a new VM type following docs/governance/vde-spec.md.
 Parse `$ARGUMENTS`:
 - Type: `lang` (port range 2200-2299) or `service` (port range 2400-2499)
 - Name: VM identifier (lowercase, no spaces, no `vde-` prefix — it's added automatically)
+- The name MUST match `^[a-z][a-z0-9-]*$`. Refuse anything else (quotes, `$`, backticks, `;`, spaces, slashes) BEFORE the name reaches any shell command, then use it only inside single quotes.
 
 Check for name conflict:
 ```zsh
-grep -i "<name>" data/vm-types.json
+grep -iF -- '<name>' data/vm-types.json
 ```
 If exists: report conflict and stop.
 

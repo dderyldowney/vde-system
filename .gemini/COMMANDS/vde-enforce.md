@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: vde-enforce
+description: "Runs the UAP Universal Supervisor audit on described work to verify Phase 0-5 lifecycle and TDD, DRY, and Swarm+MCP compliance; returns PASS or BLOCKED."
+---
 # /vde-enforce Command (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 
