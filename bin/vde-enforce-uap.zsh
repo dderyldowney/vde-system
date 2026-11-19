@@ -277,7 +277,12 @@ else
         1)
             while IFS= read -r shib_grow_line; do
                 [[ -z "${shib_grow_line}" ]] && continue
-                shib_error "Shibboleth baseline GREW versus ${shib_base}: ${shib_grow_line}. The baseline is shrink-only: add the shibboleth to that file instead of listing it."
+                if [[ "${shib_grow_line}" == "baseline file deleted"* ]]; then
+                    # The library already says what happened and what to do; "GREW" would mislead.
+                    shib_error "Shibboleth ${shib_grow_line}."
+                else
+                    shib_error "Shibboleth baseline GREW versus ${shib_base}: ${shib_grow_line}. The baseline is shrink-only: add the shibboleth to that file instead of listing it."
+                fi
                 errors=$((errors + 1))
             done <<< "${shib_growth}"
             ;;
@@ -293,6 +298,34 @@ else
             errors=$((errors + 1))
             ;;
     esac
+    # The growth above reads the WORKING-TREE baseline. An exemption a commit added and an uncommitted edit
+    # then removed would hide from it, yet the push carries the commit: judge the COMMITTED baseline too, and
+    # report an entry once (Signet #646). Only when the base resolved (rc 0 or 1 above).
+    if [[ $shib_grow_rc -le 1 ]]; then
+        shib_head_rc=0
+        shib_head_growth="$(vde_shib_baseline_growth "${VDE_ROOT_DIR}" "${shib_base}" "" head)" || shib_head_rc=$?
+        shib_seen_lines=("${(@f)shib_growth}")
+        case $shib_head_rc in
+            0) ;;
+            1)
+                while IFS= read -r shib_grow_line; do
+                    [[ -z "${shib_grow_line}" ]] && continue
+                    # already reported by the working-copy view
+                    (( ${shib_seen_lines[(Ie)${shib_grow_line}]} )) && continue
+                    if [[ "${shib_grow_line}" == "baseline file deleted"* ]]; then
+                        shib_error "Shibboleth ${shib_grow_line}."
+                    else
+                        shib_error "Shibboleth baseline GREW in the COMMITTED baseline versus ${shib_base}: ${shib_grow_line}. The baseline is shrink-only: add the shibboleth to that file instead of listing it."
+                    fi
+                    errors=$((errors + 1))
+                done <<< "${shib_head_growth}"
+                ;;
+            *)
+                shib_error "Shibboleth committed baseline growth could not be checked (rc ${shib_head_rc}): ${shib_head_growth%%$'\n'*}"
+                errors=$((errors + 1))
+                ;;
+        esac
+    fi
     fi
 fi
 
