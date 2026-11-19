@@ -156,24 +156,45 @@ vde_shib_has_literal() {
     return 1
 }
 
-# vde_shib_ensure_base_ref ROOT REF
-# Makes REF (e.g. origin/develop) resolvable to a commit, with at most one best-effort
-# fetch of origin. rc 0 when REF resolves (already, or after the fetch), 3 when it still
-# does not. A shallow clone is fetched with --depth=1 so it stays shallow; a FULL clone is
-# fetched without --depth, because a depth fetch would truncate its history.
-vde_shib_ensure_base_ref() {
+# _vde_shib_fetch_base ROOT REF -> one best-effort, non-prompting fetch of REF (origin/<branch>) into
+# refs/remotes/REF. A shallow clone is fetched with --depth=1 so it stays shallow; a FULL clone is
+# fetched without --depth, because a depth fetch would truncate its history. Failure is silent: the
+# caller judges whether REF resolves afterwards. The leading + lets a refresh move the ref even when
+# the branch was rewritten. The one place that fetches the base ref.
+_vde_shib_fetch_base() {
     local root="$1" ref="$2" br shallow=''
+    local -a envv=(GIT_TERMINAL_PROMPT=0) opts=(-c http.lowSpeedLimit=1000 -c http.lowSpeedTime=30) depth=()
+    br="${ref#origin/}"
+    # Never block a push: GIT_TERMINAL_PROMPT=0 does not stop ssh from prompting on the terminal (host
+    # key, passphrase) and ssh has no time limit. Unless the user set an ssh command (theirs wins),
+    # make ssh non-interactive with a connect timeout; the http low-speed options abort a stalled
+    # transfer (Signet #646).
+    if [[ -z "${GIT_SSH_COMMAND:-}" && -z "$(git -C "${root}" config --get core.sshCommand 2>/dev/null)" ]]; then
+        envv+=("GIT_SSH_COMMAND=ssh -o BatchMode=yes -o ConnectTimeout=15")
+    fi
+    shallow="$(git -C "${root}" rev-parse --is-shallow-repository 2>/dev/null)"
+    [[ "${shallow}" == true ]] && depth=(--depth=1)
+    env "${envv[@]}" git -C "${root}" "${opts[@]}" fetch -q "${depth[@]}" origin "+${br}:refs/remotes/${ref}" 2>/dev/null || true
+    return 0
+}
+
+# vde_shib_ensure_base_ref ROOT REF
+# Makes REF (e.g. origin/develop) resolvable to a commit, with at most one best-effort fetch of
+# origin. rc 0 when REF resolves (already, or after the fetch), 3 when it still does not.
+# A REF that already resolves may be STALE (develop moved on since the last fetch), and a stale base
+# hides growth the real base would report. Refreshing costs a network round trip, so only the push
+# gate pays it: set VDE_SHIB_REFRESH_BASE=1 (githooks/proof-of-life-hook.zsh does) and an already
+# resolvable origin/* REF is fetched again; an unreachable remote keeps the cached ref (Signet #646).
+vde_shib_ensure_base_ref() {
+    local root="$1" ref="$2"
     if git -C "${root}" rev-parse --verify -q "${ref}^{commit}" >/dev/null 2>&1; then
+        if [[ "${VDE_SHIB_REFRESH_BASE:-}" == 1 && "${ref}" == origin/* ]]; then
+            _vde_shib_fetch_base "${root}" "${ref}"
+        fi
         return 0
     fi
     [[ "${ref}" == origin/* ]] || return 3
-    br="${ref#origin/}"
-    shallow="$(git -C "${root}" rev-parse --is-shallow-repository 2>/dev/null)"
-    if [[ "${shallow}" == true ]]; then
-        GIT_TERMINAL_PROMPT=0 git -C "${root}" fetch -q --depth=1 origin "${br}:refs/remotes/${ref}" 2>/dev/null || true
-    else
-        GIT_TERMINAL_PROMPT=0 git -C "${root}" fetch -q origin "${br}:refs/remotes/${ref}" 2>/dev/null || true
-    fi
+    _vde_shib_fetch_base "${root}" "${ref}"
     if git -C "${root}" rev-parse --verify -q "${ref}^{commit}" >/dev/null 2>&1; then
         return 0
     fi
@@ -484,10 +505,10 @@ vde_shib_staged_baseline_additions() {
 # when BASE_REF cannot be resolved, 2 when git cannot read the merge-base baseline.
 vde_shib_baseline_growth() {
     local root="$1" base_ref="$2" baseline_rel="${3:-${VDE_SHIBBOLETH_BASELINE_REL}}"
-    local base_text entry mb=''
+    local base_text entry mb='' tmp=''
     local -a work_entries=()
     local -A seen=()
-    local -i grew=0
+    local -i grew=0 brc=0
 
     if ! git -C "${root}" rev-parse --verify -q "${base_ref}^{commit}" >/dev/null 2>&1; then
         return 3
@@ -498,6 +519,36 @@ vde_shib_baseline_growth() {
     [[ -n "${mb}" ]] || mb="${base_ref}"
 
     if ! git -C "${root}" cat-file -e "${mb}:${baseline_rel}" 2>/dev/null; then
+        # First creation of the baseline on this branch: there is no earlier baseline to be shrink-only
+        # against, so every entry must be a file that ALREADY violates at the merge-base tree. A file that
+        # is new on this branch, or already carries the literal, would otherwise let the creating change
+        # grandfather a fresh violator (Signet #646).
+        [[ -f "${root}/${baseline_rel}" ]] || return 0
+        _vde_shib_parse_baseline < "${root}/${baseline_rel}"
+        work_entries=("${_vde_shib_entries[@]}")
+        tmp="$(mktemp -d 2>/dev/null)" || { print -r -- "ERROR cannot create a temporary directory for the baseline check"; return 2; }
+        for entry in "${work_entries[@]}"; do
+            [[ -n "${seen[${entry}]:-}" ]] && continue
+            seen[${entry}]=1
+            brc=0
+            _vde_shib_blob_violates "${root}" "${mb}:${entry}" "${tmp}" || brc=$?
+            case ${brc} in
+                0) ;;
+                2)
+                    print -r -- "ERROR cannot read ${entry} at ${base_ref} in ${root}"
+                    rm -rf -- "${tmp:?}"
+                    return 2
+                    ;;
+                *)
+                    print -r -- "${entry}"
+                    grew=1
+                    ;;
+            esac
+        done
+        rm -rf -- "${tmp:?}"
+        if (( grew == 1 )); then
+            return 1
+        fi
         return 0
     fi
     if ! base_text="$(git -C "${root}" show "${mb}:${baseline_rel}" 2>/dev/null)"; then
