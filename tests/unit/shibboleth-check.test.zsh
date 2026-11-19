@@ -927,6 +927,15 @@ commit_all() {  # commit_all REPO MESSAGE
     git -C "$1" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -q -m "$2"
 }
 
+drop_object() {  # drop_object REPO SHA -> deletes a LOOSE object; a packed one fails the setup loudly
+    local f="$1/.git/objects/${2[1,2]}/${2[3,-1]}"
+    if [[ ! -f "${f}" ]]; then
+        test_fail "test setup" "object ${2[1,12]} is not loose in $1 (packed?), so it cannot be made unreadable"
+        return 1
+    fi
+    command rm -f -- "${f}"
+}
+
 snap_into() {  # snap_into ROOT SOURCE [BASELINE_REL] -> sets SNAP_OUT, SNAP_RC
     SNAP_OUT="$(vde_shib_sweep_snapshot "$@" 2>&1)"
     SNAP_RC=$?
@@ -1103,7 +1112,7 @@ test_case45_committed_and_staged_content_is_judged_not_the_working_copy() {
     # which would also fail on a damaged blob, is not the thing that notices).
     mkdir -p "${r}/docs/governance"
     print -r -- lib/y.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
-    command rm -f -- "${r}/.git/objects/${sha[1,2]}/${sha[3,-1]}"
+    drop_object "${r}" "${sha}"
     snap_into "${r}" head
     expect_eq "case45l an unreadable committed blob: rc 2" "${SNAP_RC}" 2
     [[ "${SNAP_OUT}" == *"ERROR cannot read the committed content of lib/y.zsh"* ]] \
@@ -1166,7 +1175,7 @@ test_case45_committed_and_staged_content_is_judged_not_the_working_copy() {
     local bsha
     bsha="$(git -C "${r}" rev-parse HEAD:docs/governance/shibboleth-baseline.txt)"
     mk_zsh "${r}/lib/a.zsh" 4
-    command rm -f -- "${r}/.git/objects/${bsha[1,2]}/${bsha[3,-1]}"
+    drop_object "${r}" "${bsha}"
     snap_into "${r}" head
     expect_eq "case45s an unreadable committed baseline: rc 2" "${SNAP_RC}" 2
     [[ "${SNAP_OUT}" == *ERROR* ]] \
@@ -1330,21 +1339,51 @@ test_case49_an_unreachable_remote_falls_back_to_the_cached_ref() {
 }
 
 test_case52_the_base_fetch_cannot_prompt_or_stall() {
-    test_start "52: the base fetch cannot block on an ssh prompt or stall on a dead http or ssh remote"
-    local body
-    body="$(awk '/^_vde_shib_fetch_base\(\)/ { f = 1 } f { print } f && /^}/ { exit }' "${VDE_ROOT_DIR}/lib/vde-shibboleth")"
-    # GIT_TERMINAL_PROMPT=0 does not stop ssh from prompting on the terminal (host key, passphrase), and
-    # neither it nor ssh has a time limit: the push gate would hang (review, Signet #646).
-    [[ "${body}" == *'BatchMode=yes'* && "${body}" == *'ConnectTimeout='* ]] \
-        && test_pass "case52 an ssh fetch is non-interactive and has a connect timeout" \
-        || test_fail "case52 an ssh fetch is non-interactive and has a connect timeout" "the helper sets neither BatchMode=yes nor ConnectTimeout"
-    [[ "${body}" == *'http.lowSpeedLimit'* && "${body}" == *'http.lowSpeedTime'* ]] \
-        && test_pass "case52 an http fetch aborts when the transfer stalls" \
-        || test_fail "case52 an http fetch aborts when the transfer stalls" "the helper sets no http.lowSpeedLimit/http.lowSpeedTime"
-    # a configured ssh command is the user's: it is never overridden
-    [[ "${body}" == *'core.sshCommand'* && "${body}" == *'GIT_SSH_COMMAND'* ]] \
-        && test_pass "case52 an ssh command the user configured is left alone" \
-        || test_fail "case52 an ssh command the user configured is left alone" "the helper does not check GIT_SSH_COMMAND / core.sshCommand before setting its own"
+    test_start "52: the base fetch is non-interactive and bounded, and never overrides the user's own ssh setup (observed, not grepped)"
+    local r real shim rec out
+    r="$(new_repo c52)"
+    print -r -- readme > "${r}/README"
+    commit_all "${r}" base
+    real="$(command -v git)"
+    shim="${TMP_ROOT}/shim52"
+    rec="${TMP_ROOT}/rec52"
+    mkdir -p "${shim}"
+    # A git that records the environment and arguments of the FETCH only and delegates everything else.
+    printf '#!/usr/bin/env zsh\ntypeset _ZSH_PURE=${(%%):-%%x}\nif [[ " $* " == *" fetch "* ]]; then print -r -- "SSH=<${GIT_SSH_COMMAND:-}> PROMPT=<${GIT_TERMINAL_PROMPT:-}> ARGS=$*" > %s; exit 0; fi\nexec %s "$@"\n' "${rec}" "${real}" > "${shim}/git"
+    chmod +x "${shim}/git"
+    # a: the default fetch
+    : > "${rec}"
+    ( PATH="${shim}:${PATH}" _vde_shib_fetch_base "${r}" origin/develop )
+    out="$(<"${rec}")"
+    [[ "${out}" == *'BatchMode=yes'* && "${out}" == *'ConnectTimeout='* && "${out}" == *'ServerAliveInterval='* && "${out}" == *'PROMPT=<0>'* ]] \
+        && test_pass "case52a the fetch cannot prompt (terminal or ssh) and has connect and keep-alive limits" \
+        || test_fail "case52a the fetch cannot prompt (terminal or ssh) and has connect and keep-alive limits" "fetch saw: ${out}"
+    [[ "${out}" == *'http.lowSpeedLimit'* && "${out}" == *'http.lowSpeedTime'* ]] \
+        && test_pass "case52a an http transfer that stalls is aborted" \
+        || test_fail "case52a an http transfer that stalls is aborted" "fetch saw: ${out}"
+    # b: the user's GIT_SSH_COMMAND wins
+    : > "${rec}"
+    ( GIT_SSH_COMMAND="my-ssh -v" PATH="${shim}:${PATH}" _vde_shib_fetch_base "${r}" origin/develop )
+    out="$(<"${rec}")"
+    [[ "${out}" == "SSH=<my-ssh -v>"* ]] \
+        && test_pass "case52b a GIT_SSH_COMMAND the user set is kept" \
+        || test_fail "case52b a GIT_SSH_COMMAND the user set is kept" "fetch saw: ${out}"
+    # c: core.sshCommand wins
+    git -C "${r}" config core.sshCommand "core-ssh"
+    : > "${rec}"
+    ( PATH="${shim}:${PATH}" _vde_shib_fetch_base "${r}" origin/develop )
+    out="$(<"${rec}")"
+    [[ "${out}" == "SSH=<>"* ]] \
+        && test_pass "case52c a core.sshCommand the user configured is not shadowed" \
+        || test_fail "case52c a core.sshCommand the user configured is not shadowed" "fetch saw: ${out}"
+    git -C "${r}" config --unset core.sshCommand
+    # d: a GIT_SSH wrapper wins (git prefers GIT_SSH_COMMAND over GIT_SSH, so setting ours would ignore it)
+    : > "${rec}"
+    ( GIT_SSH=/bin/true PATH="${shim}:${PATH}" _vde_shib_fetch_base "${r}" origin/develop )
+    out="$(<"${rec}")"
+    [[ "${out}" == "SSH=<>"* ]] \
+        && test_pass "case52d a GIT_SSH wrapper the user set is not shadowed" \
+        || test_fail "case52d a GIT_SSH wrapper the user set is not shadowed" "fetch saw: ${out}"
 }
 
 test_case53_a_deleted_baseline_is_not_reported_as_growth() {
@@ -1603,6 +1642,74 @@ test_case63_precommit_stage_check_and_creation_message() {
         || test_fail "case63b the message says the baseline may only list files that already violate" "hook said: [${HOOK_OUT}]"
 }
 
+test_case64_growth_judges_the_committed_baseline_too() {
+    test_start "64: a baseline exemption a commit ADDED is judged even when an uncommitted edit removes it from the working copy"
+    local r f out rc
+    r="$(make_baseline_repo c64)"
+    mk_zsh "${r}/lib/c.zsh" 3
+    commit_all "${r}" "c exists, unlisted"
+    git -C "${r}" branch -M base
+    git -C "${r}" checkout -q -b feat
+    print -rl -- lib/a.zsh lib/b.zsh lib/c.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    commit_all "${r}" "feat adds an exemption for c"
+    print -rl -- lib/a.zsh lib/b.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    out="$(vde_shib_baseline_growth "${r}" base)"; rc=$?
+    expect_eq "case64a the working-copy view is clean (the uncommitted edit hides it)" "${rc}" 0
+    out="$(vde_shib_baseline_growth "${r}" base "" head)"; rc=$?
+    expect_eq "case64b the committed baseline view reports the added exemption" "${out}" "lib/c.zsh"
+    expect_eq "case64b rc" "${rc}" 1
+    # and the REAL audit: the exemption is committed, the working copy is fully clean
+    f="$(make_forge e2e64)"
+    git -C "${f}" checkout -q -b feat64
+    printf '#!/usr/bin/env zsh\n# @forge (t)\necho hi\n' > "${f}/lib/zz-grown"
+    print -r -- 'lib/zz-grown' >> "${f}/docs/governance/shibboleth-baseline.txt"
+    commit_all "${f}" "grow the baseline"
+    git -C "${f}" show base:docs/governance/shibboleth-baseline.txt > "${f}/docs/governance/shibboleth-baseline.txt"
+    printf '#!/usr/bin/env zsh\n# @forge (t)\n%s\necho hi\n' "${SHIB_LIT}" > "${f}/lib/zz-grown"
+    run_enforcer_in "${f}" base
+    [[ "${ENF_OUT}" == *"[UAP-ERROR] Shibboleth baseline GREW in the COMMITTED baseline"* ]] && (( ENF_RC != 0 )) \
+        && test_pass "case64c the audit reports the committed exemption and fails" \
+        || test_fail "case64c the audit reports the committed exemption and fails" "rc ${ENF_RC}: $(print -r -- "${ENF_OUT}" | grep -i 'shibboleth' | head -3)"
+}
+
+test_case65_an_unreadable_merge_base_baseline_is_an_error() {
+    test_start "65: a baseline that exists at the merge-base but cannot be read is an ERROR (rc 2), not 'first creation'"
+    local r out rc sha
+    r="$(make_baseline_repo c65)"
+    git -C "${r}" branch -M base
+    git -C "${r}" checkout -q -b feat
+    print -r -- change > "${r}/CHANGE"
+    commit_all "${r}" "feat"
+    sha="$(git -C "${r}" rev-parse base:docs/governance/shibboleth-baseline.txt)"
+    drop_object "${r}" "${sha}"
+    out="$(vde_shib_baseline_growth "${r}" base 2>&1)"; rc=$?
+    expect_eq "case65 an unreadable merge-base baseline: rc 2" "${rc}" 2
+    [[ "${out}" == *ERROR* ]] \
+        && test_pass "case65 an unreadable merge-base baseline: an ERROR line is printed" \
+        || test_fail "case65 an unreadable merge-base baseline: an ERROR line is printed" "output [${out}]"
+}
+
+test_case66_an_unreadable_working_baseline_is_an_error() {
+    test_start "66: a baseline file the working tree cannot read is an ERROR (rc 2), not an empty baseline with no growth"
+    local r out rc
+    r="$(make_baseline_repo c66)"
+    git -C "${r}" branch -M base
+    git -C "${r}" checkout -q -b feat
+    print -rl -- lib/a.zsh lib/b.zsh lib/c.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    chmod 000 "${r}/docs/governance/shibboleth-baseline.txt"
+    if [[ -r "${r}/docs/governance/shibboleth-baseline.txt" ]]; then
+        chmod 644 "${r}/docs/governance/shibboleth-baseline.txt"
+        test_pass "case66 skipped: this user can read a mode-000 file (running as root)"
+        return
+    fi
+    out="$(vde_shib_baseline_growth "${r}" base 2>&1)"; rc=$?
+    chmod 644 "${r}/docs/governance/shibboleth-baseline.txt"
+    expect_eq "case66 an unreadable working baseline: rc 2" "${rc}" 2
+    [[ "${out}" == *ERROR* ]] \
+        && test_pass "case66 an unreadable working baseline: an ERROR line is printed" \
+        || test_fail "case66 an unreadable working baseline: an ERROR line is printed" "output [${out}]"
+}
+
 test_case50_the_push_gate_turns_the_refresh_on() {
     test_start "50: githooks/proof-of-life-hook.zsh runs the audit with VDE_SHIB_REFRESH_BASE=1 (an ACTIVE line, not a comment)"
     local active
@@ -1617,7 +1724,7 @@ test_case51_the_docs_state_the_base_ref_prerequisite() {
     local f t
     for f in AGENTS.md .gemini/instructions.md; do
         t="$(grep -m1 -F 'shrink-only baseline' "${VDE_ROOT_DIR}/${f}")"
-        [[ "${t}" == *'VDE_SHIB_BASE_REF'* && "${t}" == *'origin/develop'* && "${t}" == *'COMMITTED bytes'* ]] \
+        [[ "${t}" == *'VDE_SHIB_BASE_REF'* && "${t}" == *'origin/develop'* && "${t}" == *'COMMITTED bytes'* && "${t}" == *'local ref'* ]] \
             && test_pass "${f}: the rule names origin/develop, VDE_SHIB_BASE_REF and the committed bytes" \
             || test_fail "${f}: the rule names origin/develop, VDE_SHIB_BASE_REF and the committed bytes" "the Mandate C line does not mention all three (Signets #645, #646)"
     done
@@ -1640,6 +1747,9 @@ test_case60_an_unreadable_staged_baseline_is_an_error_not_a_pass
 test_case61_security_review_of_the_commit_time_guard
 test_case62_the_hook_fails_closed_when_git_cannot_list_the_staged_files
 test_case63_precommit_stage_check_and_creation_message
+test_case64_growth_judges_the_committed_baseline_too
+test_case65_an_unreadable_merge_base_baseline_is_an_error
+test_case66_an_unreadable_working_baseline_is_an_error
 
 echo ""
 echo "Results: ${TESTS_PASSED} passed, ${TESTS_FAILED} failed"
