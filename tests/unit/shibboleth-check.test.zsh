@@ -865,8 +865,8 @@ test_case40_precommit_does_not_call_a_deletion_an_addition() {
 
 test_case41_the_base_fetch_never_prompts() {
     test_start "41: the best-effort base fetch cannot hang on a credential prompt"
-    # The one fetch lives in _vde_shib_fetch_base (first fetch and the push gate's refresh share it).
-    awk '/^_vde_shib_fetch_base\(\)/ { f = 1 } f { print } f && /^}/ { exit }' "${VDE_ROOT_DIR}/lib/vde-shibboleth" | grep -q 'GIT_TERMINAL_PROMPT=0' \
+    # The one network call lives in _vde_shib_net_fetch (the base fetch, the refresh and the deepening share it).
+    awk '/^_vde_shib_net_fetch\(\)/ { f = 1 } f { print } f && /^}/ { exit }' "${VDE_ROOT_DIR}/lib/vde-shibboleth" | grep -q 'GIT_TERMINAL_PROMPT=0' \
         && test_pass "case41 the fetch sets GIT_TERMINAL_PROMPT=0" \
         || test_fail "case41 the fetch sets GIT_TERMINAL_PROMPT=0" "a pre-push hook could block on a prompt"
 }
@@ -1721,6 +1721,88 @@ test_case66_an_unreadable_working_baseline_is_an_error() {
         || test_fail "case66 an unreadable working baseline: an ERROR line is printed" "output [${out}]"
 }
 
+# shallow_fixture NAME -> a remote whose develop SHRANK its baseline after three feature branches were cut
+# from the commit before. a.zsh was fixed by develop (benign for the branches); c.zsh violates and is unlisted.
+shallow_fixture() {
+    local n="$1" R="${TMP_ROOT}/$1-remote.git" P="${TMP_ROOT}/$1-pusher"
+    git init -q --bare -b develop "${R}"
+    git clone -q "${R}" "${P}" 2>/dev/null
+    git -C "${P}" checkout -q -b develop
+    mkdir -p "${P}/docs/governance"
+    mk_zsh "${P}/a.zsh" 3
+    mk_zsh "${P}/b.zsh" 3
+    mk_zsh "${P}/c.zsh" 3
+    mk_zsh "${P}/d.zsh" 3 2
+    print -rl -- a.zsh b.zsh > "${P}/docs/governance/shibboleth-baseline.txt"
+    commit_all "${P}" A
+    git -C "${P}" push -q origin develop 2>/dev/null
+    # three branches cut at A
+    git -C "${P}" checkout -q -b feat-benign develop;  print x > "${P}/f.txt"; commit_all "${P}" "benign"
+    git -C "${P}" push -q origin feat-benign 2>/dev/null
+    git -C "${P}" checkout -q -b feat-new develop;     mk_zsh "${P}/n.zsh" 3; print -rl -- a.zsh b.zsh n.zsh > "${P}/docs/governance/shibboleth-baseline.txt"; commit_all "${P}" "adds a NEW violator and lists it"
+    git -C "${P}" push -q origin feat-new 2>/dev/null
+    git -C "${P}" checkout -q -b feat-viol develop;    print -rl -- a.zsh b.zsh c.zsh > "${P}/docs/governance/shibboleth-baseline.txt"; commit_all "${P}" "lists c.zsh, which violates"
+    git -C "${P}" push -q origin feat-viol 2>/dev/null
+    git -C "${P}" checkout -q -b feat-strip develop;   mk_zsh "${P}/d.zsh" 3; print -rl -- a.zsh b.zsh d.zsh > "${P}/docs/governance/shibboleth-baseline.txt"; commit_all "${P}" "strips the literal from d.zsh and lists it"
+    git -C "${P}" push -q origin feat-strip 2>/dev/null
+    # develop then SHRINKS: a.zsh gains the literal and leaves the baseline
+    git -C "${P}" checkout -q develop
+    mk_zsh "${P}/a.zsh" 3 2
+    print -r -- b.zsh > "${P}/docs/governance/shibboleth-baseline.txt"
+    commit_all "${P}" "B: a fixed, baseline b"
+    git -C "${P}" push -q origin develop 2>/dev/null
+}
+
+# growth_in KIND NAME BRANCH -> sets GROW_OUT, GROW_RC; KIND is shallow (depth 1, what CI does) or full
+growth_in() {
+    local kind="$1" n="$2" br="$3" c="${TMP_ROOT}/$2-$1-$3"
+    if [[ "${kind}" == shallow ]]; then
+        git clone -q --depth 1 --branch "${br}" "file://${TMP_ROOT}/${n}-remote.git" "${c}" 2>/dev/null
+    else
+        git clone -q --branch "${br}" "${TMP_ROOT}/${n}-remote.git" "${c}" 2>/dev/null
+    fi
+    vde_shib_ensure_base_ref "${c}" origin/develop
+    GROW_OUT="$(vde_shib_baseline_growth "${c}" origin/develop 2>&1)"
+    GROW_RC=$?
+}
+
+test_case67_a_shallow_checkout_does_not_report_a_fixed_entry_as_growth() {
+    test_start "67: with no merge-base (a depth-1 CI checkout) an entry develop removed by FIXING its file is not growth; real growth still is"
+    shallow_fixture c67
+    # a: the repro. Full clone (merge-base found) is clean; so must the shallow clone be.
+    growth_in full c67 feat-benign
+    expect_eq "case67a full clone: nothing grew" "${GROW_RC}:${GROW_OUT}" "0:"
+    growth_in shallow c67 feat-benign
+    expect_eq "case67a shallow clone: nothing grew (develop fixed a.zsh and dropped its entry)" "${GROW_RC}:${GROW_OUT}" "0:"
+    # b: a NEW violator listed by the branch is growth in BOTH views
+    growth_in full c67 feat-new
+    expect_eq "case67b full clone: the new violator is growth" "${GROW_RC}:${GROW_OUT}" "1:n.zsh"
+    growth_in shallow c67 feat-new
+    expect_eq "case67b shallow clone: the new violator is growth, and only it" "${GROW_RC}:${GROW_OUT}" "1:n.zsh"
+    # c: an entry for a file that STILL violates at develop's tip is growth in BOTH views
+    growth_in full c67 feat-viol
+    expect_eq "case67c full clone: c.zsh is growth" "${GROW_RC}:${GROW_OUT}" "1:c.zsh"
+    growth_in shallow c67 feat-viol
+    expect_eq "case67c shallow clone: c.zsh (still violating at the tip) is growth, and only it" "${GROW_RC}:${GROW_OUT}" "1:c.zsh"
+    # d: a branch that STRIPS the literal from a file develop keeps compliant and lists it: growth in BOTH
+    # views (a tip-based guess would call it benign; a real merge-base cannot, which is why we deepen)
+    growth_in full c67 feat-strip
+    expect_eq "case67d full clone: d.zsh is growth" "${GROW_RC}:${GROW_OUT}" "1:d.zsh"
+    growth_in shallow c67 feat-strip
+    expect_eq "case67d shallow clone: d.zsh is growth too" "${GROW_RC}:${GROW_OUT}" "1:d.zsh"
+}
+
+test_case68_when_history_cannot_be_deepened_the_check_stays_strict() {
+    test_start "68: if the shallow clone cannot be deepened the check falls back to the base tip and FAILS CLOSED (a false block, never a false pass)"
+    local c="${TMP_ROOT}/c68-shallow"
+    shallow_fixture c68
+    git clone -q --depth 1 --branch feat-benign "file://${TMP_ROOT}/c68-remote.git" "${c}" 2>/dev/null
+    vde_shib_ensure_base_ref "${c}" origin/develop
+    command mv "${TMP_ROOT}/c68-remote.git" "${TMP_ROOT}/c68-remote.gone"
+    GROW_OUT="$(vde_shib_baseline_growth "${c}" origin/develop 2>&1)"; GROW_RC=$?
+    expect_eq "case68 no deepening possible: the strict tip comparison reports the removed entry" "${GROW_RC}:${GROW_OUT}" "1:a.zsh"
+}
+
 test_case50_the_push_gate_turns_the_refresh_on() {
     test_start "50: githooks/proof-of-life-hook.zsh runs the audit with VDE_SHIB_REFRESH_BASE=1 (an ACTIVE line, not a comment)"
     local active
@@ -1735,7 +1817,7 @@ test_case51_the_docs_state_the_base_ref_prerequisite() {
     local f t
     for f in AGENTS.md .gemini/instructions.md; do
         t="$(grep -m1 -F 'shrink-only baseline' "${VDE_ROOT_DIR}/${f}")"
-        [[ "${t}" == *'VDE_SHIB_BASE_REF'* && "${t}" == *'origin/develop'* && "${t}" == *'COMMITTED bytes'* && "${t}" == *'local ref'* ]] \
+        [[ "${t}" == *'VDE_SHIB_BASE_REF'* && "${t}" == *'origin/develop'* && "${t}" == *'COMMITTED bytes'* && "${t}" == *'local ref'* && "${t}" == *'shallow'* ]] \
             && test_pass "${f}: the rule names origin/develop, VDE_SHIB_BASE_REF and the committed bytes" \
             || test_fail "${f}: the rule names origin/develop, VDE_SHIB_BASE_REF and the committed bytes" "the Mandate C line does not mention all three (Signets #645, #646)"
     done
@@ -1762,6 +1844,8 @@ test_case69_the_charter_states_the_base_ref_prerequisite
 test_case64_growth_judges_the_committed_baseline_too
 test_case65_an_unreadable_merge_base_baseline_is_an_error
 test_case66_an_unreadable_working_baseline_is_an_error
+test_case67_a_shallow_checkout_does_not_report_a_fixed_entry_as_growth
+test_case68_when_history_cannot_be_deepened_the_check_stays_strict
 
 echo ""
 echo "Results: ${TESTS_PASSED} passed, ${TESTS_FAILED} failed"

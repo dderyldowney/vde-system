@@ -157,27 +157,54 @@ vde_shib_has_literal() {
     return 1
 }
 
-# _vde_shib_fetch_base ROOT REF -> one best-effort, non-prompting fetch of REF (origin/<branch>) into
-# refs/remotes/REF. A shallow clone is fetched with --depth=1 so it stays shallow; a FULL clone is
-# fetched without --depth, because a depth fetch would truncate its history. Failure is silent: the
-# caller judges whether REF resolves afterwards. The leading + lets a refresh move the ref even when
-# the branch was rewritten. The one place that fetches the base ref.
-_vde_shib_fetch_base() {
-    local root="$1" ref="$2" br shallow=''
-    local -a envv=(GIT_TERMINAL_PROMPT=0) opts=(-c http.lowSpeedLimit=1000 -c http.lowSpeedTime=30) depth=()
-    br="${ref#origin/}"
-    # Never block a push: GIT_TERMINAL_PROMPT=0 does not stop ssh from prompting on the terminal (host
-    # key, passphrase) and ssh has no time limit. Unless the user set an ssh command (theirs wins),
-    # make ssh non-interactive with a connect timeout; the http low-speed options abort a stalled
-    # transfer (Signet #646).
-    # GIT_SSH is honoured too: git prefers GIT_SSH_COMMAND over it, so setting ours would shadow the user's wrapper.
+# _vde_shib_net_fetch ROOT FETCH_ARGS... -> `git fetch -q FETCH_ARGS` made non-interactive and bounded, with
+# git's own exit status, silent. The ONE place the library touches the network. GIT_TERMINAL_PROMPT=0 does
+# not stop ssh from prompting on the terminal (host key, passphrase) and ssh has no time limit, so unless the
+# user set an ssh command (theirs wins: GIT_SSH_COMMAND, GIT_SSH or core.sshCommand) ssh is made
+# non-interactive with connect and keep-alive limits; the http low-speed options abort a stalled transfer
+# (Signet #646). git prefers GIT_SSH_COMMAND over GIT_SSH, so setting ours would shadow a user's wrapper.
+_vde_shib_net_fetch() {
+    local root="$1"
+    shift
+    local -a envv=(GIT_TERMINAL_PROMPT=0) opts=(-c http.lowSpeedLimit=1000 -c http.lowSpeedTime=30)
     if [[ -z "${GIT_SSH_COMMAND:-}" && -z "${GIT_SSH:-}" && -z "$(git -C "${root}" config --get core.sshCommand 2>/dev/null)" ]]; then
         envv+=("GIT_SSH_COMMAND=ssh -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=3")
     fi
+    env "${envv[@]}" git -C "${root}" "${opts[@]}" fetch -q "$@" 2>/dev/null
+}
+
+# _vde_shib_fetch_base ROOT REF -> one best-effort fetch of REF (origin/<branch>) into refs/remotes/REF.
+# A shallow clone is fetched with --depth=1 so it stays shallow; a FULL clone is fetched without --depth,
+# because a depth fetch would truncate its history. Failure is silent: the caller judges whether REF
+# resolves afterwards. The leading + lets a refresh move the ref even when the branch was rewritten.
+_vde_shib_fetch_base() {
+    local root="$1" ref="$2" br shallow=''
+    local -a depth=()
+    br="${ref#origin/}"
     shallow="$(git -C "${root}" rev-parse --is-shallow-repository 2>/dev/null)"
     [[ "${shallow}" == true ]] && depth=(--depth=1)
-    env "${envv[@]}" git -C "${root}" "${opts[@]}" fetch -q "${depth[@]}" origin "+${br}:refs/remotes/${ref}" 2>/dev/null || true
+    _vde_shib_net_fetch "${root}" "${depth[@]}" origin "+${br}:refs/remotes/${ref}" || true
     return 0
+}
+
+# _vde_shib_deepen ROOT REF -> rc 0 once HEAD and REF share a merge-base. A shallow clone (what CI checks
+# out) has none, and judging a branch against the base TIP then mistakes an entry the base removed after
+# the branch was cut for growth. Deepen both histories in steps (at most 8 x 250 commits) until a merge-base
+# appears. rc 1 when the clone is not shallow, REF is not an origin/* ref, or no merge-base could be found
+# (offline, or the history is longer than the cap): the caller then keeps the strict tip comparison, which
+# can only block too much, never too little (Signet #651).
+_vde_shib_deepen() {
+    local root="$1" ref="$2" br head
+    local -i i
+    [[ "${ref}" == origin/* ]] || return 1
+    [[ "$(git -C "${root}" rev-parse --is-shallow-repository 2>/dev/null)" == true ]] || return 1
+    br="${ref#origin/}"
+    head="$(git -C "${root}" rev-parse HEAD 2>/dev/null)" || return 1
+    for (( i = 1; i <= 8; i++ )); do
+        _vde_shib_net_fetch "${root}" --deepen=250 origin "${head}" "+${br}:refs/remotes/${ref}" || return 1
+        [[ -n "$(git -C "${root}" merge-base HEAD "${ref}" 2>/dev/null)" ]] && return 0
+    done
+    return 1
 }
 
 # vde_shib_ensure_base_ref ROOT REF
@@ -638,8 +665,12 @@ vde_shib_baseline_growth() {
         return 3
     fi
 
-    # No common ancestor (a shallow clone or unrelated history) falls back to the base tip.
+    # No common ancestor: a shallow clone (CI) is deepened until one exists (Signet #651). If none can be
+    # found (unrelated history, offline, or longer than the cap) the check falls back to the base tip.
     mb="$(git -C "${root}" merge-base HEAD "${base_ref}" 2>/dev/null)"
+    if [[ -z "${mb}" ]] && _vde_shib_deepen "${root}" "${base_ref}"; then
+        mb="$(git -C "${root}" merge-base HEAD "${base_ref}" 2>/dev/null)"
+    fi
     [[ -n "${mb}" ]] || mb="${base_ref}"
 
     if ! git -C "${root}" cat-file -e "${mb}:${baseline_rel}" 2>/dev/null; then
