@@ -29,7 +29,6 @@ bin/vde-bootstrap
 bin/vde-check-tetrad.zsh
 bin/vde-cluster
 bin/vde-dns-check.zsh
-bin/vde-enforce-uap.zsh
 bin/vde-exec
 bin/vde-gospel-audit.zsh
 bin/vde-heal-docs.zsh

@@ -908,6 +908,263 @@ test_case40_precommit_does_not_call_a_deletion_an_addition
 test_case41_the_base_fetch_never_prompts
 test_case42_no_doc_calls_the_swept_folders_out_of_scope
 
+# ---------------------------------------------------------------------------
+# Signet #645: the sweep judges the right bytes and classifies files by interpreter
+# ---------------------------------------------------------------------------
+
+commit_all() {  # commit_all REPO MESSAGE
+    git -C "$1" add -A
+    git -C "$1" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -q -m "$2"
+}
+
+snap_into() {  # snap_into ROOT SOURCE [BASELINE_REL] -> sets SNAP_OUT, SNAP_RC
+    SNAP_OUT="$(vde_shib_sweep_snapshot "$@" 2>&1)"
+    SNAP_RC=$?
+}
+
+test_case43_shebang_matches_the_interpreter_not_a_substring() {
+    test_start "43: the shebang test matches the zsh INTERPRETER, not the word zsh anywhere on line 1"
+    local line f rc r n=0
+    local -a yes=('#!/usr/bin/env zsh' '#!/bin/zsh' '#!/usr/bin/zsh' '#!/usr/bin/env -S zsh -f' '#! /bin/zsh -f' '#!/opt/homebrew/bin/zsh' '#!/usr/bin/env zsh -f' '#!/usr/bin/env -- zsh' '#!/usr/bin/env ZDOTDIR=/tmp zsh' '#!/usr/bin/env -S ZDOTDIR=/tmp zsh -f' '#!/usr/local/bin/zsh-5.9' '#!/usr/bin/zsh5' '#!/usr/bin/env zsh5' '#!/usr/bin/zsh-static')
+    local -a no=('#!/bin/bash # zsh is not used here' '#!/usr/bin/env bash' '#!/bin/sh' '#!/usr/bin/env python3 # zsh' '#!/bin/zshfoo' '#!/usr/bin/env bash -c zsh' '#!/usr/bin/env zshfoo' '#!/usr/bin/env FOO=bar bash')
+    for line in "${yes[@]}"; do
+        f="${TMP_ROOT}/sb43-${n}"; (( ++n ))
+        printf '%s\necho hi\n' "${line}" > "${f}"
+        vde_shib_is_zsh "${f}"; rc=$?
+        expect_eq "case43 accepts [${line}]" "${rc}" 0
+    done
+    for line in "${no[@]}"; do
+        f="${TMP_ROOT}/sb43-${n}"; (( ++n ))
+        printf '%s\necho hi\n' "${line}" > "${f}"
+        vde_shib_is_zsh "${f}"; rc=$?
+        expect_eq "case43 rejects [${line}]" "${rc}" 1
+    done
+    # at sweep level: a bash script that merely mentions zsh is not asked for the literal
+    r="$(new_repo c43)"
+    mkdir -p "${r}/lib"
+    printf '#!/bin/bash # zsh is not used here\necho hi\n' > "${r}/lib/tool"
+    chmod +x "${r}/lib/tool"
+    stage_all "${r}"
+    sweep_into "${r}"
+    expect_eq "case43 sweep output for a bash script that mentions zsh" "${SWEEP_OUT}" ""
+    expect_eq "case43 sweep rc for a bash script that mentions zsh" "${SWEEP_RC}" 0
+}
+
+test_case44_an_unreadable_baseline_entry_is_not_also_called_stale() {
+    test_start "44: an unreadable baseline entry is reported once, as UNREADABLE, and never as STALE 'not a zsh file'"
+    local r
+    r="$(make_baseline_repo c44)"
+    chmod 000 "${r}/lib/a.zsh"
+    if [[ -r "${r}/lib/a.zsh" ]]; then
+        chmod 644 "${r}/lib/a.zsh"
+        test_pass "case44 skipped: this user can read a mode-000 file (running as root)"
+        return
+    fi
+    sweep_into "${r}"
+    chmod 644 "${r}/lib/a.zsh"
+    expect_eq "case44 output" "${SWEEP_OUT}" "UNREADABLE lib/a.zsh"
+    expect_eq "case44 rc" "${SWEEP_RC}" 1
+    # the same for an entry without the .zsh suffix: it cannot be classified (its shebang cannot be
+    # read), so it is neither UNREADABLE nor 'STALE: not a zsh file' (review, Signet #645)
+    r="$(new_repo c44b)"
+    mkdir -p "${r}/lib" "${r}/docs/governance"
+    printf '#!/usr/bin/env zsh\necho hi\n' > "${r}/lib/tool"
+    print -r -- 'lib/tool' > "${r}/docs/governance/shibboleth-baseline.txt"
+    commit_all "${r}" base
+    chmod 000 "${r}/lib/tool"
+    sweep_into "${r}"
+    chmod 644 "${r}/lib/tool"
+    expect_eq "case44b an unreadable extensionless baseline entry is not called stale" "${SWEEP_OUT}" ""
+    # but an unreadable entry that is not even a tracked file is still reported (nothing else reports it)
+    r="$(new_repo c44c)"
+    mkdir -p "${r}/lib" "${r}/docs/governance"
+    print -r -- readme > "${r}/README"
+    commit_all "${r}" base
+    printf '#!/usr/bin/env zsh\necho hi\n' > "${r}/lib/ghost.zsh"
+    print -r -- 'lib/ghost.zsh' > "${r}/docs/governance/shibboleth-baseline.txt"
+    chmod 000 "${r}/lib/ghost.zsh"
+    sweep_into "${r}"
+    chmod 644 "${r}/lib/ghost.zsh"
+    [[ "${SWEEP_OUT}" == "STALE lib/ghost.zsh :: unreadable"* ]] \
+        && test_pass "case44c an unreadable, untracked baseline entry is reported stale for the TRUE reason" \
+        || test_fail "case44c an unreadable, untracked baseline entry is reported stale for the TRUE reason" "output [${SWEEP_OUT}]"
+}
+
+test_case45_committed_and_staged_content_is_judged_not_the_working_copy() {
+    test_start "45: vde_shib_sweep_snapshot judges the COMMITTED (head) or STAGED (index) bytes, not the working copy"
+    local r
+    r="$(new_repo c45)"
+    mk_zsh "${r}/lib/x.zsh" 3
+    commit_all "${r}" base
+    # a: the literal is only in the UNSTAGED working copy
+    mk_zsh "${r}/lib/x.zsh" 3 2
+    sweep_into "${r}"
+    expect_eq "case45a the working-tree sweep is clean" "${SWEEP_OUT}" ""
+    snap_into "${r}" head
+    expect_eq "case45a the committed version still lacks it" "${SNAP_OUT}" "COMMITTED lib/x.zsh"
+    expect_eq "case45a rc" "${SNAP_RC}" 1
+    snap_into "${r}" index
+    expect_eq "case45a nothing is staged, so the index view is silent" "${SNAP_OUT}" ""
+    # b: staged (still not committed)
+    git -C "${r}" add -A
+    snap_into "${r}" index
+    expect_eq "case45b the staged version carries it" "${SNAP_OUT}" ""
+    snap_into "${r}" head
+    expect_eq "case45b the committed version still lacks it" "${SNAP_OUT}" "COMMITTED lib/x.zsh"
+    # c: committed
+    commit_all "${r}" fix
+    snap_into "${r}" head
+    expect_eq "case45c clean once the fix is committed" "${SNAP_OUT}" ""
+    expect_eq "case45c rc" "${SNAP_RC}" 0
+    # d: a NEW staged file without the literal
+    mk_zsh "${r}/lib/new.zsh" 3
+    git -C "${r}" add -A
+    snap_into "${r}" index
+    expect_eq "case45d a new staged violator is reported by the index view" "${SNAP_OUT}" "STAGED lib/new.zsh"
+    snap_into "${r}" head
+    expect_eq "case45d it is not in HEAD, so the head view is silent" "${SNAP_OUT}" ""
+    # d2: the index holds a good version, the working copy was stripped afterwards
+    mk_zsh "${r}/lib/new.zsh" 3 2
+    git -C "${r}" add -A
+    mk_zsh "${r}/lib/new.zsh" 3
+    snap_into "${r}" index
+    expect_eq "case45d2 the index view judges the staged bytes, not the stripped working copy" "${SNAP_OUT}" ""
+    # e: an uncommitted deletion of a file whose committed version violates
+    r="$(new_repo c45e)"
+    mk_zsh "${r}/lib/v.zsh" 3
+    commit_all "${r}" base
+    command rm -- "${r}/lib/v.zsh"
+    snap_into "${r}" head
+    expect_eq "case45e a deleted-but-committed violator is still reported (the push carries it)" "${SNAP_OUT}" "COMMITTED lib/v.zsh"
+    # f: excluded paths stay out of scope
+    r="$(new_repo c45f)"
+    mk_zsh "${r}/plans/p.zsh" 3
+    commit_all "${r}" base
+    mk_zsh "${r}/plans/p.zsh" 4
+    snap_into "${r}" head
+    expect_eq "case45f an excluded path is silent" "${SNAP_OUT}" ""
+    # g: a grandfathered violator listed in the COMMITTED baseline is silent
+    r="$(make_baseline_repo c45g)"
+    mk_zsh "${r}/lib/a.zsh" 4
+    snap_into "${r}" head
+    expect_eq "case45g a baseline-listed file is silent in the head view" "${SNAP_OUT}" ""
+    # i: a staged RENAME of a committed violator: the old path is still what HEAD carries
+    r="$(new_repo c45i)"
+    mk_zsh "${r}/lib/old.zsh" 3
+    commit_all "${r}" base
+    git -C "${r}" mv lib/old.zsh lib/new.zsh
+    mk_zsh "${r}/lib/new.zsh" 3 2
+    git -C "${r}" add -A
+    snap_into "${r}" head
+    expect_eq "case45i a renamed committed violator is still reported under its old path" "${SNAP_OUT}" "COMMITTED lib/old.zsh"
+    snap_into "${r}" index
+    expect_eq "case45i the staged new path carries the literal" "${SNAP_OUT}" ""
+    # j: the check must FAIL CLOSED: an error is rc 2 with a message, never an empty clean result
+    r="$(new_repo c45j)"
+    mk_zsh "${r}/lib/x.zsh" 3
+    commit_all "${r}" base
+    SNAP_OUT="$(TMPDIR=/nonexistent-dir vde_shib_sweep_snapshot "${r}" head 2>&1)"; SNAP_RC=$?
+    expect_eq "case45j no temp dir: rc 2" "${SNAP_RC}" 2
+    [[ "${SNAP_OUT}" == *"ERROR cannot create a temporary directory"* ]] \
+        && test_pass "case45j no temp dir: an ERROR line is printed" \
+        || test_fail "case45j no temp dir: an ERROR line is printed" "output [${SNAP_OUT}]"
+    printf 'not an index' > "${r}/.git/index"
+    snap_into "${r}" head
+    expect_eq "case45j a broken index: rc 2" "${SNAP_RC}" 2
+    [[ "${SNAP_OUT}" == *"ERROR cannot list the files changed since HEAD"* ]] \
+        && test_pass "case45j a broken index: an ERROR line is printed" \
+        || test_fail "case45j a broken index: an ERROR line is printed" "output [${SNAP_OUT}]"
+    # k: the baseline that grandfathers a file must be HEAD's, not an uncommitted edit of it
+    r="$(make_baseline_repo c45k)"
+    print -r -- lib/b.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    commit_all "${r}" "shrink: a.zsh leaves the baseline although it still violates"
+    print -rl -- lib/a.zsh lib/b.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    sweep_into "${r}"
+    expect_eq "case45k the working-tree sweep is clean (the uncommitted baseline grandfathers a.zsh)" "${SWEEP_OUT}" ""
+    snap_into "${r}" head
+    expect_eq "case45k the committed bytes still violate: HEAD's baseline does not list a.zsh" "${SNAP_OUT}" "COMMITTED lib/a.zsh"
+    # l: a committed blob that exists in the tree but cannot be read is an ERROR (rc 2), never "clean"
+    r="$(new_repo c45l)"
+    mk_zsh "${r}/lib/y.zsh" 3
+    commit_all "${r}" base
+    local sha
+    sha="$(git -C "${r}" rev-parse HEAD:lib/y.zsh)"
+    # The file is looked at because an UNCOMMITTED baseline entry names it (so `git diff` itself,
+    # which would also fail on a damaged blob, is not the thing that notices).
+    mkdir -p "${r}/docs/governance"
+    print -r -- lib/y.zsh > "${r}/docs/governance/shibboleth-baseline.txt"
+    command rm -f -- "${r}/.git/objects/${sha[1,2]}/${sha[3,-1]}"
+    snap_into "${r}" head
+    expect_eq "case45l an unreadable committed blob: rc 2" "${SNAP_RC}" 2
+    [[ "${SNAP_OUT}" == *"ERROR cannot read the committed content of lib/y.zsh"* ]] \
+        && test_pass "case45l an unreadable committed blob: the file is named in an ERROR line" \
+        || test_fail "case45l an unreadable committed blob: the file is named in an ERROR line" "output [${SNAP_OUT}]"
+    # m: a symlink is not file content: its target is judged as its own path
+    r="$(new_repo c45m)"
+    mk_zsh "${r}/lib/other.zsh" 3 2
+    ln -s other.zsh "${r}/lib/link.zsh"
+    git -C "${r}" add -A
+    snap_into "${r}" index
+    expect_eq "case45m a staged symlink is not judged by its link text" "${SNAP_OUT}" ""
+    # n: under set -e (the pre-commit hook runs with it) a clean blob must not end the sweep early
+    r="$(new_repo c45n)"
+    mk_zsh "${r}/lib/a.zsh" 3 2
+    mk_zsh "${r}/lib/b.zsh" 3
+    git -C "${r}" add -A
+    # Called plainly: errexit is suspended inside anything on the left of `||`, which would hide the abort.
+    SNAP_OUT="$(zsh -e -c 'source "$1"; vde_shib_sweep_snapshot "$2" index' _ "${SHIB_LIB}" "${r}" 2>&1)"
+    expect_eq "case45n under set -e the violator after a clean file is still reported" "${SNAP_OUT}" "STAGED lib/b.zsh"
+    # h: an unknown source is an error; an unborn HEAD has nothing committed to judge
+    snap_into "${r}" bogus
+    expect_eq "case45h an unknown source is rc 2" "${SNAP_RC}" 2
+    r="$(new_repo c45h)"
+    mk_zsh "${r}/lib/u.zsh" 3
+    git -C "${r}" add -A
+    snap_into "${r}" head
+    expect_eq "case45h unborn HEAD: nothing committed to judge" "${SNAP_RC}" 0
+    snap_into "${r}" index
+    expect_eq "case45h unborn HEAD: the staged file is still judged" "${SNAP_OUT}" "STAGED lib/u.zsh"
+}
+
+test_case46_the_audit_reports_a_violation_only_the_commit_has() {
+    test_start "46: the REAL audit fails when the commit lacks the shibboleth even though the working copy has it"
+    local f
+    f="$(make_forge e2e46)"
+    git -C "${f}" checkout -q -b feat46
+    printf '#!/usr/bin/env zsh\n# @forge (t)\necho hi\n' > "${f}/lib/zz-committed.zsh"
+    commit_all "${f}" "violating commit"
+    printf '#!/usr/bin/env zsh\n# @forge (t)\n%s\necho hi\n' "${SHIB_LIT}" > "${f}/lib/zz-committed.zsh"
+    run_enforcer_in "${f}" base
+    [[ "${ENF_OUT}" == *"[UAP-ERROR] Shibboleth MISSING in the COMMITTED version of lib/zz-committed.zsh"* && "${ENF_OUT}" != *"Shibboleth sweep clean"* ]] \
+        && test_pass "case46a an uncommitted fix does not hide the committed violation" \
+        || test_fail "case46a an uncommitted fix does not hide the committed violation" "$(print -r -- "${ENF_OUT}" | grep -i shibboleth | head -3)"
+    commit_all "${f}" "fix"
+    run_enforcer_in "${f}" base
+    [[ "${ENF_OUT}" == *"Shibboleth sweep clean"* && "${ENF_OUT}" != *"[UAP-ERROR] Shibboleth MISSING"* ]] \
+        && test_pass "case46b the audit is clean once the fix is committed" \
+        || test_fail "case46b the audit is clean once the fix is committed" "$(print -r -- "${ENF_OUT}" | grep -i shibboleth | head -3)"
+    # a file that violates in BOTH the working copy and the commit is reported once, not twice
+    printf '#!/usr/bin/env zsh\n# @forge (t)\necho one\n' > "${f}/lib/zz-both.zsh"
+    commit_all "${f}" "second violator"
+    printf '#!/usr/bin/env zsh\n# @forge (t)\necho two\n' > "${f}/lib/zz-both.zsh"
+    run_enforcer_in "${f}" base
+    local -i seen
+    seen=$(print -r -- "${ENF_OUT}" | grep -c -F 'Shibboleth MISSING') || true
+    expect_eq "case46c a violator in both the working copy and the commit is reported once" "${seen}" 1
+    # the committed-bytes check cannot run (no temp dir): the audit must fail, never print "clean"
+    f="$(make_forge e2e46d)"
+    ENF_OUT="$(cd "${f}" && TMPDIR=/nonexistent-dir VDE_SHIB_BASE_REF=base zsh bin/vde-enforce-uap.zsh 2>&1 | sed 's/\x1b\[[0-9;]*m//g')"
+    # Either layer may report it: the library's own ERROR line, or the audit's guard for a silent rc 2.
+    [[ ( "${ENF_OUT}" == *"[UAP-ERROR] ERROR"* || "${ENF_OUT}" == *"[UAP-ERROR] Shibboleth committed-content check failed"* ) && "${ENF_OUT}" != *"Shibboleth sweep clean"* ]] \
+        && test_pass "case46d a committed-bytes check that cannot run fails the audit" \
+        || test_fail "case46d a committed-bytes check that cannot run fails the audit" "$(print -r -- "${ENF_OUT}" | grep -i -E 'shibboleth|ERROR' | head -3)"
+}
+
+test_case43_shebang_matches_the_interpreter_not_a_substring
+test_case44_an_unreadable_baseline_entry_is_not_also_called_stale
+test_case45_committed_and_staged_content_is_judged_not_the_working_copy
+test_case46_the_audit_reports_a_violation_only_the_commit_has
+
 echo ""
 echo "Results: ${TESTS_PASSED} passed, ${TESTS_FAILED} failed"
 exit $TESTS_FAILED

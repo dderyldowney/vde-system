@@ -68,15 +68,26 @@ _vde_shib_parse_baseline() {
 # so names survive intact. rc 2 when ROOT is not a git repository or ls-files fails
 # (a corrupt index must never look like an empty, clean tree).
 _vde_shib_tracked() {
-    setopt localoptions pipefail
-    local out
-    _vde_shib_tracked_list=()
     if ! git -C "$1" rev-parse --git-dir >/dev/null 2>&1; then
+        _vde_shib_tracked_list=()
         return 2
     fi
-    # core.quotepath=off: otherwise git prints non-ASCII names as quoted octal
-    # escapes, no such file exists on disk, and the sweep would silently skip it.
-    out="$(git -C "$1" -c core.quotepath=off ls-files -z | tr '\0' '\037')" || return 2
+    _vde_shib_git_list "$1" ls-files -z
+}
+
+# _vde_shib_git_list ROOT GIT_ARGS... -> fills _vde_shib_tracked_list with the names printed by
+# `git -C ROOT GIT_ARGS`, which MUST end in -z. NUL is mapped to the unit separator (\037), which
+# cannot occur in a tracked path in practice, so names survive intact. core.quotepath=off: otherwise
+# git prints non-ASCII names as quoted octal escapes, no such file exists on disk, and the sweep would
+# silently skip it. rc 2 when git fails (a failing listing must never look like an empty, clean one).
+# The ONE place that turns a git name listing into a list: the tracked files, the files changed since
+# HEAD and the staged files all go through it.
+_vde_shib_git_list() {
+    setopt localoptions pipefail
+    local root="$1" out
+    shift
+    _vde_shib_tracked_list=()
+    out="$(git -C "${root}" -c core.quotepath=off "$@" | tr '\0' '\037')" || return 2
     _vde_shib_tracked_list=("${(@ps:\037:)out}")
     return 0
 }
@@ -107,7 +118,12 @@ vde_shib_is_zsh() {
     [[ "${magic}" == '#!' ]] || return 1
     IFS= read -r first < "${file}" 2>/dev/null
     [[ -n "${first}" ]] || return 1
-    [[ "${first}" == '#!'*zsh* ]]
+    # Match the INTERPRETER, not the word zsh anywhere on the line: `#!/bin/bash # zsh is not
+    # used here` is a bash script (Signet #645). Accepts `#!/bin/zsh`, `#!/usr/bin/env zsh`,
+    # `#!/usr/bin/env -S zsh -f`, `#! /opt/homebrew/bin/zsh -f` and versioned names such as
+    # `zsh-5.9`, `zsh5` or `zsh-static`; rejects `zshfoo` and every other interpreter.
+    local re='^#![[:space:]]*(([^[:space:]]*/)?env[[:space:]]+((-[^[:space:]]+|[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*)[[:space:]]+)*)?([^[:space:]]*/)?zsh([-.0-9][^[:space:]]*)?([[:space:]]|$)'
+    [[ "${first}" =~ ${re} ]]
 }
 
 # _vde_shib_is_zsh_file FILE -> rc 0 when FILE is a non-empty zsh file: its name ends in
@@ -175,12 +191,15 @@ vde_shib_sweep() {
     local base_file="${root}/${baseline_rel}"
     local rel line reason f
     local -a baseline_order=() missing=() unreadable=() stale=()
-    local -A baseline=()
+    local -A baseline=() tracked_set=()
 
     if ! _vde_shib_tracked "${root}"; then
         print -r -- "ERROR cannot enumerate tracked files in ${root}"
         return 2
     fi
+    for rel in "${_vde_shib_tracked_list[@]}"; do
+        tracked_set[${rel}]=1
+    done
 
     if [[ -f "${base_file}" ]]; then
         _vde_shib_parse_baseline < "${base_file}"
@@ -208,6 +227,16 @@ vde_shib_sweep() {
         f="${root}/${rel}"
         if [[ ! -f "${f}" ]]; then
             reason="file not found"
+        elif [[ ! -r "${f}" && -n "${tracked_set[${rel}]:-}" ]] && ! vde_shib_excluded "${rel}"; then
+            # A TRACKED file that exists but cannot be read. A .zsh file was already reported once as
+            # UNREADABLE above; any other name cannot be classified at all (its shebang cannot be read).
+            # Neither is "stale", and telling the developer to delete the entry would send them the wrong
+            # way (Signet #645). An untracked or excluded entry falls through to its real reason.
+            continue
+        elif [[ ! -r "${f}" ]]; then
+            # Unreadable AND not a tracked in-scope file: it cannot be classified, so say so instead of
+            # the misleading "not a zsh file" (the entry is still stale: nothing tracked backs it).
+            reason="unreadable and not a tracked in-scope file"
         elif ! _vde_shib_is_zsh_file "${f}"; then
             reason="not a zsh file"
         elif vde_shib_excluded "${rel}"; then
@@ -237,6 +266,128 @@ vde_shib_sweep() {
     fi
 
     if (( ${#missing[@]} + ${#unreadable[@]} + ${#stale[@]} > 0 )); then
+        return 1
+    fi
+    return 0
+}
+
+# _vde_shib_blob_violates ROOT REVPATH TMPDIR -> rc 0 when the git blob at REVPATH (for example
+# HEAD:lib/x.zsh, :lib/x.zsh for the index, or <merge-base>:lib/x.zsh) is a non-empty zsh file
+# WITHOUT the literal. rc 1 when it is not zsh, carries the literal, or the path is not in that tree.
+# rc 2 when the path IS in that tree but its blob cannot be read: a damaged object store must never
+# look clean. The blob is written under TMPDIR with its own base name, so the *.zsh test still applies.
+# The one place that judges a committed or staged blob (Signet #645).
+_vde_shib_blob_violates() {
+    local root="$1" revpath="$2" tmp="$3" f fmode rc=1
+    f="${tmp}/${revpath:t}"
+    if [[ "${revpath}" == :* ]]; then
+        fmode="$(git -C "${root}" --literal-pathspecs ls-files -s -- "${revpath#:}" 2>/dev/null)"
+    else
+        fmode="$(git -C "${root}" ls-tree "${revpath%%:*}" -- "${revpath#*:}" 2>/dev/null)"
+    fi
+    # A symlink's blob is its link TEXT, not file content: its target is judged as its own path.
+    [[ "${fmode}" == 120000* ]] && return 1
+    if ! git -C "${root}" show "${revpath}" > "${f}" 2>/dev/null; then
+        rm -f -- "${f}"
+        # Absent from the tree is fine (rc 1); present but unreadable is an error (rc 2).
+        git -C "${root}" rev-parse -q --verify "${revpath}" >/dev/null 2>&1 && return 2
+        return 1
+    fi
+    if _vde_shib_is_zsh_file "${f}" && ! vde_shib_has_literal "${f}"; then
+        rc=0
+    fi
+    rm -f -- "${f}"
+    return ${rc}
+}
+
+# vde_shib_sweep_snapshot ROOT SOURCE [BASELINE_REL]
+# Judges the bytes GIT holds, not the working copy (Signet #645). SOURCE is `head` (the last
+# commit: what a push carries) or `index` (the staged content: what a commit will record).
+# Only files whose content differs from HEAD can have a different verdict from the working-tree
+# sweep, so only those are read: `git diff --name-only HEAD` for head, the staged names for index.
+# For head, a file that an UNCOMMITTED baseline entry names is read too: that entry would otherwise
+# grandfather a committed violator the diff never mentions.
+# Prints, sorted, `COMMITTED <rel>` (head) or `STAGED <rel>` (index) for every in-scope zsh blob
+# that lacks the literal and is not grandfathered in the baseline of the SAME snapshot. rc 0 when
+# nothing is printed, 1 when something is. rc 2 (with an `ERROR ...` line, after any findings) on an
+# unknown SOURCE, when git cannot list the files, or when a blob that exists cannot be read: the
+# check fails closed. An unborn HEAD has nothing committed, so head is rc 0 with no output. The index
+# mode is wired into githooks/pre-commit by Signet #647; until that lands only the tests call it.
+vde_shib_sweep_snapshot() {
+    setopt localoptions pipefail
+    local root="$1" mode="$2" baseline_rel="${3:-${VDE_SHIBBOLETH_BASELINE_REL}}"
+    local rev token what rel tmp line
+    local -i brc
+    local -a names=() found=() unreadable=()
+    local -A baseline=() judged=()
+
+    case "${mode}" in
+        head)  rev='HEAD:'; token=COMMITTED; what=committed ;;
+        index) rev=':';     token=STAGED;    what=staged ;;
+        *)
+            print -r -- "ERROR unknown snapshot source '${mode}' (use head or index)"
+            return 2
+            ;;
+    esac
+
+    if [[ "${mode}" == head ]]; then
+        git -C "${root}" rev-parse --verify -q 'HEAD^{commit}' >/dev/null 2>&1 || return 0
+        _vde_shib_git_list "${root}" diff --no-renames --name-only -z HEAD -- \
+            || { print -r -- "ERROR cannot list the files changed since HEAD in ${root}"; return 2; }
+    else
+        _vde_shib_git_list "${root}" diff --cached --no-renames --name-only -z --diff-filter=ACMR \
+            || { print -r -- "ERROR cannot list the staged files in ${root}"; return 2; }
+    fi
+    names=("${_vde_shib_tracked_list[@]}")
+
+    # The baseline of the same snapshot decides who is grandfathered.
+    if git -C "${root}" cat-file -e "${rev}${baseline_rel}" 2>/dev/null; then
+        _vde_shib_parse_baseline < <(git -C "${root}" show "${rev}${baseline_rel}" 2>/dev/null)
+        for line in "${_vde_shib_entries[@]}"; do
+            baseline[${line}]=1
+        done
+    fi
+
+    # An uncommitted baseline entry must not hide a committed violator: its file did not change, so the
+    # diff above does not list it, yet the entry changes the verdict. Judge every file the working-tree
+    # baseline names beyond HEAD's baseline (head only; the pre-commit guard owns staged additions).
+    if [[ "${mode}" == head && -f "${root}/${baseline_rel}" ]]; then
+        _vde_shib_parse_baseline < "${root}/${baseline_rel}"
+        for line in "${_vde_shib_entries[@]}"; do
+            [[ -n "${baseline[${line}]:-}" ]] || names+=("${line}")
+        done
+    fi
+
+    tmp="$(mktemp -d 2>/dev/null)" || { print -r -- "ERROR cannot create a temporary directory for the snapshot sweep"; return 2; }
+    for rel in "${names[@]}"; do
+        [[ -n "${rel}" ]] || continue
+        [[ -n "${judged[${rel}]:-}" ]] && continue
+        judged[${rel}]=1
+        vde_shib_excluded "${rel}" && continue
+        [[ -n "${baseline[${rel}]:-}" ]] && continue
+        # `|| brc=$?`: the helper returns 1 for every clean blob, and a bare call would end the whole
+        # sweep there under set -e (githooks/pre-commit runs with it).
+        brc=0
+        _vde_shib_blob_violates "${root}" "${rev}${rel}" "${tmp}" || brc=$?
+        case ${brc} in
+            0) found+=("${rel}") ;;
+            2) unreadable+=("${rel}") ;;
+        esac
+    done
+    rm -rf -- "${tmp:?}"
+
+    if (( ${#found[@]} > 0 )); then
+        for rel in "${(@o)found}"; do
+            print -r -- "${token} ${rel}"
+        done
+    fi
+    if (( ${#unreadable[@]} > 0 )); then
+        for rel in "${(@o)unreadable}"; do
+            print -r -- "ERROR cannot read the ${what} content of ${rel}"
+        done
+        return 2
+    fi
+    if (( ${#found[@]} > 0 )); then
         return 1
     fi
     return 0
