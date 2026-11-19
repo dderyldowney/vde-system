@@ -62,9 +62,10 @@ commit_tree() {  # commit_tree TREE -> commits everything currently in TREE
     git -C "$1" -c user.email=t@t -c user.name=t commit -qm fixture
 }
 
-run_audit() {  # run_audit TREE -> sets AUD_OUT (colours stripped) and AUD_RC (the audit's own status)
-    local raw
-    raw="$(cd "$1" && zsh bin/vde-enforce-uap.zsh 2>&1; print -r -- "AUDRC=$?")"
+run_audit() {  # run_audit TREE [CWD [SCRIPT]] -> sets AUD_OUT (colours stripped) and AUD_RC (the audit's own status)
+    local tree="$1" cwd="${2:-$1}" script="${3:-}" raw
+    [[ -z "${script}" ]] && { [[ "${cwd}" == "${tree}" ]] && script="bin/vde-enforce-uap.zsh" || script="${tree}/bin/vde-enforce-uap.zsh" }
+    raw="$(cd "${cwd}" && zsh "${script}" 2>&1; print -r -- "AUDRC=$?")"
     AUD_RC="${raw##*AUDRC=}"
     AUD_OUT="$(print -r -- "${raw%AUDRC=*}" | sed 's/\x1b\[[0-9;]*m//g')"
 }
@@ -180,12 +181,42 @@ test_case6_a_hidden_subdirectory_is_an_offender_too() {
         || test_fail "case6b the hidden directory survives" "plans/.cache/note.md is gone"
 }
 
+test_case7_the_rule_inspects_the_audited_tree_not_the_callers_directory() {
+    test_start "7: the rule scans the repository the enforcer lives in, whatever directory it is run from"
+    local t clean elsewhere
+    t="$(make_tree c7)"
+    mkdir -p "${t}/plans/mywork"
+    print -r -- "work" > "${t}/plans/mywork/a.md"
+    elsewhere="${TMP_ROOT}/c7-elsewhere"
+    mkdir -p "${elsewhere}"
+    run_audit "${t}" "${elsewhere}"
+    [[ "${AUD_RC}" != 0 && "${AUD_OUT}" == *"Ghost Zone 'plans/mywork/' detected"* ]] \
+        && test_pass "case7a an offender in the audited tree is found when run from another directory" \
+        || test_fail "case7a an offender in the audited tree is found when run from another directory" "rc=${AUD_RC} out: ${AUD_OUT[1,300]}"
+    [[ -f "${t}/plans/mywork/a.md" ]] \
+        && test_pass "case7b the offender survives" \
+        || test_fail "case7b the offender survives" "plans/mywork/a.md is gone"
+    # a RELATIVE invocation from inside bin/ must still audit the tree's own plans/
+    run_audit "${t}" "${t}/bin" vde-enforce-uap.zsh
+    [[ "${AUD_RC}" != 0 && "${AUD_OUT}" == *"Ghost Zone 'plans/mywork/' detected"* ]] \
+        && test_pass "case7d run as 'cd bin && zsh vde-enforce-uap.zsh' the tree's own plans/ is audited" \
+        || test_fail "case7d run as 'cd bin && zsh vde-enforce-uap.zsh' the tree's own plans/ is audited" "rc=${AUD_RC} out: ${AUD_OUT[1,300]}"
+    # the other direction: a stray plans/ in the CALLER's directory must not condemn a clean tree
+    clean="$(make_tree c7clean)"
+    mkdir -p "${clean}/plans/scripts" "${elsewhere}/plans/stray"
+    run_audit "${clean}" "${elsewhere}"
+    [[ "${AUD_OUT}" != *"Ghost Zone"* && "${AUD_OUT}" == *"Verifying mandatory configurations"* ]] \
+        && test_pass "case7c a stray plans/ in the caller's directory is not the audited tree's problem" \
+        || test_fail "case7c a stray plans/ in the caller's directory is not the audited tree's problem" "out: ${AUD_OUT[1,300]}"
+}
+
 test_case1_unauthorized_subdir_fails_and_nothing_is_deleted
 test_case2_the_message_says_nothing_was_deleted_and_how_to_resolve
 test_case3_every_offender_is_named_and_survives
 test_case4_an_authorized_tree_passes_the_rule
 test_case5_no_plans_directory_is_fine
 test_case6_a_hidden_subdirectory_is_an_offender_too
+test_case7_the_rule_inspects_the_audited_tree_not_the_callers_directory
 
 echo
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"

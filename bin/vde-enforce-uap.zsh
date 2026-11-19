@@ -11,7 +11,8 @@ set -e
 #===============================================================================
 typeset _ZSH_PURE=${(%):-%x}
 
-VDE_ROOT_DIR="${0:h:h}"
+# Absolute on purpose (:A): a relative root such as "." would make every rule below depend on the caller's directory.
+VDE_ROOT_DIR="${0:A:h:h}"
 
 # 0. Technical Integrity Gate (Project 1 Dependency)
 # The Forge cannot be lit without the Unyielding Tetrad.
@@ -38,9 +39,12 @@ warnings=0
 # The audit fails (zero tolerance) and names every offending directory, but it
 # NEVER deletes anything: an untracked file under an offender has no way back.
 # Hidden directories (plans/.<name>/) count: the (D) glob qualifier matches them.
-if [[ -d "plans" ]]; then
+# The rule reads plans/ under the absolute VDE_ROOT_DIR, so it audits the repository the
+# enforcer lives in whatever the caller's working directory is.
+typeset plans_dir="${VDE_ROOT_DIR}/plans"
+if [[ -d "${plans_dir}" ]]; then
     typeset -a ghost_zones=()
-    for item in plans/*(DN/); do
+    for item in "${plans_dir}"/*(DN/); do
         local sub_name="${item:t}"
         if [[ "${sub_name}" != "scripts" && "${sub_name}" != "archive" ]]; then
             ghost_zones+=("${sub_name}")
