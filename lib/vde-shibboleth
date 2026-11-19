@@ -170,8 +170,9 @@ _vde_shib_fetch_base() {
     # key, passphrase) and ssh has no time limit. Unless the user set an ssh command (theirs wins),
     # make ssh non-interactive with a connect timeout; the http low-speed options abort a stalled
     # transfer (Signet #646).
-    if [[ -z "${GIT_SSH_COMMAND:-}" && -z "$(git -C "${root}" config --get core.sshCommand 2>/dev/null)" ]]; then
-        envv+=("GIT_SSH_COMMAND=ssh -o BatchMode=yes -o ConnectTimeout=15")
+    # GIT_SSH is honoured too: git prefers GIT_SSH_COMMAND over it, so setting ours would shadow the user's wrapper.
+    if [[ -z "${GIT_SSH_COMMAND:-}" && -z "${GIT_SSH:-}" && -z "$(git -C "${root}" config --get core.sshCommand 2>/dev/null)" ]]; then
+        envv+=("GIT_SSH_COMMAND=ssh -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=3")
     fi
     shallow="$(git -C "${root}" rev-parse --is-shallow-repository 2>/dev/null)"
     [[ "${shallow}" == true ]] && depth=(--depth=1)
@@ -500,7 +501,30 @@ vde_shib_staged_baseline_additions() {
     return 0
 }
 
-# vde_shib_baseline_growth ROOT BASE_REF [BASELINE_REL]
+# _vde_shib_load_entries ROOT SOURCE BASELINE_REL -> fills _vde_shib_entries from the baseline as the
+# working tree holds it (SOURCE worktree) or as HEAD committed it (SOURCE head). rc 1 when that copy does
+# not exist, rc 2 (with an ERROR line) when it exists but cannot be read: an unreadable baseline must
+# never be taken for an empty one. The one reader both growth views share (Signet #646).
+_vde_shib_load_entries() {
+    local root="$1" source="$2" rel="$3"
+    _vde_shib_entries=()
+    if [[ "${source}" == head ]]; then
+        git -C "${root}" cat-file -e "HEAD:${rel}" 2>/dev/null || return 1
+        _vde_shib_parse_baseline < <(git -C "${root}" show "HEAD:${rel}" 2>/dev/null)
+    else
+        [[ -f "${root}/${rel}" ]] || return 1
+        if [[ ! -r "${root}/${rel}" ]]; then
+            print -r -- "ERROR cannot read ${rel} in ${root}"
+            return 2
+        fi
+        _vde_shib_parse_baseline < "${root}/${rel}"
+    fi
+    return 0
+}
+
+# vde_shib_baseline_growth ROOT BASE_REF [BASELINE_REL] [SOURCE]
+# SOURCE is `worktree` (default: the baseline file as it is on disk) or `head` (as HEAD committed it): an
+# exemption a commit added and an uncommitted edit removed is only visible in the head view.
 # Prints, in working-tree file order, every baseline entry present in the working-tree
 # baseline but absent from the baseline at the MERGE-BASE of HEAD and BASE_REF (the base
 # tip when there is no merge-base). A branch cut before the base shrank its baseline is
@@ -509,11 +533,11 @@ vde_shib_staged_baseline_additions() {
 # nothing is or the merge-base holds no baseline (first creation), 3 (printing nothing)
 # when BASE_REF cannot be resolved, 2 when git cannot read the merge-base baseline.
 vde_shib_baseline_growth() {
-    local root="$1" base_ref="$2" baseline_rel="${3:-${VDE_SHIBBOLETH_BASELINE_REL}}"
+    local root="$1" base_ref="$2" baseline_rel="${3:-${VDE_SHIBBOLETH_BASELINE_REL}}" source="${4:-worktree}"
     local base_text entry mb='' tmp=''
     local -a work_entries=()
     local -A seen=()
-    local -i grew=0 brc=0
+    local -i grew=0 brc=0 lrc=0
 
     if ! git -C "${root}" rev-parse --verify -q "${base_ref}^{commit}" >/dev/null 2>&1; then
         return 3
@@ -524,12 +548,19 @@ vde_shib_baseline_growth() {
     [[ -n "${mb}" ]] || mb="${base_ref}"
 
     if ! git -C "${root}" cat-file -e "${mb}:${baseline_rel}" 2>/dev/null; then
+        # A baseline that IS in the merge-base tree but cannot be read is an error, never "first creation".
+        if git -C "${root}" rev-parse -q --verify "${mb}:${baseline_rel}" >/dev/null 2>&1; then
+            print -r -- "ERROR cannot read ${baseline_rel} at ${base_ref} in ${root}"
+            return 2
+        fi
         # First creation of the baseline on this branch: there is no earlier baseline to be shrink-only
         # against, so every entry must be a file that ALREADY violates at the merge-base tree. A file that
         # is new on this branch, or already carries the literal, would otherwise let the creating change
         # grandfather a fresh violator (Signet #646).
-        [[ -f "${root}/${baseline_rel}" ]] || return 0
-        _vde_shib_parse_baseline < "${root}/${baseline_rel}"
+        lrc=0
+        _vde_shib_load_entries "${root}" "${source}" "${baseline_rel}" || lrc=$?
+        (( lrc == 1 )) && return 0
+        (( lrc == 2 )) && return 2
         work_entries=("${_vde_shib_entries[@]}")
         tmp="$(mktemp -d 2>/dev/null)" || { print -r -- "ERROR cannot create a temporary directory for the baseline check"; return 2; }
         for entry in "${work_entries[@]}"; do
@@ -566,11 +597,13 @@ vde_shib_baseline_growth() {
         seen[${entry}]=1
     done
 
-    if [[ ! -f "${root}/${baseline_rel}" ]]; then
+    lrc=0
+    _vde_shib_load_entries "${root}" "${source}" "${baseline_rel}" || lrc=$?
+    if (( lrc == 1 )); then
         print -r -- "baseline file deleted since ${base_ref}: empty it instead of deleting ${baseline_rel}"
         return 1
     fi
-    _vde_shib_parse_baseline < "${root}/${baseline_rel}"
+    (( lrc == 2 )) && return 2
     work_entries=("${_vde_shib_entries[@]}")
 
     for entry in "${work_entries[@]}"; do
