@@ -55,6 +55,9 @@ A hidden folder that holds only `skills/`. Each `.agents/skills/<name>/SKILL.md`
 
 Other local files under `.agents/` stay git-ignored. Every other agent reads the same documents by their `.gemini/` path.
 
+### `.claude/`
+Claude Code's own folder. Only `skills/` is tracked: each `.claude/skills/<name>/SKILL.md` is a relative symlink to the same 19 documents in `.gemini/SKILLS/` and `.gemini/COMMANDS/` (the same links as `.agents/skills`), so Claude Code discovers them natively as skills and `/vde-*` slash commands. Everything else under `.claude/` (personal settings, backups, hooks) stays git-ignored and local.
+
 ### `.gemini/`
 Agent instructions, commands, rules, skills, and strike plans. Every agent (Claude, Gemini, Kilo and others) reads project state from `.gemini/STATE/` at session start:
 

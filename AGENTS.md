@@ -12,7 +12,7 @@ This document defines the **MANDATORY** development lifecycle and behavioral con
 
 - **Project state (read at session start):** `.gemini/STATE/MEMORY.md` (standing watch, baseline, recent Strikes) and `.gemini/STATE/session_handover.md` (current session goals and constraints).
 - **Project rules:** `.gemini/RULES/` (one file per rule family), `STYLE_GUIDE.md` (repository root) and `.gemini/instructions.md`.
-- **Procedures (the `/vde-*` commands and role skills named in these rules):** `.gemini/COMMANDS/` and `.gemini/SKILLS/`. Antigravity discovers them natively through `.agents/skills` (symlinks to these files); for every other agent they are not auto-discovered: read the named file and follow it.
+- **Procedures (the `/vde-*` commands and role skills named in these rules):** `.gemini/COMMANDS/` and `.gemini/SKILLS/`. Antigravity discovers them natively through `.agents/skills` and Claude Code through `.claude/skills` (both folders hold only symlinks to these files); for every other agent they are not auto-discovered: read the named file and follow it.
 - **Plans and remediation:** `plans/` (Forge development artifacts; the active remediation plan is `plans/session_handover_remediation.md`). Retired plans are archived under `.gemini/PLANS/archive/`.
 - **Certified status record:** `PROJECT_STATUS.md` (repository root; part of the version-sync and Gospel mechanism).
 - **Tool-mandated entry points (stay at the repository root):** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (a symlink to `.gemini/instructions.md`) and `kilo.json`.
@@ -165,14 +165,14 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 | Capability | Claude Code | Antigravity (`agy`) |
 |------------|-------------|---------------------|
 | Plan Mode | `EnterPlanMode` | `agy --mode plan` |
-| Sub-Agents | the `Agent` tool (for example the `worker` type) | the role skills `scout`, `security-auditor`, `reviewer` and `coder` are native skills (`.agents/skills`); `agy agents` lists configured agents (this repository defines none) |
-| Compliance | `zsh bin/vde-enforce-uap.zsh` (procedure: `.gemini/COMMANDS/vde-enforce.md`) | `/vde-enforce` (native skill) or `zsh bin/vde-enforce-uap.zsh` |
-| Review | the `/code-review` skill (procedure: `.gemini/COMMANDS/vde-review.md`) | `/vde-review` (native skill) |
+| Sub-Agents | the `Agent` tool (for example the `worker` type); the role skills are also native skills (`.claude/skills`) | the role skills `scout`, `security-auditor`, `reviewer` and `coder` are native skills (`.agents/skills`); `agy agents` lists configured agents (this repository defines none) |
+| Compliance | `/vde-enforce` (native skill) or `zsh bin/vde-enforce-uap.zsh` (procedure: `.gemini/COMMANDS/vde-enforce.md`) | `/vde-enforce` (native skill) or `zsh bin/vde-enforce-uap.zsh` |
+| Review | the `/code-review` skill, or `/vde-review` (native skill; procedure: `.gemini/COMMANDS/vde-review.md`) | `/vde-review` (native skill) |
 
 **Kilo** loads this rules file through `kilo.json` (which lists `.gemini/instructions.md`), so every rule here applies to it. No Kilo-specific plan, sub-agent, compliance or review mechanism is documented because none has been verified: Kilo is not installed in this environment. Follow the named procedure files like any other agent.
 
 **Where a platform has no sub-agent facility** (including Antigravity: its skills are single-agent procedures, not parallel sub-agents), do the role steps yourself, one after another, by reading and following the named file in `.gemini/SKILLS/` (for example `scout`, `security-auditor`, `reviewer`, `coder`). The Phase gates still apply and no step is skipped.
 
-**The `/vde-*` names used in these rules (`/vde-enforce`, `/vde-review`, `/vde-commit`, `/vde-plan` and the like) are procedures written in `.gemini/COMMANDS/`, and the role skills (`supervisor`, `reviewer` and the like) are written in `.gemini/SKILLS/`. Antigravity discovers them natively: each one is also a skill under `.agents/skills` (a symlink to the file), so the `/vde-*` names are real slash commands there. For every other agent they are not auto-discovered: read the named file and follow it. Verified 2026-11-18 with `agy` (the skills are listed and their descriptions are read through the links) and with Claude Code (each file is still read at its original path).**
+**The `/vde-*` names used in these rules (`/vde-enforce`, `/vde-review`, `/vde-commit`, `/vde-plan` and the like) are procedures written in `.gemini/COMMANDS/`, and the role skills (`supervisor`, `reviewer` and the like) are written in `.gemini/SKILLS/`. Antigravity discovers them natively: each one is also a skill under `.agents/skills` (a symlink to the file), so the `/vde-*` names are real slash commands there. Claude Code discovers them natively too, through the same symlinks under `.claude/skills`. For every other agent they are not auto-discovered: read the named file and follow it. Verified 2026-11-18 with `agy` (the skills are listed and their descriptions are read through the links) and with Claude Code (each file is still read at its original path, and all 19 names are listed in the `skills` and `slash_commands` of the session `init` event; reproduce with `claude -p ok --tools "" --output-format stream-json --verbose`).**
 
 **The Agent Directory is the single source of truth. Rules apply regardless of which agent platform is used.**

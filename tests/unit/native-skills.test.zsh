@@ -62,45 +62,69 @@ test_frontmatter_valid() {
     (( bad == 0 )) && test_pass "all ${#CANON} files have valid frontmatter" || test_fail "all files have valid frontmatter" "${bad} problems: ${msg[1,300]}"
 }
 
+# The folders each agent discovers skills in. Antigravity reads .agents/skills (Signet #634);
+# Claude Code reads .claude/skills (Signet #642). Both hold ONLY symlinks to the canonical files.
+typeset -a SKILL_DIRS=(.agents/skills .claude/skills)
+
 test_symlinks_resolve() {
-    test_start "2: every canonical file has a .agents/skills/<name>/SKILL.md symlink that resolves to it"
-    local rel name link want got bad=0 msg=""
+    test_start "2: every canonical file has a <skill dir>/<name>/SKILL.md symlink that resolves to it (${SKILL_DIRS[*]})"
+    local rel name link want got sdir bad=0 msg=""
+    for sdir in "${SKILL_DIRS[@]}"; do
     for rel in "${CANON[@]}"; do
         name="${${rel:t}%.md}"
-        link="${VDE_ROOT_DIR}/.agents/skills/${name}/SKILL.md"
-        if [[ ! -L "${link}" ]]; then (( ++bad )); msg+="${name}: no symlink | "; continue; fi
+        link="${VDE_ROOT_DIR}/${sdir}/${name}/SKILL.md"
+        if [[ ! -L "${link}" ]]; then (( ++bad )); msg+="${sdir}/${name}: no symlink | "; continue; fi
         want="${VDE_ROOT_DIR:A}/${rel}"
         got="${link:A}"
-        [[ "${got}" == "${want}" ]] || { (( ++bad )); msg+="${name}: points at ${got#${VDE_ROOT_DIR:A}/} | "; }
-        [[ "$(readlink "${link}")" != /* ]] || { (( ++bad )); msg+="${name}: absolute symlink | "; }
+        [[ "${got}" == "${want}" ]] || { (( ++bad )); msg+="${sdir}/${name}: points at ${got#${VDE_ROOT_DIR:A}/} | "; }
+        [[ "$(readlink "${link}")" != /* ]] || { (( ++bad )); msg+="${sdir}/${name}: absolute symlink | "; }
         # Found in review: .gitignore ignored the whole .agents/ folder, so the links
         # existed only on disk and a fresh clone had none. A link must be TRACKED by git
         # and must not be ignored, otherwise the "native skills" claim is false for
-        # everyone who clones the repository.
-        git -C "${VDE_ROOT_DIR}" ls-files --error-unmatch -- ".agents/skills/${name}/SKILL.md" >/dev/null 2>&1 \
-            || { (( ++bad )); msg+="${name}: link is not tracked by git | "; }
+        # everyone who clones the repository. The same trap exists for .claude/ (Signet #642).
+        git -C "${VDE_ROOT_DIR}" ls-files --error-unmatch -- "${sdir}/${name}/SKILL.md" >/dev/null 2>&1 \
+            || { (( ++bad )); msg+="${sdir}/${name}: link is not tracked by git | "; }
         # --no-index: by default git skips TRACKED paths, so a tracked link would look "not
         # ignored" even when a rule matches it (Sourcery, PR #635/#638).
-        git -C "${VDE_ROOT_DIR}" check-ignore --no-index -q -- ".agents/skills/${name}/SKILL.md" 2>/dev/null \
-            && { (( ++bad )); msg+="${name}: link is git-ignored | "; }
+        git -C "${VDE_ROOT_DIR}" check-ignore --no-index -q -- "${sdir}/${name}/SKILL.md" 2>/dev/null \
+            && { (( ++bad )); msg+="${sdir}/${name}: link is git-ignored | "; }
     done
-    (( bad == 0 )) && test_pass "all ${#CANON} symlinks resolve to their canonical file" || test_fail "all symlinks resolve" "${bad} problems: ${msg[1,300]}"
+    done
+    (( bad == 0 )) && test_pass "all ${#CANON} symlinks resolve to their canonical file in ${#SKILL_DIRS} folders" || test_fail "all symlinks resolve" "${bad} problems: ${msg[1,300]}"
 }
 
 test_no_orphans_or_collisions() {
     test_start "3: no orphan skill folders and no duplicate skill names across skills and commands"
-    local d name bad=0 msg=""
+    local d name sdir bad=0 msg=""
     typeset -A seen
     for f in "${CANON[@]}"; do
         name="${${f:t}%.md}"
         [[ -n "${seen[${name}]:-}" ]] && { (( ++bad )); msg+="duplicate name ${name} | "; }
         seen[${name}]=1
     done
-    for d in "${VDE_ROOT_DIR}"/.agents/skills/*(N/); do
+    for sdir in "${SKILL_DIRS[@]}"; do
+    for d in "${VDE_ROOT_DIR}/${sdir}"/*(N/); do
         name="${d:t}"
-        [[ -n "${seen[${name}]:-}" ]] || { (( ++bad )); msg+="orphan .agents/skills/${name} | "; }
+        [[ -n "${seen[${name}]:-}" ]] || { (( ++bad )); msg+="orphan ${sdir}/${name} | "; }
+    done
     done
     (( bad == 0 )) && test_pass "no orphans, no duplicate names" || test_fail "no orphans, no duplicate names" "${msg}"
+}
+
+test_claude_local_files_stay_ignored() {
+    test_start "10: only .claude/skills is tracked; Claude's personal settings, backups and hooks stay git-ignored"
+    local p bad=0 msg=""
+    # Unignoring .claude/skills must not unignore the rest of .claude/ (settings.local.json
+    # holds personal permissions). --no-index so an existing tracked path cannot hide a rule.
+    for p in .claude/settings.local.json .claude/settings.json .claude/hooks/direnv-session-env.zsh .claude/settings.json.bak.1; do
+        git -C "${VDE_ROOT_DIR}" check-ignore --no-index -q -- "${p}" 2>/dev/null \
+            || { (( ++bad )); msg+="${p} is NOT ignored | "; }
+    done
+    # Nothing but skill symlinks may be tracked under .claude/.
+    local tracked
+    tracked="$(git -C "${VDE_ROOT_DIR}" ls-files -- .claude | grep -v -E '^\.claude/skills/[^/]+/SKILL\.md$')"
+    [[ -z "${tracked}" ]] || { (( ++bad )); msg+="unexpected tracked .claude files: ${tracked[1,120]} | "; }
+    (( bad == 0 )) && test_pass ".claude/ personal files stay ignored; only skill links are tracked" || test_fail ".claude/ personal files stay ignored" "${bad} problems: ${msg[1,300]}"
 }
 
 test_other_agents_unaffected() {
@@ -157,10 +181,28 @@ test_new_vm_procedure_cannot_inject_a_shell_command() {
 }
 
 test_directory_guide_lists_the_native_skills_folder() {
-    test_start "8: docs/reference/directory-structure.md lists .agents/skills"
-    grep -qF '.agents/skills' "${VDE_ROOT_DIR}/docs/reference/directory-structure.md" \
-        && test_pass "the directory guide lists .agents/skills" \
-        || test_fail "the directory guide lists .agents/skills" "the guide calls its tree complete but omits the new folder (Sourcery, PR #638)"
+    test_start "8: docs/reference/directory-structure.md lists .agents/skills and .claude/skills"
+    local d
+    for d in .agents/skills .claude/skills; do
+        grep -qF "${d}" "${VDE_ROOT_DIR}/docs/reference/directory-structure.md" \
+            && test_pass "the directory guide lists ${d}" \
+            || test_fail "the directory guide lists ${d}" "the guide calls its tree complete but omits the folder (Sourcery, PR #638; Signet #642)"
+    done
+}
+
+test_docs_name_the_claude_skills_folder() {
+    test_start "11: AGENTS.md section 5 and the READING LOCATIONS blocks say Claude Code discovers the skills through .claude/skills"
+    local f s b
+    s="$(awk '/^## 5\. Agent-Platform Mapping/ { g = 1; print; next } g && /^## / { exit } g { print }' "${VDE_ROOT_DIR}/AGENTS.md")"
+    [[ "${s}" == *'.claude/skills'* ]] \
+        && test_pass "section 5 names .claude/skills" \
+        || test_fail "section 5 names .claude/skills" "section 5 of AGENTS.md does not mention .claude/skills"
+    for f in AGENTS.md .gemini/instructions.md; do
+        b="$(sed -n '/^## READING LOCATIONS/,/^---/p' "${VDE_ROOT_DIR}/${f}")"
+        [[ "${b}" == *'.claude/skills'* ]] \
+            && test_pass "${f} READING LOCATIONS block names .claude/skills" \
+            || test_fail "${f} READING LOCATIONS block names .claude/skills" "the block does not mention .claude/skills"
+    done
 }
 
 test_subagents_row_names_the_native_role_skills() {
@@ -181,6 +223,8 @@ test_symlinks_resolve
 test_no_orphans_or_collisions
 test_other_agents_unaffected
 test_docs_state_the_new_truth
+test_claude_local_files_stay_ignored
+test_docs_name_the_claude_skills_folder
 test_suite_is_in_the_ci_runner
 
 echo ""
