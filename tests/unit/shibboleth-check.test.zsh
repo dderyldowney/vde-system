@@ -1296,6 +1296,19 @@ test_case52_the_base_fetch_cannot_prompt_or_stall() {
         || test_fail "case52 an ssh command the user configured is left alone" "the helper does not check GIT_SSH_COMMAND / core.sshCommand before setting its own"
 }
 
+test_case53_a_deleted_baseline_is_not_reported_as_growth() {
+    test_start "53: deleting the baseline is reported as a deletion with its remedy, not as 'baseline GREW'"
+    local f
+    f="$(make_forge e2e53)"
+    git -C "${f}" checkout -q -b feat53
+    git -C "${f}" rm -q docs/governance/shibboleth-baseline.txt
+    commit_all "${f}" "delete the baseline"
+    run_enforcer_in "${f}" base
+    [[ "${ENF_OUT}" == *"[UAP-ERROR] Shibboleth baseline file deleted since base"* && "${ENF_OUT}" != *"baseline GREW versus base: baseline file deleted"* ]] \
+        && test_pass "case53 the deletion is named as a deletion, with the remedy" \
+        || test_fail "case53 the deletion is named as a deletion, with the remedy" "$(print -r -- "${ENF_OUT}" | grep -i 'shibboleth baseline' | head -3)"
+}
+
 test_case50_the_push_gate_turns_the_refresh_on() {
     test_start "50: githooks/proof-of-life-hook.zsh runs the audit with VDE_SHIB_REFRESH_BASE=1 (an ACTIVE line, not a comment)"
     local active
@@ -1322,6 +1335,7 @@ test_case49_an_unreachable_remote_falls_back_to_the_cached_ref
 test_case50_the_push_gate_turns_the_refresh_on
 test_case51_the_docs_state_the_base_ref_prerequisite
 test_case52_the_base_fetch_cannot_prompt_or_stall
+test_case53_a_deleted_baseline_is_not_reported_as_growth
 
 echo ""
 echo "Results: ${TESTS_PASSED} passed, ${TESTS_FAILED} failed"

@@ -277,7 +277,12 @@ else
         1)
             while IFS= read -r shib_grow_line; do
                 [[ -z "${shib_grow_line}" ]] && continue
-                shib_error "Shibboleth baseline GREW versus ${shib_base}: ${shib_grow_line}. The baseline is shrink-only: add the shibboleth to that file instead of listing it."
+                if [[ "${shib_grow_line}" == "baseline file deleted"* ]]; then
+                    # The library already says what happened and what to do; "GREW" would mislead.
+                    shib_error "Shibboleth ${shib_grow_line}."
+                else
+                    shib_error "Shibboleth baseline GREW versus ${shib_base}: ${shib_grow_line}. The baseline is shrink-only: add the shibboleth to that file instead of listing it."
+                fi
                 errors=$((errors + 1))
             done <<< "${shib_growth}"
             ;;
