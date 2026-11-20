@@ -39,19 +39,23 @@ discover_unit_tests() {
             name="${w[1]}"
             reason="${(j: :)w[2,-1]}"
             if [[ "${name}" != *.test.zsh ]]; then
-                echo "ERROR: ${name}: not a unit suite (an exclusion must name a *.test.zsh file)"
+                echo "ERROR: ${name}: not a unit suite (an exclusion must name a *.test.zsh file)" >&2
+                return 1
+            fi
+            if [[ "${name}" == */* ]]; then
+                echo "ERROR: ${name}: an exclusion names a suite by its file name only, not a path" >&2
                 return 1
             fi
             if [[ -z "${reason}" || "${reason}" == \#* ]]; then
-                echo "ERROR: ${name}: an exclusion with no reason in tests/ci-unit-exclusions.txt (an inline # comment is not a reason)"
+                echo "ERROR: ${name}: an exclusion with no reason in tests/ci-unit-exclusions.txt (an inline # comment is not a reason)" >&2
                 return 1
             fi
             if [[ ! -f "${VDE_ROOT_DIR}/tests/unit/${name}" ]]; then
-                echo "ERROR: ${name}: stale exclusion, no such suite in tests/unit/"
+                echo "ERROR: ${name}: stale exclusion, no such suite in tests/unit/" >&2
                 return 1
             fi
             if (( ${+UNIT_EXCLUDED[${name}]} )); then
-                echo "ERROR: ${name}: listed twice in tests/ci-unit-exclusions.txt"
+                echo "ERROR: ${name}: listed twice in tests/ci-unit-exclusions.txt" >&2
                 return 1
             fi
             UNIT_EXCLUDED[${name}]="${reason}"

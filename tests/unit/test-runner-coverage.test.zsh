@@ -64,6 +64,10 @@ list_in() {  # list_in ROOT -> sets OUT and RC from `--list`; a runner without -
     OUT="${raw%LISTRC=*}"
 }
 
+list_stdout_in() {  # list_stdout_in ROOT -> the plan stream ONLY (stderr dropped) in OUT
+    OUT="$(cd "$1" && timeout 15 zsh tests/run-sovereign-tests.zsh --list 2>/dev/null)"
+}
+
 # ---------------------------------------------------------------------------
 # Cases
 # ---------------------------------------------------------------------------
@@ -145,6 +149,40 @@ test_case3_more_validation_comment_markers_non_suites_and_duplicates() {
         || test_fail "case3f a suite listed twice fails the runner (the earlier reason is not silently lost)" "rc=${RC} out: ${OUT[1,300]}"
 }
 
+test_case3_names_are_plain_file_names_reasons_are_literal_and_errors_go_to_stderr() {
+    test_start "3 (names): an exclusion names a suite by its FILE NAME (a path would be announced but the suite would still run); reasons are kept literally; errors go to stderr"
+    local r
+    r="$(make_root c3g alpha.test.zsh)"
+    mkdir -p "${r}/tests/unit/sub"; printf '#!/usr/bin/env zsh\nexit 0\n' > "${r}/tests/unit/sub/gamma.test.zsh"
+    printf './alpha.test.zsh   a dotted path to a suite that would still run\n' > "${r}/tests/ci-unit-exclusions.txt"
+    list_in "${r}"
+    [[ "${RC}" == 1 && "${OUT}" == *"./alpha.test.zsh"*"file name"* ]] \
+        && test_pass "case3g a dotted path is refused (the suite would otherwise be announced as skipped yet still run)" \
+        || test_fail "case3g a dotted path is refused (the suite would otherwise be announced as skipped yet still run)" "rc=${RC} out: ${OUT[1,300]}"
+    printf 'sub/gamma.test.zsh   a sub-directory path\n' > "${r}/tests/ci-unit-exclusions.txt"
+    list_in "${r}"
+    [[ "${RC}" == 1 && "${OUT}" == *"sub/gamma.test.zsh"*"file name"* ]] \
+        && test_pass "case3h a sub-directory path is refused" \
+        || test_fail "case3h a sub-directory path is refused" "rc=${RC} out: ${OUT[1,300]}"
+    r="$(make_root c3i alpha.test.zsh beta.test.zsh)"
+    touch "${r}/tests/unit/README.md" "${r}/tests/unit/NOTES.txt"
+    printf 'alpha.test.zsh   uses * and ? and [a-z] and *.md literally\n' > "${r}/tests/ci-unit-exclusions.txt"
+    list_in "${r}"
+    [[ "${RC}" == 0 && "${OUT}" == *$'skip alpha.test.zsh :: uses * and ? and [a-z] and *.md literally'* ]] \
+        && test_pass "case3i glob characters in a reason are kept literally, never expanded to file names" \
+        || test_fail "case3i glob characters in a reason are kept literally, never expanded to file names" "rc=${RC} out: ${OUT[1,300]}"
+    local bad
+    for bad in 'alpha.test.zsh' './alpha.test.zsh   a path' 'helper.zsh   not a suite' 'ghost.test.zsh   no such suite' $'alpha.test.zsh   one\nalpha.test.zsh   two'; do
+        r="$(make_root c3j alpha.test.zsh)"
+        printf '#!/usr/bin/env zsh\n' > "${r}/tests/unit/helper.zsh"
+        print -r -- "${bad}" > "${r}/tests/ci-unit-exclusions.txt"
+        list_stdout_in "${r}"
+        [[ -z "${OUT}" ]] \
+            && test_pass "case3j [${bad//$'\n'/ | }] a validation error leaves the plan stream (stdout) empty: it goes to stderr" \
+            || test_fail "case3j [${bad//$'\n'/ | }] a validation error leaves the plan stream (stdout) empty: it goes to stderr" "stdout: ${OUT[1,300]}"
+    done
+}
+
 test_case4_the_run_mode_executes_every_discovered_suite_and_fails_on_a_failing_one() {
     test_start "4: a real run executes each discovered suite (including one nobody listed) and a failing suite fails the run"
     local r raw rc
@@ -181,7 +219,7 @@ test_case4c_the_run_mode_skips_an_excluded_suite_loudly() {
 
 test_case5_in_the_real_repo_every_suite_is_run_or_excluded_with_a_reason() {
     test_start "5: in this repository every tests/unit/*.test.zsh is either run or on the exclusion list with a reason (the drift guard)"
-    local raw rc f name hits
+    local raw rc f name hits x
     local -a on_disk listed_run listed_skip missing extra
     raw="$(cd "${VDE_ROOT_DIR}" && timeout 30 zsh tests/run-sovereign-tests.zsh --list 2>&1; print -r -- "LISTRC=$?")"
     rc="${raw##*LISTRC=}"
@@ -190,22 +228,24 @@ test_case5_in_the_real_repo_every_suite_is_run_or_excluded_with_a_reason() {
     listed_skip=( ${(f)"$(print -r -- "${raw%LISTRC=*}" | sed -n 's/^skip \([^ ]*\) :: .*/\1/p')"} )
     for name in "${on_disk[@]}"; do
         hits=0
-        (( ${listed_run[(Ie)${name}]} > 0 )) && hits=$(( hits + 1 ))
-        (( ${listed_skip[(Ie)${name}]} > 0 )) && hits=$(( hits + 1 ))
+        for x in "${listed_run[@]}" "${listed_skip[@]}"; do
+            [[ "${x}" == "${name}" ]] && hits=$(( hits + 1 ))
+        done
         (( hits == 1 )) || missing+=( "${name}" )
     done
     for name in "${listed_run[@]}" "${listed_skip[@]}"; do
         (( ${on_disk[(Ie)${name}]} )) || extra+=( "${name}" )
     done
-    [[ "${rc}" == 0 && ${#on_disk} -gt 30 && ${#missing} == 0 && ${#extra} == 0 ]] \
+    [[ "${rc}" == 0 && ${#on_disk} -gt 0 && ${#missing} == 0 && ${#extra} == 0 && $(( ${#listed_run} + ${#listed_skip} )) == ${#on_disk} ]] \
         && test_pass "case5 all ${#on_disk} suites on disk are accounted for exactly once (${#listed_run} run, ${#listed_skip} excluded with a reason)" \
-        || test_fail "case5 every suite on disk is accounted for exactly once" "rc=${rc} on_disk=${#on_disk} not-accounted-for: ${missing[*]:-none} listed-but-absent: ${extra[*]:-none}"
+        || test_fail "case5 every suite on disk is accounted for exactly once" "rc=${rc} on_disk=${#on_disk} listed=$(( ${#listed_run} + ${#listed_skip} )) not-exactly-once: ${missing[*]:-none} listed-but-absent: ${extra[*]:-none}"
 }
 
 test_case1_list_mode_is_cheap_and_runs_nothing
 test_case2_a_new_suite_is_discovered_without_touching_the_runner
 test_case3_exclusions_need_a_reason_and_must_name_a_real_suite
 test_case3_more_validation_comment_markers_non_suites_and_duplicates
+test_case3_names_are_plain_file_names_reasons_are_literal_and_errors_go_to_stderr
 test_case4_the_run_mode_executes_every_discovered_suite_and_fails_on_a_failing_one
 test_case4c_the_run_mode_skips_an_excluded_suite_loudly
 test_case5_in_the_real_repo_every_suite_is_run_or_excluded_with_a_reason
