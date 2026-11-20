@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# @armor (Engine Core)
+# @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
