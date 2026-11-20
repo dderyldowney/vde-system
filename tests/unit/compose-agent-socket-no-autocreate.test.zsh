@@ -180,8 +180,10 @@ else
             typeset out rc=0
             out="$(VDE_HOST_SSH_AUTH_SOCK="${missing}" docker compose -f "${scratch}/compose.yml" create 2>&1)" || rc=$?
             docker compose -f "${scratch}/compose.yml" down --remove-orphans >/dev/null 2>&1
-            if (( rc != 0 )) && [[ ! -e "${missing}" ]]; then
-                test_pass "compose refused (rc=${rc}) and ${missing:t} was not created"
+            # The refusal must be FOR the missing source: an unrelated Compose
+            # failure (no image, bad YAML) also exits non-zero and creates nothing.
+            if (( rc != 0 )) && [[ ! -e "${missing}" ]] && [[ "${out:l}" == *"bind source path does not exist"* ]]; then
+                test_pass "compose refused (rc=${rc}) with 'bind source path does not exist' and ${missing:t} was not created"
             else
                 test_fail "behaviour" "rc=${rc}, source exists=$([[ -e ${missing} ]] && echo yes || echo no), output: ${out[1,160]}"
             fi
