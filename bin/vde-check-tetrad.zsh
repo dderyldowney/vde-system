@@ -62,7 +62,10 @@ done
 for dir in "${TRANSIENT_DIRS[@]}"; do
     local target_dir="${VDE_ROOT_DIR}/${dir}"
     if [[ ! -d "${target_dir}" ]]; then
-        if [[ -e "${target_dir}" ]]; then
+        # Blocked only if the path STILL exists and is not a directory: another gate
+        # process may have created the directory since the check above (mkdir -p below
+        # accepts an existing directory).
+        if [[ -e "${target_dir}" && ! -d "${target_dir}" ]]; then
             echo -e "${RED}[ERROR] Blockage: '${dir}' exists but is not a directory.${RESET}"
             exit 1
         fi

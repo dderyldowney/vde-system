@@ -152,14 +152,21 @@ test_start "The gate sources the root's lib/vde-core, not the caller's"
 typeset R5="${SCRATCH}/r5" DECOY5="${SCRATCH}/decoy5"
 make_root "${R5}"
 make_root "${DECOY5}"
+# The root gets its OWN stub core (not the linked real lib/), so sourcing the real
+# checkout's lib/vde-core instead of the root's would be visible too.
+rm "${R5}/lib"; mkdir "${R5}/lib"
+print -r -- 'echo ROOT-CORE-SOURCED' > "${R5}/lib/vde-core"
+print -r -- "vde_get_version() { echo ${SPEC_VERSION} }" >> "${R5}/lib/vde-core"
+print -r -- "vde_query_json() { echo '\"${SPEC_VERSION}\"' }" >> "${R5}/lib/vde-core"
+: > "${R5}/lib/vm-common"
 rm "${DECOY5}/lib"; mkdir "${DECOY5}/lib"
 print -r -- 'echo DECOY-CORE-SOURCED' > "${DECOY5}/lib/vde-core"
 print -r -- "vde_get_version() { echo ${SPEC_VERSION} }" >> "${DECOY5}/lib/vde-core"
 print -r -- "vde_query_json() { echo '\"${SPEC_VERSION}\"' }" >> "${DECOY5}/lib/vde-core"
 : > "${DECOY5}/lib/vm-common"
 run_gate "${DECOY5}" "${R5}/bin/vde-check-tetrad.zsh"
-if [[ "${GATE_OUT}" != *"DECOY-CORE-SOURCED"* && "${GATE_RC}" == "0" ]]; then
-    test_pass "the decoy lib/vde-core was never sourced"
+if [[ "${GATE_OUT}" == *"ROOT-CORE-SOURCED"* && "${GATE_OUT}" != *"DECOY-CORE-SOURCED"* && "${GATE_RC}" == "0" ]]; then
+    test_pass "the root's own lib/vde-core was sourced, the decoy's never"
 else
     test_fail "source is not anchored to the root" "rc=${GATE_RC} out=${GATE_OUT}"
 fi
@@ -184,10 +191,24 @@ make_root "${DECOY7}"
 print -r -- '#!/usr/bin/env zsh' > "${R7}/bin/vde-armor-heal.zsh"
 print -r -- 'echo "HEAL-RAN-IN:${PWD:A}"' >> "${R7}/bin/vde-armor-heal.zsh"
 run_gate "${DECOY7}" "${R7}/bin/vde-check-tetrad.zsh"
-if [[ "${GATE_OUT}" == *"HEAL-RAN-IN:${R7}"* && "${GATE_RC}" == "0" ]]; then
-    test_pass "the heal script ran with the root as its working directory"
+if [[ "${GATE_OUT}" == *"Baseline Drift"* && "${GATE_OUT}" == *"HEAL-RAN-IN:${R7}"* && "${GATE_RC}" == "0" ]]; then
+    test_pass "drift detected in the root's registry; the heal script ran with the root as its working directory"
 else
     test_fail "heal call is not anchored to the root" "rc=${GATE_RC} out=${GATE_OUT}"
+fi
+
+#-------------------------------------------------------------------------------
+test_start ".cache that exists but is not a directory still blocks the gate (and a decoy's .cache is irrelevant)"
+typeset R9="${SCRATCH}/r9" DECOY9="${SCRATCH}/decoy9"
+make_root "${R9}"
+make_root "${DECOY9}"
+: > "${R9}/.cache"
+mkdir -p "${DECOY9}/.cache"
+run_gate "${DECOY9}" "${R9}/bin/vde-check-tetrad.zsh"
+if [[ "${GATE_RC}" == "1" && "${GATE_OUT}" == *"exists but is not a directory"* ]]; then
+    test_pass "exit 1, 'exists but is not a directory' for the ROOT's .cache"
+else
+    test_fail "the blockage check is not anchored to the root or is gone" "rc=${GATE_RC} out=${GATE_OUT}"
 fi
 
 #-------------------------------------------------------------------------------
