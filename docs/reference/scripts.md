@@ -79,7 +79,7 @@ These scripts provide specialized maintenance, automation, and development suppo
 | `check-zsh-shebang.zsh` | CI ritual to enforce the Zsh-only mandate. |
 | `coverage.zsh` | Generate code coverage reports for the Forge. |
 | `targeted-test.zsh` | Execute specific BDD or unit test suites. |
-| `paired_update_enforcer` | Mandate L ritual to ensure PR/Remediation alignment. |
+| `paired_update_enforcer` | Paired-update check (Signet #641): `.gemini/STATE/session_handover.md` and `plans/session_handover_remediation.md` must carry the Paired Update Policy and link to each other, and a PR that changes one must change the other (diff against `VDE_PAIRED_BASE`, default `origin/develop`; `VDE_PAIRED_DIFF=skip` for promotions into main/stable). |
 | `add-vm-type` | Low-level script to register a new VM type in the Beskar Registry. |
 | `list-vms` | Low-level script to audit registered VM types. |
 | `uninstall-vm-type` | Low-level script to permanently remove a VM type. |

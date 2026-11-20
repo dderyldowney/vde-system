@@ -93,6 +93,7 @@ UNIT_TESTS=(
     "${VDE_ROOT_DIR}/tests/unit/agent-platforms.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/native-skills.test.zsh"
     "${VDE_ROOT_DIR}/tests/unit/ghost-zone-report-only.test.zsh"
+    "${VDE_ROOT_DIR}/tests/unit/paired-update-enforcer.test.zsh"
 )
 
 for test in "${UNIT_TESTS[@]}"; do
