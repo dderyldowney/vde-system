@@ -52,11 +52,24 @@ make_tree() {
         | tar -c -C "${SRC_ROOT}" --null -T - -f - | tar -x -C "$1" -f -
 }
 
+# Variables scrubbed from every run: git's repository selectors, the cache override
+# VM_TYPES_CACHE, and EVERY exported VDE_* variable (VDE_ROOT_DIR, VDE_CACHE_DIR,
+# VDE_VM_TYPES_CACHE, ... are all honoured by the libs, so an inherited one could
+# point a script at state outside the scratch tree).
+typeset -a SCRUB
+typeset _v
+compute_scrub() {
+    SCRUB=(-u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR -u VM_TYPES_CACHE)
+    for _v in ${(f)"$(env | sed -n 's/^\(VDE_[A-Za-z0-9_]*\)=.*/\1/p')"}; do
+        SCRUB+=(-u "${_v}")
+    done
+}
+compute_scrub
+
 # run_script <cwd> <script as typed> -> sets OUT and RC
 typeset OUT RC
 run_script() {
-    OUT=$(cd "$1" && env -u VDE_ROOT_DIR -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE \
-        -u GIT_COMMON_DIR HOME="${FAKEHOME}" zsh "$2" 2>&1)
+    OUT=$(cd "$1" && env "${SCRUB[@]}" HOME="${FAKEHOME}" zsh "$2" 2>&1)
     RC=$?
 }
 
@@ -150,6 +163,25 @@ if [[ "${RC}" != "0" && "${OUT}" == *"scripts.md"* ]]; then
     test_pass "exit ${RC}, names scripts.md"
 else
     test_fail "gospel-audit judged the caller's tree, not the root" "rc=${RC} out=${OUT[-200,-1]}"
+fi
+
+#-------------------------------------------------------------------------------
+test_start "harness: inherited cache overrides cannot point a script at state outside the scratch tree"
+typeset EXT="${SCRATCH}/external-cache" R4="${SCRATCH}/r-cache"
+mkdir -p "${EXT}"
+print -r -- "sentinel" > "${EXT}/vm-types.cache"
+make_tree "${R4}"
+typeset ext_sum="$(cksum < "${EXT}/vm-types.cache")"
+export VDE_CACHE_DIR="${EXT}" VDE_VM_TYPES_CACHE="${EXT}/vm-types.cache" VM_TYPES_CACHE="${EXT}/vm-types.cache"
+compute_scrub   # as at startup, now seeing the hostile overrides exported above
+run_script "${SCRATCH}" "${R4}/bin/vde-rebuild-cache"
+unset VDE_CACHE_DIR VDE_VM_TYPES_CACHE VM_TYPES_CACHE
+compute_scrub
+if [[ "${RC}" == "0" && "$(cksum < "${EXT}/vm-types.cache")" == "${ext_sum}" && -f "${R4}/.cache/vm-types.cache" ]]; then
+    test_pass "the external cache is byte-identical; the scratch root's own cache was rebuilt"
+else
+    test_fail "an inherited override leaked into a run" \
+        "rc=${RC} external-same=$([[ $(cksum < ${EXT}/vm-types.cache) == ${ext_sum} ]] && echo yes || echo NO) scratch-cache=$([[ -f ${R4}/.cache/vm-types.cache ]] && echo yes || echo NO) out=${OUT[1,160]}"
 fi
 
 #-------------------------------------------------------------------------------
