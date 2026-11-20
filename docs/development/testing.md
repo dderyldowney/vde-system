@@ -94,5 +94,13 @@ behave --tags @system-spine
 How to verify a router change (characterization against a stub `docker`, trace comparison, mutation checks):
 [router-handlers](router-handlers.md#8-verifying-a-change-to-the-router).
 
+## 7. HOW CI FINDS THE UNIT TESTS
+
+CI's "Sovereign Tests" job runs `tests/run-sovereign-tests.zsh`, which DISCOVERS every `tests/unit/*.test.zsh` and runs it: a new suite needs no edit to the runner. The only exclusions are the suites named in `tests/ci-unit-exclusions.txt`, one `<suite> <reason>` per line. A reason is mandatory and an entry naming a suite that does not exist is an error, so the list cannot rot silently; prefer a suite that skips loudly inside itself over an entry there.
+
+- `zsh tests/run-sovereign-tests.zsh --list` prints the plan (`run  <suite>` / `skip <suite> :: <reason>`) and exits before the audit and before running anything.
+- `tests/unit/test-runner-coverage.test.zsh` is the drift guard: every suite on disk is either run or excluded with a reason. The runner refuses to start on an exclusion with no reason (an inline `#` comment is not a reason), one that does not name a `*.test.zsh` suite, one for a suite that does not exist, or a suite listed twice.
+- A suite passes or fails by its exit status alone.
+
 ---
 **Status:** SYSTEM CERTIFIED (1.5.6)

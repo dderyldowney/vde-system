@@ -3,6 +3,12 @@
 # VDE Sovereign Test Runner (1.3.0)
 # This script runs all CI-safe tests (Unit Tests + Image Logic).
 # It STRICTLY EXCLUDES any tests that require running containers (DinD).
+#
+# Unit suites are DISCOVERED, not listed (Signet #630): every tests/unit/*.test.zsh runs, except the
+# suites named in tests/ci-unit-exclusions.txt ("<suite> <reason>" per line; # comments and blank
+# lines allowed). An exclusion with no reason, or one naming a suite that does not exist, is an
+# error. `--list` prints the plan ("run  <suite>" / "skip <suite> :: <reason>") and exits 0 before
+# the audit and before running anything.
 
 # Determine VDE root directory
 VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -15,6 +21,54 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 BOLD='\033[1m'
 RESET='\033[0m'
+
+# --- Unit suite discovery (Signet #630) -------------------------------------------------------
+typeset EXCLUSIONS_FILE="${VDE_ROOT_DIR}/tests/ci-unit-exclusions.txt"
+typeset -a UNIT_TESTS=()
+typeset -A UNIT_EXCLUDED=()
+
+discover_unit_tests() {
+    local line name reason f
+    local -a w
+    UNIT_TESTS=()
+    UNIT_EXCLUDED=()
+    if [[ -f "${EXCLUSIONS_FILE}" ]]; then
+        while IFS= read -r line || [[ -n "${line}" ]]; do
+            [[ "${line}" =~ '^[[:space:]]*(#|$)' ]] && continue
+            w=( ${=line} )
+            name="${w[1]}"
+            reason="${(j: :)w[2,-1]}"
+            if [[ "${name}" != *.test.zsh ]]; then
+                echo "ERROR: ${name}: not a unit suite (an exclusion must name a *.test.zsh file)"
+                return 1
+            fi
+            if [[ -z "${reason}" || "${reason}" == \#* ]]; then
+                echo "ERROR: ${name}: an exclusion with no reason in tests/ci-unit-exclusions.txt (an inline # comment is not a reason)"
+                return 1
+            fi
+            if [[ ! -f "${VDE_ROOT_DIR}/tests/unit/${name}" ]]; then
+                echo "ERROR: ${name}: stale exclusion, no such suite in tests/unit/"
+                return 1
+            fi
+            if (( ${+UNIT_EXCLUDED[${name}]} )); then
+                echo "ERROR: ${name}: listed twice in tests/ci-unit-exclusions.txt"
+                return 1
+            fi
+            UNIT_EXCLUDED[${name}]="${reason}"
+        done < "${EXCLUSIONS_FILE}"
+    fi
+    for f in "${VDE_ROOT_DIR}"/tests/unit/*.test.zsh(N); do
+        (( ${+UNIT_EXCLUDED[${f:t}]} )) || UNIT_TESTS+=( "${f}" )
+    done
+    return 0
+}
+
+if [[ "${1:-}" == --list ]]; then
+    discover_unit_tests || exit 1
+    for f in "${UNIT_TESTS[@]}"; do print -r -- "run  ${f:t}"; done
+    for name in ${(ko)UNIT_EXCLUDED}; do print -r -- "skip ${name} :: ${UNIT_EXCLUDED[$name]}"; done
+    exit 0
+fi
 
 # Mandatory Sovereign Audit (Rule A)
 echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
@@ -58,43 +112,10 @@ echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━
 # Ensure test-tmp directory exists
 mkdir -p "${VDE_ROOT_DIR}/.test-tmp"
 
-UNIT_TESTS=(
-    "${VDE_ROOT_DIR}/tests/unit/vde-shell-compat.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-core.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-naming.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-path-utils.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-docker.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-parser.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-parser-validation.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vm-lock.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-ssh.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-security.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-schema-validation.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vm-types-schema.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-no-cache-parse.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-projects-base-resolver.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/shibboleth-check.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vm-mounts-projects-base.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/tracked-compose-baseline.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/jupyterlab-language-vm.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/sudo-home-parity.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/dns-check-dispatch.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-router-exit-status.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/setup-bash-allowlist.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/rustup-helper.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/pol-stamp.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-router-delegate-args.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vde-actions.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/compose-template-drift.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/vm-types-source-parity.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/spine-git-env-isolation.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/gospel-audit-script-doc.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/ai-file-locations.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/agent-platforms.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/native-skills.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/ghost-zone-report-only.test.zsh"
-    "${VDE_ROOT_DIR}/tests/unit/paired-update-enforcer.test.zsh"
-)
+discover_unit_tests || exit 1
+for name in ${(ko)UNIT_EXCLUDED}; do
+    echo -e "${YELLOW}⚠ Excluded from CI: ${name} :: ${UNIT_EXCLUDED[$name]}${RESET}"
+done
 
 for test in "${UNIT_TESTS[@]}"; do
     if [[ -f "${test}" ]]; then

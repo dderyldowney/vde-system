@@ -586,15 +586,6 @@ test_case24_stale_line_survives_spaces_in_paths() {
     expect_eq "case24 exact STALE line" "$SWEEP_OUT" "STALE lib/my tool.zsh :: file not found"
 }
 
-test_case25_suite_is_wired_into_the_ci_runner() {
-    test_start "25: this suite is listed in tests/run-sovereign-tests.zsh (otherwise CI never runs it)"
-    if grep -qF 'shibboleth-check.test.zsh' "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh"; then
-        test_pass "case25 suite is in the CI runner list"
-    else
-        test_fail "case25 suite is in the CI runner list" "tests/run-sovereign-tests.zsh has an explicit file list without this suite"
-    fi
-}
-
 test_case26_precommit_fails_closed_without_the_lib() {
     test_start "26: pre-commit blocks a staged baseline change when lib/vde-shibboleth is missing"
     local r hook="${SHIB_TEST_HOOK:-${VDE_ROOT_DIR}/githooks/pre-commit}"
@@ -900,7 +891,6 @@ test_case21_growth_against_base_ref
 test_case22_literal_must_be_its_own_line
 test_case23_dot_zsh_without_shebang_is_in_scope
 test_case24_stale_line_survives_spaces_in_paths
-test_case25_suite_is_wired_into_the_ci_runner
 test_case26_precommit_fails_closed_without_the_lib
 test_case27_special_characters_in_filenames
 test_case28_deleted_baseline_is_growth
