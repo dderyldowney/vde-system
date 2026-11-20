@@ -362,6 +362,89 @@ test_case12h_an_ambient_ci_context_cannot_decide_a_case() {
         || test_fail "case12h a runner that looks like a push to main does not turn a violation into a skip" "out: ${out[1,300]}"
 }
 
+# The effective CHECK name of every job in a workflow file, one per line: the job's explicit
+# `name:`, else its id. Tolerates blank lines and column-0 comments between jobs, quoted ids and
+# names, and trailing comments. (A required status check is matched by this name.)
+workflow_check_names() {  # workflow_check_names FILE
+    awk '
+      function unq(v) { sub(/^"/, "", v); sub(/"$/, "", v); sub(/^\047/, "", v); sub(/\047$/, "", v); return v }
+      /^jobs:[[:space:]]*(#.*)?$/ { f = 1; next }
+      !f { next }
+      /^[[:space:]]*(#.*)?$/ { next }
+      /^[^[:space:]]/ { exit }
+      /^  [^[:space:]#][^:]*:[[:space:]]*(#.*)?$/ {
+          if (id != "") print (nm != "" ? nm : id)
+          id = $0; sub(/^  /, "", id); sub(/:[[:space:]]*(#.*)?$/, "", id); id = unq(id); nm = ""; next }
+      /^    name:[[:space:]]*/ { v = $0; sub(/^    name:[[:space:]]*/, "", v); sub(/[[:space:]]+#.*$/, "", v); nm = unq(v); next }
+      END { if (id != "") print (nm != "" ? nm : id) }
+    ' "$1"
+}
+
+# every workflow file in DIR (.yml and .yaml, GitHub loads both) except EXCLUDE that has a job whose check name is NAME
+workflow_name_holders() {  # workflow_name_holders DIR EXCLUDE NAME -> file basenames, one per line
+    local f
+    for f in "$1"/*.yml(N) "$1"/*.yaml(N); do
+        [[ "${f}" == "$2" ]] && continue
+        [[ $'\n'"$(workflow_check_names "${f}")"$'\n' == *$'\n'"$3"$'\n'* ]] && print -r -- "${f:t}"
+    done
+}
+
+test_case14_the_check_has_one_unique_required_name() {
+    test_start "14: the paired-update workflow has exactly one job, named paired-update, and no other workflow uses that check name (a required check is matched by name; Signet #658)"
+    local names holders d
+    names="$(workflow_check_names "${WORKFLOW}")"
+    [[ "${names}" == "paired-update" ]] \
+        && test_pass "case14a the workflow's only job has the check name paired-update" \
+        || test_fail "case14a the workflow's only job has the check name paired-update" "check names: ${names//$'\n'/, }"
+    grep -qE "^    name:[[:space:]]*[\"']?paired-update[\"']?[[:space:]]*(#.*)?\$" "${WORKFLOW}" \
+        && test_pass "case14b the job sets its check name explicitly (name: paired-update)" \
+        || test_fail "case14b the job sets its check name explicitly (name: paired-update)" "no job-level 'name: paired-update' line"
+    holders="$(workflow_name_holders "${VDE_ROOT_DIR}/.github/workflows" "${WORKFLOW}" paired-update)"
+    [[ -z "${holders}" ]] \
+        && test_pass "case14c no other workflow has a check named paired-update" \
+        || test_fail "case14c no other workflow has a check named paired-update" "also used in: ${holders//$'\n'/, }"
+
+    # the helper itself, against violating and innocent fixtures (not only the live tree)
+    d="${TMP_ROOT}/wf14"; mkdir -p "${d}"
+    cat > "${d}/by-id.yml" <<'WFEOF'
+name: x
+jobs:
+# a column-zero comment between jobs must not end the block
+
+  other:
+    runs-on: ubuntu-latest
+# another one
+  paired-update:
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/quoted-id.yaml" <<'WFEOF'
+jobs:
+  "paired-update":
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/by-name.yml" <<'WFEOF'
+jobs:
+  something:
+    name: 'paired-update'   # the check name, whatever the id
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/innocent.yml" <<'WFEOF'
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: paired-update
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-update
+WFEOF
+    holders="$(workflow_name_holders "${d}" "" paired-update | sort | tr '\n' ' ')"
+    [[ "${holders}" == "by-id.yml by-name.yml quoted-id.yaml " ]] \
+        && test_pass "case14d the helper finds a collision by id (past column-0 comments), by quoted id in a .yaml file and by an explicit quoted name, and ignores step and artifact names" \
+        || test_fail "case14d the helper finds a collision by id (past column-0 comments), by quoted id in a .yaml file and by an explicit quoted name, and ignores step and artifact names" "found: ${holders}"
+}
+
 test_case13_the_real_files_satisfy_the_static_policy() {
     test_start "13: the REAL handover and remediation plan carry the policy and the two cross-links"
     local raw
@@ -386,6 +469,7 @@ test_case11_the_ci_step_can_fail
 test_case12_the_enforcer_decides_skip_and_base_not_the_yaml
 test_case12h_an_ambient_ci_context_cannot_decide_a_case
 test_case13_the_real_files_satisfy_the_static_policy
+test_case14_the_check_has_one_unique_required_name
 
 echo
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"
