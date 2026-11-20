@@ -97,6 +97,8 @@ If the directory has contents, or the path is a file or symlink, VDE leaves it a
 
 **Prevention:** `vde start` now starts the VDE agent before it runs Docker, and refuses to start the Spoke if the agent cannot be started, so Docker is never handed a socket path that does not exist.
 
+**Second guard:** the generated Compose manifests declare both agent-socket mounts in the long form with `create_host_path: false`, so running `docker compose up` on them directly (outside `vde start`) while the agent is down is refused by Docker instead of creating the directory. The error reads `invalid mount config for type "bind": bind source path does not exist: .../agent.sock`. Start the agent (`vde ssh-setup start`) and run the command again. The same refusal happens when `VDE_HOST_SSH_AUTH_SOCK` names a path that does not exist, and `vde start` does not check a value you set yourself first. `vde start` hides Docker's output and prints only `Failed to ignite`, so run the `docker compose` command yourself to see the reason. Fix it by making that socket available, or unset `VDE_HOST_SSH_AUTH_SOCK` so VDE uses its own agent.
+
 ---
 
 ## "No Space Left on Device" During a Build
