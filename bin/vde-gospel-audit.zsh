@@ -15,7 +15,11 @@ setopt LOCAL_OPTIONS
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 set -e
 
-# Use relative pathing (Mandate)
+# Pure Relative Pathing (Mandate, vde-spec.md): the root comes from this script's own
+# location (absolute, symlinks kept) and every "./..." path below is relative to it,
+# so the script behaves the same wherever it is started (Signet #661).
+VDE_ROOT_DIR="${0:a:h:h}"
+cd "${VDE_ROOT_DIR}" || exit 1
 source "./lib/vde-core"
 
 # Colors for output
