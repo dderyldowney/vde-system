@@ -101,6 +101,14 @@ If the directory has contents, or the path is a file or symlink, VDE leaves it a
 
 ---
 
+## A Spoke Refuses My SSH Key After Running Compose by Hand
+
+**Cause:** the generated Compose manifests no longer load the root `.env` (Signet #666). A Spoke gets `VDE_AUTHORIZED_KEY` (your public SSH key) and `POSTGRES_DEV_PASSWORD` only from the `.env` that `vde start` hands to Compose as `--env-file`. Running `docker compose up` on a manifest directly leaves both empty, the entrypoint writes no `authorized_keys`, and the SSH login is denied without an error.
+
+**Fix:** start the Spoke with `vde start <name>`, or pass the file yourself from the VDE root: `docker compose --env-file .env -f configs/docker/<category>/<name>/docker-compose.yml up -d`. A change to `.env` reaches a Spoke when its container is recreated, not on restart.
+
+---
+
 ## "No Space Left on Device" During a Build
 
 **Problem:** a `vde rebuild`, `vde create` or `vde start` fails, or `df -h /` shows the disk nearly full. The usual cause is Docker's *build cache*: a `--no-cache` rebuild of a few Spokes can leave tens of gigabytes behind.

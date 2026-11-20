@@ -36,7 +36,10 @@ done
 typeset staged_all=($(git diff --cached --name-only --diff-filter=ACM | grep -v "env.template" | grep -v "env-files/" | grep -v "\.bak$" || true))
 
 for file in "${staged_all[@]}"; do
-    if git diff --cached "$file" | grep -Ei "^[+].*(API_KEY|SECRET|PASSWORD)\s*=" > /dev/null 2>&1; then
+    # A line that only forwards a variable with an EMPTY default (NAME=${NAME:-}, a Compose
+    # pass-through) carries no value and is skipped. Every other shape is still checked,
+    # including a default with a value (NAME=${NAME:-x}) and a bare ${NAME} (Signet #666).
+    if git diff --cached "$file" | grep -E "^[+]" | grep -Ev '=\$\{[A-Za-z_][A-Za-z0-9_]*:-\}[[:space:]]*$' | grep -Ei "(API_KEY|SECRET|PASSWORD)\s*=" > /dev/null 2>&1; then
         echo -e "\033[0;31m[ERROR] Rule 12 Violation (Security Law):\033[0m"
         echo -e "  File '$file' contains potential hardcoded credentials."
         echo -e "  Please use .env files or the project's secret management system."

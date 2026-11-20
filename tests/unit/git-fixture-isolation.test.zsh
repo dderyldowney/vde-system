@@ -5,8 +5,8 @@ typeset _ZSH_PURE=${(%):-%x}
 
 # Unit tests: git fixtures must not read the caller's git environment (Signet #656).
 #
-# Four suites build throwaway git repositories as fixtures: shibboleth-check, pol-stamp,
-# vde-prune-safety and ghost-zone-report-only. Git lets GIT_DIR, GIT_WORK_TREE and GIT_INDEX_FILE beat both `cd` and `git -C`,
+# Five suites build throwaway git repositories as fixtures: shibboleth-check, pol-stamp,
+# vde-prune-safety, ghost-zone-report-only and pre-commit-secret-sentinel. Git lets GIT_DIR, GIT_WORK_TREE and GIT_INDEX_FILE beat both `cd` and `git -C`,
 # and a git hook (or a linked-worktree shell) exports them. An unscrubbed fixture then runs its
 # `git init`, `add` and `commit` against the ENCLOSING repository: the suite fails, and its
 # fixture commits land in a repo that is not theirs.
@@ -49,7 +49,7 @@ WORK="$(mktemp -d)" || { print -u2 "mktemp failed"; exit 1; }
 trap 'rm -rf -- "${WORK}"' EXIT
 
 # The suites under test, named the way the runner names them.
-typeset -a SUITES=(pol-stamp vde-prune-safety shibboleth-check ghost-zone-report-only)
+typeset -a SUITES=(pol-stamp vde-prune-safety shibboleth-check ghost-zone-report-only pre-commit-secret-sentinel)
 
 # The one definition of "the git environment this test removes" (this test's own bookkeeping and
 # the clean/polluted runs both use it).

@@ -58,12 +58,16 @@ services:
 
     environment:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
+      - VDE_AUTHORIZED_KEY=${VDE_AUTHORIZED_KEY:-}
+      - POSTGRES_DEV_PASSWORD=${POSTGRES_DEV_PASSWORD:-}
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
       - REDIS_ARGS=--save 60 1 --loglevel warning
 
+    # The root .env is NOT loaded here (Signet #666): it holds the user's host-side
+    # secrets. The two variables above are interpolated from the --env-file that
+    # `vde start` passes.
     env_file:
-      - ../../../../.env
       - ../../../../env-files/rabbitmq.env
 
     networks:
