@@ -362,6 +362,288 @@ test_case12h_an_ambient_ci_context_cannot_decide_a_case() {
         || test_fail "case12h a runner that looks like a push to main does not turn a violation into a skip" "out: ${out[1,300]}"
 }
 
+# The effective CHECK name of every job in a workflow file, one per line: the job's explicit
+# `name:`, else its id. (A required status check is matched by this name.)
+#
+# This is a line reader for the plain spelling this repository's workflows use, NOT a YAML parser,
+# and it is an ALLOWLIST: inside `jobs:` a 2-space line must be a plain or simply quoted job header,
+# a 4-space line must be a plain `key:`, and a job `name:` must be a complete one-line scalar (plain,
+# "double" or 'single' quoted, no escape, no expression). Anything else (flow mappings, quoted keys,
+# merge keys, a value on the next line, a scalar split over lines, odd indentation, block scalars,
+# anchors, tags) prints one `UNREADABLE: <why>` line instead, and callers treat that as a possible
+# collision: it fails closed, it never reads such a file as "unique".
+# Boundary, stated plainly: this guards against ACCIDENTAL collisions. It is not a YAML parser, and a
+# deliberately adversarial spelling outside the allowlist could still evade it; ruling that out needs a
+# real parser (PyYAML) installed in the CI test jobs, which they do not have today.
+workflow_check_names() {  # workflow_check_names FILE
+    awk '
+      function bad(why) { print "UNREADABLE: " why; bad_seen = 1; exit }
+      function ind(l) { match(l, /^ */); return RLENGTH }
+      /^jobs:[[:space:]]*(#.*)?$/ { f = 1; next }
+      !f { next }
+      /^[[:space:]]*(#.*)?$/ { next }
+      /^[^[:space:]]/ { exit }
+      {
+          n = ind($0)
+          if (after_name) { after_name = 0; if (n > 4) bad("a job name continues on the next line") }
+          if (need_child && n != 2) { need_child = 0; if (n != 4) bad("a job property is not indented by exactly 4 spaces") }
+          if (n == 2) {
+              if ($0 !~ /^  ("[^"\\]*"|\047[^\047]*\047|[A-Za-z0-9_-]+):[[:space:]]*(#.*)?$/) bad("a job header is not a plain or simply quoted id on its own line")
+              if (id != "") print (nm != "" ? nm : id)
+              id = $0; sub(/^  /, "", id)
+              if (id ~ /^"/) { sub(/^"/, "", id); id = substr(id, 1, index(id, "\"") - 1) }
+              else if (id ~ /^\047/) { sub(/^\047/, "", id); id = substr(id, 1, index(id, "\047") - 1) }
+              else { sub(/:.*$/, "", id) }
+              nm = ""; need_child = 1; next
+          }
+          if (id == "") bad("jobs are not indented by exactly 2 spaces")
+          if (n == 4) {
+              if ($0 !~ /^    [A-Za-z_][A-Za-z0-9_-]*:([[:space:]]|$)/) bad("a job property is not a plain key")
+              if ($0 !~ /^    name:/) next
+              v = $0; sub(/^    name:[[:space:]]*/, "", v)
+              if (v == "" || v ~ /^#/) bad("a job name has its value on the next line")
+              if (v ~ /\\/) bad("a job name uses an escape sequence")
+              if (v ~ /\$\{\{/) bad("a job name is an expression")
+              if (v ~ /^(null|Null|NULL|~)([[:space:]]+#.*)?$/) bad("a job name is null, which GitHub resolves to the job id")
+              if (v ~ /^[|>&*!%@`\[{]/) bad("a job name is a block scalar, anchor, alias, tag or flow collection")
+              if (v ~ /^"/) {
+                  sub(/^"/, "", v); q = index(v, "\"")
+                  if (!q) bad("a quoted job name is not closed on its line")
+                  if (substr(v, q + 1) !~ /^[[:space:]]*(#.*)?$/) bad("text follows a quoted job name")
+                  v = substr(v, 1, q - 1)
+                  if (v == "") bad("a quoted job name is empty")
+              } else if (v ~ /^\047/) {
+                  sub(/^\047/, "", v)
+                  if (v ~ /\047\047/) bad("a quoted job name uses the doubled-quote escape")
+                  q = index(v, "\047")
+                  if (!q) bad("a quoted job name is not closed on its line")
+                  if (substr(v, q + 1) !~ /^[[:space:]]*(#.*)?$/) bad("text follows a quoted job name")
+                  v = substr(v, 1, q - 1)
+                  if (v == "") bad("a quoted job name is empty")
+              } else {
+                  sub(/[[:space:]]+#.*$/, "", v); sub(/[[:space:]]+$/, "", v); after_name = 1
+              }
+              nm = v; next
+          }
+          if (n < 4) bad("a job line is indented by neither 2 nor 4 spaces")
+      }
+      END { if (bad_seen) exit; if (!f) print "UNREADABLE: no plain jobs: block"; else if (id != "") print (nm != "" ? nm : id) }
+    ' "$1"
+}
+
+# every workflow file in DIR (.yml and .yaml, GitHub loads both) except EXCLUDE that has a job whose
+# check name is NAME, OR that cannot be read exactly (fail closed)
+workflow_name_holders() {  # workflow_name_holders DIR EXCLUDE NAME -> file basenames, one per line
+    local f names
+    for f in "$1"/*.yml(N) "$1"/*.yaml(N); do
+        [[ "${f}" == "$2" ]] && continue
+        names=$'\n'"$(workflow_check_names "${f}")"$'\n'
+        if [[ "${names}" == *$'\n'"$3"$'\n'* || "${names}" == *$'\n'UNREADABLE:* ]]; then
+            print -r -- "${f:t}"
+        fi
+    done
+}
+
+test_case14_the_check_has_one_unique_required_name() {
+    test_start "14: the paired-update workflow has exactly one job, named paired-update, and no other workflow uses that check name (a required check is matched by name; Signet #658)"
+    local names holders d
+    names="$(workflow_check_names "${WORKFLOW}")"
+    [[ "${names}" == "paired-update" ]] \
+        && test_pass "case14a the workflow's only job has the check name paired-update" \
+        || test_fail "case14a the workflow's only job has the check name paired-update" "check names: ${names//$'\n'/, }"
+    grep -qE "^    name:[[:space:]]*[\"']?paired-update[\"']?[[:space:]]*(#.*)?\$" "${WORKFLOW}" \
+        && test_pass "case14b the job sets its check name explicitly (name: paired-update)" \
+        || test_fail "case14b the job sets its check name explicitly (name: paired-update)" "no job-level 'name: paired-update' line"
+    holders="$(workflow_name_holders "${VDE_ROOT_DIR}/.github/workflows" "${WORKFLOW}" paired-update)"
+    [[ -z "${holders}" ]] \
+        && test_pass "case14c no other workflow has a check named paired-update" \
+        || test_fail "case14c no other workflow has a check named paired-update" "also used in: ${holders//$'\n'/, }"
+
+    # the helper itself, against violating and innocent fixtures (not only the live tree)
+    d="${TMP_ROOT}/wf14"; mkdir -p "${d}"
+    cat > "${d}/by-id.yml" <<'WFEOF'
+name: x
+jobs:
+# a column-zero comment between jobs must not end the block
+
+  other:
+    runs-on: ubuntu-latest
+# another one
+  paired-update:
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/quoted-id.yaml" <<'WFEOF'
+jobs:
+  "paired-update":
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/by-name.yml" <<'WFEOF'
+jobs:
+  something:
+    name: 'paired-update'   # the check name, whatever the id
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/innocent.yml" <<'WFEOF'
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: paired-update
+        uses: actions/upload-artifact@v4
+        with:
+          name: paired-update
+WFEOF
+    # spellings a line-based reader cannot resolve: each must be FLAGGED (fail closed), never read as "unique"
+    cat > "${d}/dynamic.yml" <<'WFEOF'
+jobs:
+  matrix-job:
+    name: ${{ matrix.check }}
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/indent4.yml" <<'WFEOF'
+jobs:
+    paired-update:
+        runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/props3.yml" <<'WFEOF'
+jobs:
+  odd:
+   name: paired-update
+   runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/id-escape.yml" <<'WFEOF'
+jobs:
+  "paired-\u0075pdate":
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/nextline-name.yml" <<'WFEOF'
+jobs:
+  other:
+    name:
+      paired-update
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/flow-job.yml" <<'WFEOF'
+jobs:
+  a: {name: paired-update, runs-on: ubuntu-latest}
+WFEOF
+    cat > "${d}/colon-id.yml" <<'WFEOF'
+jobs:
+  "x:y":
+    name: paired-update
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/quoted-key.yml" <<'WFEOF'
+jobs:
+  a:
+    "name": paired-update
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/multiline-plain.yml" <<'WFEOF'
+jobs:
+  a:
+    name: paired-
+      update
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/unterminated.yml" <<'WFEOF'
+jobs:
+  a:
+    name: "paired-
+      update"
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/squote-escape.yml" <<'WFEOF'
+jobs:
+  a:
+    name: 'paired-update'''
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/merge-key.yml" <<'WFEOF'
+jobs:
+  a:
+    <<: *defaults
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/jobs-flow.yml" <<'WFEOF'
+jobs: {a: {name: paired-update, runs-on: ubuntu-latest}}
+WFEOF
+    cat > "${d}/jobs-quoted.yml" <<'WFEOF'
+"jobs":
+  a:
+    name: paired-update
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/null-name.yml" <<'WFEOF'
+jobs:
+  paired-update:
+    name: null
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/empty-name.yml" <<'WFEOF'
+jobs:
+  a:
+    name: ""
+    runs-on: ubuntu-latest
+WFEOF
+    # readable and distinct: the id contains ": #" and must be read in full, not cut at the first colon
+    cat > "${d}/id-colon-hash.yml" <<'WFEOF'
+jobs:
+  "paired-update: #b":
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/deep-indent.yml" <<'WFEOF'
+jobs:
+  other:
+      name: paired-update
+      runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/anchor.yml" <<'WFEOF'
+jobs:
+  a:
+    name: &n paired-update
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/tag.yml" <<'WFEOF'
+jobs:
+  a:
+    name: !!str paired-update
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/block.yml" <<'WFEOF'
+jobs:
+  a:
+    name: >
+      paired-update
+    runs-on: ubuntu-latest
+WFEOF
+    # readable and distinct although it contains a #: a comment is only a comment OUTSIDE quotes
+    cat > "${d}/hash-in-quotes.yml" <<'WFEOF'
+jobs:
+  a:
+    name: "paired-update # not a comment"   # but this is
+    runs-on: ubuntu-latest
+WFEOF
+    cat > "${d}/escape.yml" <<'WFEOF'
+jobs:
+  a:
+    name: "paired-\u0075pdate"
+    runs-on: ubuntu-latest
+WFEOF
+    # readable and distinct: must NOT be flagged
+    cat > "${d}/distinct.yml" <<'WFEOF'
+jobs:
+  b:
+    name: "Paired Update (legacy)"
+    runs-on: ubuntu-latest
+WFEOF
+    holders="$(workflow_name_holders "${d}" "" paired-update | LC_ALL=C sort | tr '\n' ' ')"
+    [[ "${holders}" == "anchor.yml block.yml by-id.yml by-name.yml colon-id.yml deep-indent.yml dynamic.yml empty-name.yml escape.yml flow-job.yml id-escape.yml indent4.yml jobs-flow.yml jobs-quoted.yml merge-key.yml multiline-plain.yml nextline-name.yml null-name.yml props3.yml quoted-id.yaml quoted-key.yml squote-escape.yml tag.yml unterminated.yml " ]] \
+        && test_pass "case14d the helper finds a collision by id (past column-0 comments), by quoted id in a .yaml file and by an explicit quoted name, FLAGS every spelling it cannot read (a missing plain jobs: block, dynamic or null or empty names, odd indentation, escapes, block scalars, anchors, tags, flow mappings, quoted keys, split or unterminated scalars, merge keys), and reads a quoted name or id containing # or a colon exactly, and ignores step names, artifact names and a distinct quoted name" \
+        || test_fail "case14d the helper finds a collision by id (past column-0 comments), by quoted id in a .yaml file and by an explicit quoted name, FLAGS every spelling it cannot read (a missing plain jobs: block, dynamic or null or empty names, odd indentation, escapes, block scalars, anchors, tags, flow mappings, quoted keys, split or unterminated scalars, merge keys), and reads a quoted name or id containing # or a colon exactly, and ignores step names, artifact names and a distinct quoted name" "found: ${holders}"
+}
+
 test_case13_the_real_files_satisfy_the_static_policy() {
     test_start "13: the REAL handover and remediation plan carry the policy and the two cross-links"
     local raw
@@ -386,6 +668,7 @@ test_case11_the_ci_step_can_fail
 test_case12_the_enforcer_decides_skip_and_base_not_the_yaml
 test_case12h_an_ambient_ci_context_cannot_decide_a_case
 test_case13_the_real_files_satisfy_the_static_policy
+test_case14_the_check_has_one_unique_required_name
 
 echo
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"

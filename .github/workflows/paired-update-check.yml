@@ -18,7 +18,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
-  verify:
+  paired-update:
+    name: paired-update
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
