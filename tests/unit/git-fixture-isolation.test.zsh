@@ -17,11 +17,19 @@ typeset _ZSH_PURE=${(%):-%x}
 #   B  GIT_DIR + GIT_INDEX_FILE       (a hook that exports the index)
 #   C  GIT_OBJECT_DIRECTORY           (fixture objects land in the canary's object store)
 #   D  GIT_NAMESPACE                  (changes ref handling, so a suite's own results shift)
+#   E  GIT_COMMON_DIR                 (shared refs and objects are taken from the canary)
+#   F  GIT_CONFIG_COUNT + KEY_0/VALUE_0   (injects core.hooksPath: a caller-chosen hook runs)
+#   G  GIT_CONFIG_PARAMETERS          (what a parent `git -c core.hooksPath=...` exports: same)
+#   H  GIT_TEMPLATE_DIR               (`git init` copies a caller-chosen hook into each fixture)
+# F, G and H plant a post-commit hook that writes a mark inside the canary's git dir; a fixture
+# that commits and runs it shows up as a changed canary.
 # A scrubbed suite passes and fails exactly as it does when clean, and its canary is untouched:
 # same commits, files, HEAD, branch, status, local config and git-dir file listing (a stray
 # stamp file or object would show there).
 #
-# The scrub is the eight variables bin/vde-spine-check.zsh unsets. GIT_PREFIX and
+# The scrub is the eight variables bin/vde-spine-check.zsh unsets, plus GIT_CONFIG_COUNT,
+# GIT_CONFIG_PARAMETERS and GIT_TEMPLATE_DIR (variables that inject config or hooks; with the count
+# unset git ignores any GIT_CONFIG_KEY_n/GIT_CONFIG_VALUE_n). GIT_PREFIX and
 # GIT_ALTERNATE_OBJECT_DIRECTORIES are in the scrub for consistency with it, but they have no
 # observable effect on these suites (measured), so no test here can fail on them.
 
@@ -46,7 +54,8 @@ typeset -a SUITES=(pol-stamp vde-prune-safety shibboleth-check ghost-zone-report
 # The one definition of "the git environment this test removes" (this test's own bookkeeping and
 # the clean/polluted runs both use it).
 typeset -a GIT_UNSET=(-u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR
-                      -u GIT_PREFIX -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES -u GIT_NAMESPACE)
+                      -u GIT_PREFIX -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES -u GIT_NAMESPACE
+                      -u GIT_CONFIG_COUNT -u GIT_CONFIG_PARAMETERS -u GIT_TEMPLATE_DIR)
 
 # One git, always scrubbed: this test's own bookkeeping must not be fooled by the same variables.
 cgit() {
@@ -100,7 +109,7 @@ run_suite() {
 
 # The polluted environments (see the header). variant_env VARIANT CANARY fills VENV with the
 # NAME=value assignments for that variant, pointing at CANARY where a repository is involved.
-typeset -a VARIANTS=(A B C D)
+typeset -a VARIANTS=(A B C D E F G H)
 typeset -a VENV
 variant_env() {
     case "$1" in
@@ -108,7 +117,23 @@ variant_env() {
         B) VENV=(GIT_DIR="$2/.git" GIT_INDEX_FILE="$2/.git/index") ;;
         C) VENV=(GIT_OBJECT_DIRECTORY="$2/.git/objects") ;;
         D) VENV=(GIT_NAMESPACE=leak) ;;
+        E) VENV=(GIT_COMMON_DIR="$2/.git") ;;
+        F) make_hook "$2-hooks" "$2/.git/hook-ran"
+           VENV=(GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0="$2-hooks") ;;
+        G) make_hook "$2-hooks" "$2/.git/hook-ran"
+           VENV=(GIT_CONFIG_PARAMETERS="'core.hooksPath'='$2-hooks'") ;;
+        H) make_hook "$2-template/hooks" "$2/.git/hook-ran"
+           VENV=(GIT_TEMPLATE_DIR="$2-template") ;;
     esac
+}
+
+# make_hook DIR MARK -> an executable post-commit hook in DIR that appends a line to MARK. A fixture
+# that runs it has run a hook the caller chose; the mark lands inside the canary's git dir.
+make_hook() {
+    mkdir -p "$1" || return 1
+    print -r -- "#!/usr/bin/env zsh
+print -r -- ran >> '$2'" > "$1/post-commit" || return 1
+    chmod +x "$1/post-commit"
 }
 
 make_canary canary || { print -u2 "could not build the canary repository"; exit 1; }
@@ -143,7 +168,7 @@ typeset ref got state want
 for suite in "${SUITES[@]}"; do
     ref="$(counts "${WORK}/${suite}.clean")"
     test_start "${suite}: the clean run is the reference (it must pass everything itself)"
-    if [[ "${ref}" == [0-9]*" 0" ]]; then
+    if [[ "${ref}" == <->" 0" ]]; then
         test_pass "${suite} clean reference ${ref}"
     else
         test_fail "${suite} clean reference" "got '${ref}' (passed failed); the suite is broken even when clean"

@@ -13,10 +13,12 @@ if [[ -z "${VDE_ROOT_DIR}" ]]; then
 fi
 
 # Fixture isolation (Signet #656): git lets the GIT_* variables that select a repository, its index,
-# its objects or its namespace (the same eight bin/vde-spine-check.zsh unsets)
+# its objects or its namespace (the eight bin/vde-spine-check.zsh unsets)
 # beat `cd` and `git -C`, and a git hook or a linked-worktree shell exports them. Without this scrub the
 # fixture repository below (and the scripts this suite runs) would write into the ENCLOSING repository.
-unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_NAMESPACE
+# It also drops the variables that inject git config or install hooks: GIT_CONFIG_COUNT (with its
+# GIT_CONFIG_KEY_n/GIT_CONFIG_VALUE_n), GIT_CONFIG_PARAMETERS (what a parent `git -c` exports) and GIT_TEMPLATE_DIR.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_NAMESPACE GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS GIT_TEMPLATE_DIR
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 
 typeset TESTS_PASSED=0
