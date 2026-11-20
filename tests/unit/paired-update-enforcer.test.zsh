@@ -386,6 +386,7 @@ workflow_check_names() {  # workflow_check_names FILE
       {
           n = ind($0)
           if (after_name) { after_name = 0; if (n > 4) bad("a job name continues on the next line") }
+          if (need_child && n != 2) { need_child = 0; if (n != 4) bad("a job property is not indented by exactly 4 spaces") }
           if (n == 2) {
               if ($0 !~ /^  ("[^"\\]*"|\047[^\047]*\047|[A-Za-z0-9_-]+):[[:space:]]*(#.*)?$/) bad("a job header is not a plain or simply quoted id on its own line")
               if (id != "") print (nm != "" ? nm : id)
@@ -393,7 +394,7 @@ workflow_check_names() {  # workflow_check_names FILE
               if (id ~ /^"/) { sub(/^"/, "", id); id = substr(id, 1, index(id, "\"") - 1) }
               else if (id ~ /^\047/) { sub(/^\047/, "", id); id = substr(id, 1, index(id, "\047") - 1) }
               else { sub(/:.*$/, "", id) }
-              nm = ""; next
+              nm = ""; need_child = 1; next
           }
           if (id == "") bad("jobs are not indented by exactly 2 spaces")
           if (n == 4) {
@@ -592,6 +593,12 @@ jobs:
   "paired-update: #b":
     runs-on: ubuntu-latest
 WFEOF
+    cat > "${d}/deep-indent.yml" <<'WFEOF'
+jobs:
+  other:
+      name: paired-update
+      runs-on: ubuntu-latest
+WFEOF
     cat > "${d}/anchor.yml" <<'WFEOF'
 jobs:
   a:
@@ -632,7 +639,7 @@ jobs:
     runs-on: ubuntu-latest
 WFEOF
     holders="$(workflow_name_holders "${d}" "" paired-update | LC_ALL=C sort | tr '\n' ' ')"
-    [[ "${holders}" == "anchor.yml block.yml by-id.yml by-name.yml colon-id.yml dynamic.yml empty-name.yml escape.yml flow-job.yml id-escape.yml indent4.yml jobs-flow.yml jobs-quoted.yml merge-key.yml multiline-plain.yml nextline-name.yml null-name.yml props3.yml quoted-id.yaml quoted-key.yml squote-escape.yml tag.yml unterminated.yml " ]] \
+    [[ "${holders}" == "anchor.yml block.yml by-id.yml by-name.yml colon-id.yml deep-indent.yml dynamic.yml empty-name.yml escape.yml flow-job.yml id-escape.yml indent4.yml jobs-flow.yml jobs-quoted.yml merge-key.yml multiline-plain.yml nextline-name.yml null-name.yml props3.yml quoted-id.yaml quoted-key.yml squote-escape.yml tag.yml unterminated.yml " ]] \
         && test_pass "case14d the helper finds a collision by id (past column-0 comments), by quoted id in a .yaml file and by an explicit quoted name, FLAGS every spelling it cannot read (a missing plain jobs: block, dynamic or null or empty names, odd indentation, escapes, block scalars, anchors, tags, flow mappings, quoted keys, split or unterminated scalars, merge keys), and reads a quoted name or id containing # or a colon exactly, and ignores step names, artifact names and a distinct quoted name" \
         || test_fail "case14d the helper finds a collision by id (past column-0 comments), by quoted id in a .yaml file and by an explicit quoted name, FLAGS every spelling it cannot read (a missing plain jobs: block, dynamic or null or empty names, odd indentation, escapes, block scalars, anchors, tags, flow mappings, quoted keys, split or unterminated scalars, merge keys), and reads a quoted name or id containing # or a colon exactly, and ignores step names, artifact names and a distinct quoted name" "found: ${holders}"
 }
