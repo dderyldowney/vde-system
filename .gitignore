@@ -65,6 +65,7 @@ tests/test-logs/
 *.txt
 !requirements-dev.txt
 !docs/governance/shibboleth-baseline.txt
+!tests/ci-unit-exclusions.txt
 !scripts/setup/*.zsh
 !plans/scripts/**/*.log
 !plans/scripts/**/*.txt

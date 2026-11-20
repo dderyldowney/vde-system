@@ -243,15 +243,6 @@ test_claude_row_does_not_present_skills_as_subagents() {
         || test_fail "the Claude cell says the role skills are single-agent procedures" "row says: ${row[1,240]} (review, PR #644)"
 }
 
-test_suite_is_in_the_ci_runner() {
-    test_start "6: this suite is listed in tests/run-sovereign-tests.zsh (otherwise CI never runs it)"
-    # Only an ACTIVE entry inside the UNIT_TESTS array counts (not a comment).
-    awk '/^UNIT_TESTS=\(/ { f = 1; next } f && /^\)/ { exit } f && !/^[[:space:]]*#/ { print }' "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" \
-        | grep -qF 'native-skills.test.zsh' \
-        && test_pass "suite is in the CI runner list" \
-        || test_fail "suite is in the CI runner list" "tests/run-sovereign-tests.zsh uses an explicit list without it"
-}
-
 test_new_vm_procedure_cannot_inject_a_shell_command() {
     test_start "7: /vde-new-vm validates the VM name and never interpolates it into a double-quoted shell argument"
     local f="${VDE_ROOT_DIR}/.gemini/COMMANDS/vde-new-vm.md"
@@ -319,7 +310,6 @@ test_tool_mandated_bullet_names_the_discovery_folders
 test_root_tree_lists_claude
 test_debug_procedure_cannot_inject_a_shell_command
 test_claude_row_does_not_present_skills_as_subagents
-test_suite_is_in_the_ci_runner
 
 echo ""
 echo "Results: ${TESTS_PASSED} passed, ${TESTS_FAILED} failed"

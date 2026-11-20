@@ -121,16 +121,6 @@ test_reading_block_points_at_procedures() {
     done
 }
 
-test_suite_is_in_the_ci_runner() {
-    test_start "6: this suite is listed in tests/run-sovereign-tests.zsh (otherwise CI never runs it)"
-    # Only an ACTIVE entry inside the UNIT_TESTS array counts: the name in a comment (or
-    # anywhere else in the runner) must not satisfy the pin (Sourcery, PR #637).
-    awk '/^UNIT_TESTS=\(/ { f = 1; next } f && /^\)/ { exit } f && !/^[[:space:]]*#/ { print }' "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" \
-        | grep -qF 'agent-platforms.test.zsh' \
-        && test_pass "suite is in the CI runner list" \
-        || test_fail "suite is in the CI runner list" "tests/run-sovereign-tests.zsh uses an explicit list without it"
-}
-
 test_section5_covers_kilo_and_platforms_without_subagents() {
     test_start "7: section 5 says how Kilo and a platform with no sub-agent facility follow the rules"
     local s; s="$(section5)"
@@ -148,7 +138,6 @@ test_section5_paths_exist
 test_cited_paths_include_bare_file_names
 test_section5_is_honest_about_discovery
 test_reading_block_points_at_procedures
-test_suite_is_in_the_ci_runner
 test_section5_covers_kilo_and_platforms_without_subagents
 
 echo ""

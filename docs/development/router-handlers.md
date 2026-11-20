@@ -115,7 +115,7 @@ The words typed after the command are passed on to the delegate script:
 | `tests/unit/vde-router-exit-status.test.zsh` | Unknown command exits 2 with the message on stderr; bare `vde` and bare `function-trace` print usage and exit 2; `vde help` exits 0. |
 | `tests/unit/vde-router-delegate-args.test.zsh` | A copy of `bin/vde` against stub delegates that echo their argv: typed arguments reach `audit`, `check-tetrad`/`spine-check`, `heal` and `dns-check`. |
 
-All three are registered in `tests/run-sovereign-tests.zsh`.
+All three are discovered and run by `tests/run-sovereign-tests.zsh` (it runs every `tests/unit/*.test.zsh`; see [How CI finds the unit tests](testing.md#7-how-ci-finds-the-unit-tests)).
 
 ## 7. Function trace and the handlers
 
