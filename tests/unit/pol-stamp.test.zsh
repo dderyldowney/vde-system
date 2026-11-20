@@ -12,6 +12,13 @@ if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 fi
 
+# Fixture isolation (Signet #656): git lets the GIT_* variables that select a repository, its index,
+# its objects or its namespace (the same eight bin/vde-spine-check.zsh unsets)
+# beat `cd` and `git -C`, and a git hook or a linked-worktree shell exports them. Without this scrub the
+# fixture repository below (and the scripts this suite runs) would write into the ENCLOSING repository.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_NAMESPACE
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+
 typeset TESTS_PASSED=0
 typeset TESTS_FAILED=0
 if [[ -t 1 ]]; then
