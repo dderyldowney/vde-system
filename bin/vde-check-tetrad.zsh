@@ -33,15 +33,18 @@ for tool in git docker ssh; do
 done
 
 # 3. Environment Integrity
-# Use strictly relative pathing (Mandate)
-VDE_ROOT_DIR="${0:h:h}"
+# Pure Relative Pathing (Mandate, vde-spec.md): every artifact is reached relative
+# to VDE_ROOT_DIR, never relative to the caller's directory. ${0:A:h:h} resolves
+# the script's own location to an absolute root, so the gate gives the same
+# verdict wherever it is started (a bare ${0:h:h} is "." when run from bin/).
+VDE_ROOT_DIR="${0:A:h:h}"
 REQUIRED_DIRS=("data" "lib" "scripts")
 REQUIRED_FILES=("data/vm-types.json" "lib/vde-core" "lib/vm-common")
 TRANSIENT_DIRS=(".cache")
 
 # Check source directories (fatal if missing)
 for dir in "${REQUIRED_DIRS[@]}"; do
-    if [[ ! -d "./${dir}" ]]; then
+    if [[ ! -d "${VDE_ROOT_DIR}/${dir}" ]]; then
         echo -e "${RED}[ERROR] Missing core directory: ${dir}${RESET}"
         exit 1
     fi
@@ -49,7 +52,7 @@ done
 
 # Check core artifact existence (Deterministic Integrity)
 for file in "${REQUIRED_FILES[@]}"; do
-    if [[ ! -f "./${file}" ]]; then
+    if [[ ! -f "${VDE_ROOT_DIR}/${file}" ]]; then
         echo -e "${RED}[ERROR] Missing core artifact: ${file}${RESET}"
         exit 1
     fi
@@ -57,7 +60,7 @@ done
 
 # Check transient directories (create if missing)
 for dir in "${TRANSIENT_DIRS[@]}"; do
-    local target_dir="./${dir}"
+    local target_dir="${VDE_ROOT_DIR}/${dir}"
     if [[ ! -d "${target_dir}" ]]; then
         if [[ -e "${target_dir}" ]]; then
             echo -e "${RED}[ERROR] Blockage: '${dir}' exists but is not a directory.${RESET}"
@@ -73,14 +76,16 @@ for dir in "${TRANSIENT_DIRS[@]}"; do
 done
 
 # 4. Version Baseline Verification (Deterministic Handshake)
-source "./lib/vde-core"
+source "${VDE_ROOT_DIR}/lib/vde-core"
 local CURRENT_VER=$(vde_get_version)
-local JSON_VER=$(vde_query_json ".version" "./data/vm-types.json" | tr -d '"')
+local JSON_VER=$(vde_query_json ".version" "${VDE_ROOT_DIR}/data/vm-types.json" | tr -d '"')
 
 if [[ "${JSON_VER}" != "${CURRENT_VER}" ]]; then
     echo -e "${RED}[ERROR] Baseline Drift: Registry (${JSON_VER}) mismatch with Engine (${CURRENT_VER})${RESET}"
     echo -e "${YELLOW}[AUTO] Attempting Armor Self-Correction...${RESET}"
-    if zsh "./bin/vde-armor-heal.zsh"; then
+    # The heal script resolves its own paths against the working directory, so it
+    # is run from the root (in a subshell: the gate's own cwd is never changed).
+    if (cd "${VDE_ROOT_DIR}" && zsh "bin/vde-armor-heal.zsh"); then
         echo -e "${GREEN}[SUCCESS] Baseline synchronized.${RESET}"
     else
         echo -e "${RED}[ERROR] Auto-Remediation failed. Manual intervention required.${RESET}"
