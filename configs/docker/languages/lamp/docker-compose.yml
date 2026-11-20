@@ -42,9 +42,19 @@ services:
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
-      - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/host-services/ssh-auth.sock
+      # Long form: create_host_path false makes Docker REFUSE a missing agent socket
+      # instead of creating a root-owned directory in its place (Signet #618).
+      - type: bind
+        source: ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}
+        target: /run/host-services/ssh-auth.sock
+        bind:
+          create_host_path: false
       # VDE 2026 Sovereign Bridge
-      - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/vde-ssh.sock
+      - type: bind
+        source: ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}
+        target: /run/vde-ssh.sock
+        bind:
+          create_host_path: false
 
     environment:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
