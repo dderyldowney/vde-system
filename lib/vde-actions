@@ -22,6 +22,21 @@ if [[ "${_VDE_ACTIONS_LOADED:-}" = "1" ]]; then
 fi
 _VDE_ACTIONS_LOADED=1
 
+# vde_spoke_env_warning ENV_FILE - prints ONE line when a Spoke would start without the SSH key
+# it gets from the root .env, and nothing when the key is there (Signet #666). The generated
+# manifests no longer load the root .env, so a missing file is no longer a Compose error: the
+# key would arrive empty, the entrypoint would write no authorized_keys, and the login would be
+# denied without a message. `vde start` shows this line as a warning instead.
+vde_spoke_env_warning() {
+    local env_file="${1}"
+    if [[ ! -f "${env_file}" ]]; then
+        print -r -- "no root .env at ${env_file}: this Spoke starts without VDE_AUTHORIZED_KEY, so its SSH login may be denied. Copy .env.template to .env, then run 'vde ssh-sync' to write your key into it."
+    elif ! grep -qE '^VDE_AUTHORIZED_KEY="?[^"[:space:]#]' "${env_file}"; then
+        print -r -- "VDE_AUTHORIZED_KEY is missing or empty in ${env_file}: this Spoke starts without it, so its SSH login may be denied. Run 'vde ssh-sync' to write your key into the file."
+    fi
+    return 0
+}
+
 # vde_action_start - vde start <alias...|default|all> [-f]  - ignite Spokes (disk/breath checks, locks, compose up)
 vde_action_start() {
     vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
@@ -211,6 +226,9 @@ vde_action_start() {
         [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
         
         [[ -f "${VDE_ROOT_DIR}/.env" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")
+        local _spoke_env_gap
+        _spoke_env_gap="$(vde_spoke_env_warning "${VDE_ROOT_DIR}/.env")"
+        [[ -n "${_spoke_env_gap}" ]] && vde_log_warn "${CANONICAL_NAME}: ${_spoke_env_gap}" "ssh"
         [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
         
         [[ -f "${VDE_ROOT_DIR}/${vm_env_file}" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/${vm_env_file}")

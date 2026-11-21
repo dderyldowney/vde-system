@@ -105,7 +105,7 @@ If the directory has contents, or the path is a file or symlink, VDE leaves it a
 
 **Cause:** the generated Compose manifests no longer load the root `.env` (Signet #666). A Spoke gets `VDE_AUTHORIZED_KEY` (your public SSH key) and `POSTGRES_DEV_PASSWORD` only from the `.env` that `vde start` hands to Compose as `--env-file`. Running `docker compose up` on a manifest directly leaves both empty, the entrypoint writes no `authorized_keys`, and the SSH login is denied without an error.
 
-**Fix:** start the Spoke with `vde start <name>`, or pass the file yourself from the VDE root: `docker compose --env-file .env -f configs/docker/<category>/<name>/docker-compose.yml up -d`. A change to `.env` reaches a Spoke when its container is recreated, not on restart.
+**Fix:** start the Spoke with `vde start <name>`. It hands Compose the root `.env` and the VDE agent socket, and it warns when that file is missing or holds no `VDE_AUTHORIZED_KEY`: copy `.env.template` to `.env`, then run `vde ssh-sync` to write your key into it. Do not run `docker compose` on a manifest by hand: it also needs `VDE_HOST_SSH_AUTH_SOCK` set to the VDE agent socket, or Docker refuses the mount on a host without Docker Desktop's socket. A change to `.env` reaches a Spoke when its container is recreated, not on restart.
 
 ---
 

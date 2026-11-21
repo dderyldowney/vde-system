@@ -35,7 +35,7 @@ Spokes are AI-blind, depend only on the Unyielding Tetrad, and operate independe
 
 ### Configuration Files
 - `env-files/<alias>.env` - Spoke environment variables (the only env file a Spoke container loads)
-- The root `.env` is NOT loaded into Spokes: it holds the user's host-side secrets. A Spoke receives only `VDE_AUTHORIZED_KEY` (the public SSH key) and `POSTGRES_DEV_PASSWORD` (the dev database password, read by the postgres and jupyterlab Spokes) from it, both interpolated from the `--env-file` that `vde start` passes. A change reaches a Spoke when its container is recreated, not on restart.
+- The root `.env` is NOT loaded into a Spoke's environment: it holds the user's host-side secrets. A Spoke receives only `VDE_AUTHORIZED_KEY` (the public SSH key) and `POSTGRES_DEV_PASSWORD` (the dev database password, read by the postgres and jupyterlab Spokes) from it, both interpolated from the `--env-file` that `vde start` passes. A change reaches a Spoke when its container is recreated, not on restart. The file itself is still readable inside a Spoke at `/vde/.env` (the repository is mounted read-only there); closing that is tracked in #668.
 - `configs/docker/` - Docker configuration templates
 - `configs/nginx/` - Nginx configuration (if needed)
 - `configs/postgres/` - PostgreSQL configuration (if needed)

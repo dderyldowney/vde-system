@@ -9,8 +9,8 @@ typeset _ZSH_PURE=${(%):-%x}
 # Rule 12 rejects any ADDED line matching (API_KEY|SECRET|PASSWORD)\s*= . That also
 # caught the Compose line that forwards POSTGRES_DEV_PASSWORD as NAME=${NAME:-}: it
 # forwards a variable and carries no value. The rule now exempts exactly that
-# shape: `=${NAME:-}` (EMPTY default) at the end of the line. Anything that can carry
-# a literal stays blocked. Rule 12 had no test before this suite.
+# shape: a WHOLE line `NAME=${NAME:-}` (same name both sides, EMPTY default). Anything
+# that can carry a literal stays blocked. Rule 12 had no test before this suite.
 #
 # Every case runs the REAL githooks/pre-commit in a scratch git repo.
 #
@@ -21,7 +21,11 @@ typeset _ZSH_PURE=${(%):-%x}
 #   4. a bare `=${NAME}` reference stays blocked (the exemption is not wider);
 #   5. a pass-through next to a literal in the same file is blocked;
 #   6. API_KEY and SECRET with spaces around `=` are blocked;
-#   7. files under env-files/ keep their existing exemption.
+#   7. files under env-files/ keep their existing exemption;
+#   8. a literal sharing a line with a trailing `${Y:-}` is blocked (the exemption is
+#      the whole line, not "ends with :-}");
+#   9. a pass-through of a DIFFERENT name (`NAME=${OTHER:-}`) is blocked;
+#  10. a bare, unindented `NAME=${NAME:-}` line (shell/env style) is allowed.
 
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -122,6 +126,18 @@ expect_blocked "case6b a SECRET assignment with spaces blocked"
 test_start "7: files under env-files/ keep their existing exemption"
 stage_and_run c7 env-files/app.env "${PW}=hunter2"
 expect_allowed "case7 env-files/ stays exempt"
+
+test_start "8: a literal on the same line as a trailing \${Y:-} is blocked"
+stage_and_run c8 deploy/app.conf "client_${SC}=abc123 Y=\${Y:-}"
+expect_blocked "case8 literal beside a trailing pass-through blocked"
+
+test_start "9: a pass-through of a different name is blocked"
+stage_and_run c9 deploy/compose.yml "      - ${PW}=\${OTHER_${SC}:-}"
+expect_blocked "case9 NAME=\${OTHER:-} blocked"
+
+test_start "10: a bare unindented NAME=\${NAME:-} line is allowed"
+stage_and_run c10 deploy/app.conf "${PW}=\${${PW}:-}"
+expect_allowed "case10 bare same-name pass-through allowed"
 
 echo ""
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"

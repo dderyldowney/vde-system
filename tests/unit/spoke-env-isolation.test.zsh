@@ -20,8 +20,10 @@ typeset _ZSH_PURE=${(%):-%x}
 #   3. the one starter of Spokes (lib/vde-actions) still passes the root .env as
 #      --env-file, because the key now reaches a Spoke ONLY that way;
 #   4. behaviour: rendered config in a scratch tree keeps a canary secret OUT, carries
-#      the quoted key lib/vde-ssh writes, and interpolates DATABASE_URL
-#      (skipped loudly when the docker CLI is absent).
+#      the quoted key lib/vde-ssh writes, and interpolates DATABASE_URL, even when the
+#      caller has the two names exported (skipped loudly when the docker CLI is absent);
+#   5. vde start warns when a Spoke would start without the key (no root .env, or no
+#      VDE_AUTHORIZED_KEY in it): since #666 that is no longer a Compose error.
 #
 # Nothing here writes into the repo; fixtures live in a scratch directory.
 
@@ -55,8 +57,10 @@ typeset PW_LINE="- ${PW_NAME}=\${${PW_NAME}:-}"
 # per-VM env-files entry kept, and each explicit variable line present exactly once.
 env_isolation_problems() {
     local file="${1}" n_root n_vm n_key n_pw
-    # `(../)+.env` only matches the root file: `../env-files/x.env` has no `../.env`.
-    n_root="$(grep -vE '^[[:space:]]*#' "${file}" | grep -cE '(\.\./)+\.env([^[:alnum:]_.-]|$)')"
+    # `.env` as a path SEGMENT (after a `/`, whitespace or the line start) is the root file, in
+    # any spelling: `../../../../.env`, `../.././.env`, a bare `- .env`. `env-files/x.env` has no
+    # segment named `.env`, and `.env.local` is a different name.
+    n_root="$(grep -vE '^[[:space:]]*#' "${file}" | grep -cE '(/|[[:space:]]|^)\.env([^[:alnum:]_.-]|$)')"
     n_vm="$(grep -cE "^[[:space:]]*-[[:space:]]+(\\.\\./)+env-files/[^[:space:]]+\\.env[[:space:]]*\$" "${file}")"
     n_key="$(grep -cF -- "${KEY_LINE}" "${file}")"
     n_pw="$(grep -cF -- "${PW_LINE}" "${file}")"
@@ -137,9 +141,11 @@ render_env_defects() {
     print -r -- 'DATABASE_URL=postgresql://devuser:${POSTGRES_DEV_PASSWORD:-vde_dev_pass}@postgres:5432/x' \
         > "${root}/env-files/${name}.env"
     cp "configs/docker/${category}/${name}/docker-compose.yml" "${mdir}/"
-    with_flag="$(VDE_HOST_SSH_AUTH_SOCK=/nonexistent/agent.sock VDE_DOCKER_SOCK_GID=1000 \
+    # Compose lets a variable in the PROCESS environment beat --env-file, so the two names
+    # under test are removed from the caller's environment before every compose call.
+    with_flag="$(env -u "${PW_NAME}" -u VDE_AUTHORIZED_KEY VDE_HOST_SSH_AUTH_SOCK=/nonexistent/agent.sock VDE_DOCKER_SOCK_GID=1000 \
         docker compose --env-file "${root}/.env" -f "${mdir}/docker-compose.yml" config 2>&1)"
-    without_flag="$(VDE_HOST_SSH_AUTH_SOCK=/nonexistent/agent.sock VDE_DOCKER_SOCK_GID=1000 \
+    without_flag="$(env -u "${PW_NAME}" -u VDE_AUTHORIZED_KEY VDE_HOST_SSH_AUTH_SOCK=/nonexistent/agent.sock VDE_DOCKER_SOCK_GID=1000 \
         docker compose -f "${mdir}/docker-compose.yml" config 2>&1)"
     rm -rf -- "${root}"
 
@@ -167,14 +173,73 @@ if ! command -v docker >/dev/null 2>&1 || ! docker compose version >/dev/null 2>
     test_skip "compose config" "docker compose CLI not available"
 else
     typeset defects
-    defects="$(render_env_defects languages python)
-$(render_env_defects services postgres)"
+    # The two names are exported with a decoy value on purpose: a caller that has them set
+    # must not change what the scratch tree renders.
+    defects="$( export "${PW_NAME}=ambient_decoy" VDE_AUTHORIZED_KEY=ambient_decoy_key
+                render_env_defects languages python
+                render_env_defects services postgres )"
     defects="${defects//$'\n'$'\n'/$'\n'}"
     if [[ -z "${${defects//$'\n'/}}" ]]; then
         test_pass "language and service manifests: canary stays out; key, password and DATABASE_URL arrive via --env-file only"
     else
         test_fail "rendered config" "${(j:; :)${(f)defects}}"
     fi
+fi
+
+# --- 5. vde start warns when a Spoke would start without the key ---------------
+# Since #666 a missing root .env is no longer a Compose error (the manifests do not load
+# it): the key would just arrive empty. vde_spoke_env_warning is what `vde start` shows.
+# warn_for CONTENT -> the warning for a scratch root .env holding CONTENT ("-" = no file).
+warn_for() {
+    local content="${1}" d out
+    d="$(mktemp -d)"
+    [[ "${content}" != "-" ]] && print -r -- "${content}" > "${d}/.env"
+    # The function must exist after sourcing: a failure to load must not look like "no warning".
+    out="$(zsh -c 'source "${VDE_ROOT_DIR}/lib/vde-actions"; typeset -f vde_spoke_env_warning >/dev/null || exit 3; vde_spoke_env_warning "$1"' _ "${d}/.env" 2>/dev/null)" || out="__LOAD_FAILED__"
+    rm -rf -- "${d}"
+    print -r -- "${out}"
+}
+
+typeset case_label case_content w
+typeset -A warn_cases
+warn_cases=(
+    "no root .env at all"          "-"
+    "a .env without the key"       "OTHER_SETTING=1"
+    "a .env with an empty key"     'VDE_AUTHORIZED_KEY=""'
+    "an empty key plus a comment"  'VDE_AUTHORIZED_KEY=""  # paste your key here later'
+)
+# The two situations have different messages; each case must produce ITS message.
+typeset -A warn_expect
+warn_expect=(
+    "no root .env at all"          "no root .env at"
+    "a .env without the key"       "missing or empty"
+    "a .env with an empty key"     "missing or empty"
+    "an empty key plus a comment"  "missing or empty"
+)
+for case_label case_content in "${(@kv)warn_cases}"; do
+    test_start "vde start warns: ${case_label}"
+    w="$(warn_for "${case_content}")"
+    if [[ "${w}" == *".env"* && "${w}" == *"VDE_AUTHORIZED_KEY"* && "${w}" == *"${warn_expect[${case_label}]}"* ]]; then
+        test_pass "warning names .env and VDE_AUTHORIZED_KEY (${case_label})"
+    else
+        test_fail "warning (${case_label})" "got [${w}]"
+    fi
+done
+
+test_start "vde start stays silent when the root .env holds the key"
+w="$(warn_for 'VDE_AUTHORIZED_KEY="ssh-ed25519 AAAAcanarykey canary@host"')"
+if [[ -z "${w}" ]]; then
+    test_pass "no warning when the key is present"
+else
+    test_fail "warning with a key present" "got [${w}]"
+fi
+
+test_start "vde_action_start actually calls the warning for the root .env"
+# A source pin like check 3: comment lines are ignored, dead code is not detected.
+if grep -vE '^[[:space:]]*#' lib/vde-actions | grep -qF 'vde_spoke_env_warning "${VDE_ROOT_DIR}/.env"'; then
+    test_pass "lib/vde-actions calls vde_spoke_env_warning on the root .env"
+else
+    test_fail "lib/vde-actions" "vde_action_start never calls vde_spoke_env_warning for the root .env"
 fi
 
 echo ""

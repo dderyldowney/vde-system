@@ -35,11 +35,24 @@ done
 # Ignore files matching env.template, the env-files/ primer directory, and ghost files (*.bak).
 typeset staged_all=($(git diff --cached --name-only --diff-filter=ACM | grep -v "env.template" | grep -v "env-files/" | grep -v "\.bak$" || true))
 
+# A Compose pass-through carries no value, so it is dropped before the scan: a WHOLE added
+# line that is `NAME=${NAME:-}` (same name on both sides, empty default), optionally as a
+# YAML list item. Every other shape stays checked: a default with a value (NAME=${NAME:-x}),
+# a bare ${NAME}, a different name (NAME=${OTHER:-}), and a literal sharing a line with a
+# pass-through (Signet #666). The same-name test is done in zsh because a regex
+# back-reference is not portable across grep implementations.
+vde_rule12_drop_passthrough() {
+    local line
+    while IFS= read -r line; do
+        if [[ "${line}" =~ '^\+[[:space:]]*(-[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)=\$\{([A-Za-z_][A-Za-z0-9_]*):-\}[[:space:]]*$' ]] && [[ "${match[2]}" == "${match[3]}" ]]; then
+            continue
+        fi
+        print -r -- "${line}"
+    done
+}
+
 for file in "${staged_all[@]}"; do
-    # A line that only forwards a variable with an EMPTY default (NAME=${NAME:-}, a Compose
-    # pass-through) carries no value and is skipped. Every other shape is still checked,
-    # including a default with a value (NAME=${NAME:-x}) and a bare ${NAME} (Signet #666).
-    if git diff --cached "$file" | grep -E "^[+]" | grep -Ev '=\$\{[A-Za-z_][A-Za-z0-9_]*:-\}[[:space:]]*$' | grep -Ei "(API_KEY|SECRET|PASSWORD)\s*=" > /dev/null 2>&1; then
+    if git diff --cached "$file" | grep -E "^[+]" | vde_rule12_drop_passthrough | grep -Ei "(API_KEY|SECRET|PASSWORD)\s*=" > /dev/null 2>&1; then
         echo -e "\033[0;31m[ERROR] Rule 12 Violation (Security Law):\033[0m"
         echo -e "  File '$file' contains potential hardcoded credentials."
         echo -e "  Please use .env files or the project's secret management system."
