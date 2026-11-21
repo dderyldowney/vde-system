@@ -12,7 +12,7 @@ def step_audit_manifest_paths(context, vm_alias):
     canonical_name = resolve_vm_name(vm_alias)
     
     # We resolve the path relatively as per Mandate
-    manifest_path = VDE_ROOT / "configs" / "docker" / ("services" if "postgres" in canonical_name or "redis" in canonical_name or "jupyterlab" in canonical_name or "couchdb" in canonical_name else "languages") / vm_alias / "docker-compose.yml"
+    manifest_path = VDE_ROOT / "configs" / "docker" / ("services" if "postgres" in canonical_name or "redis" in canonical_name or "couchdb" in canonical_name else "languages") / vm_alias / "docker-compose.yml"
     
     assert manifest_path.exists(), f"Manifest missing: {manifest_path}"
     

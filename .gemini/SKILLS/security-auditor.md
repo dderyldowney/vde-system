@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: security-auditor
+description: "Security auditor for the VDE project that reports, never edits, on SSH, Docker, code and user-identity vulnerabilities; use in Phase 0 context gathering or Phase 4 review."
+---
 # Security Auditor Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

@@ -14,16 +14,17 @@ Overview of all scripts included with VDE.
 The `vde` command is the canonical entry point for the **Sovereign Evolution**. It wraps all infrastructure logic in the `vde_run` safety layer, ensuring Zsh purity and system integrity.
 
 | Command | Purpose | Usage |
-|---------|---------|-------|
+| --------- | --------- | ------- |
 | `vde init` | **The Initialization Ritual**: Hydrate infrastructure, SSH keys, networks, and build vde-base. | `vde init` |
 | `vde create <vm>` | Create a new VM Spoke from the Beskar Registry. | `vde create python` |
 | `vde path-of-the-foundling` | **The Path of the Foundling**: Interactive onboarding ritual for new students. | `vde path-of-the-foundling` |
-| `vde rebuild <vm>` | Re-forge a Spoke's Docker image (defaults to no-cache). | `vde rebuild python` |
+| `vde rebuild <vm>` | Re-forge a Spoke's Docker image (uses Docker cache by default; pass `--no-cache` for a clean rebuild). | `vde rebuild python` |
 | `vde start <vm>` | Ignite a VM Spoke. Performs "System Breath" resource check. | `vde start python` |
 | `vde stop <vm>` | Quench (stop) a running VM. | `vde stop postgres` |
 | `vde restart <vm>` | Restart one or more active Spokes. | `vde restart rust` |
 | `vde remove <vm>` | Dissolve (remove) a VM instance and its locks. (Aliases: `rm`, `delete`) | `vde remove rust` |
-| `vde nuke` | **The Great Quench**: Remove all VDE artifacts (prompts for backup). | `vde nuke` |
+| `vde nuke` | **The Great Quench**: Remove VDE's own state; **preserves** `projects/` and `data/` (offers to move them first). | `vde nuke` |
+| `vde set-projects-dir [<path>]` | Re-point the Projects base: move per-alias subfolders, update `.env` (`VDE_PROJECTS_DIR`), regenerate compose configs. | `vde set-projects-dir "$HOME/Projects"` |
 | `vde exec <vm> <cmd>` | Execute a command inside a Spoke without a full login shell. | `vde exec go "go version"` |
 | `vde enter <vm>` | The Sovereign Handshake: Enter a Spoke's login shell. (Alias: `ssh`) | `vde enter rust` |
 | `vde add <name>` | Dynamic Expansion: Register a new Spoke type. | `vde add --pkgs "htop" myvm` |
@@ -43,18 +44,20 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution**. 
 | `vde ssh-sync` | Sync VDE SSH public keys to the build context. | `vde ssh-sync` |
 | `vde networks` | Audit and manage the `vde-net` Docker bridges. | `vde networks` |
 | `vde validate` | Verify the integrity of the Beskar Registry (JSON schemas). | `vde validate` |
-| `vde prune` | **The Pruning Ritual**: Archive old plans/scripts and purge aged logs. | `vde prune` |
+| `vde prune` | **Repository Housekeeping**: Default/dry-run plans only. `--apply` deletes old repository housekeeping files and archives old plans/scripts/release records, prompting unless `--yes` is supplied. Student `logs/` and `backup/` are excluded. Timeframes: `7d` (default), `3d`, `24h`, `12h`. Use `vde clean` for Docker disk cleanup. | `vde prune [--timeframe 7d] [--dry-run | --apply] [--yes]` |
 | `vde rebuild-cache` | Force a re-smelt of the internal VM cache. | `vde rebuild-cache` |
 | `vde sync-version` | Synchronize versioning across the Hub and Spokes. | `vde sync-version` |
 | `vde port <alias>` | Retrieve the assigned SSH port for a Spoke. | `vde port python` |
 | `vde info` | Detailed system and environment diagnostic dump. | `vde info` |
 | `vde dns-check` | **The Handshake Ritual**: Verify cross-Spoke DNS resolution. | `vde dns-check <src> <tgt> [port]` |
+| `vde usb-map` | **The Socket Ledger**: Report stable per-port names for attached USB serial boards. | `vde usb-map <name> [name ...]` |
 | `vde matrix-audit` | Exhaustive verification of every registered VM type (Serialized). | `vde matrix-audit` |
 | `vde matrix-rebuild` | Comprehensive non-cached re-forging of the absolute Spoke matrix. | `vde matrix-rebuild` |
 | `vde-enforce-uap.zsh` | **The Rule Spine**: Enforce Universal Agent Protocol compliance. | `bin/vde-enforce-uap.zsh` |
 | `vde-spine-check.zsh` | **The Tetrad Check**: Verify Zsh, Git, Docker, and SSH pillars. | `bin/vde-spine-check.zsh` |
 | `vde-gospel-audit.zsh` | **The Gospel Auditor**: Verify structural integrity of the Sovereign Artifact Set. | `bin/vde-gospel-audit.zsh` |
 | `vde-heal-docs.zsh` | **The Self-Healer**: Autonomously synchronize Gospel documentation with the physical Forge. | `bin/vde-heal-docs.zsh` |
+| `vde-release.zsh` | **The Release Forger**: Drive a version bump (Gospel first, sync, bulk-update references) through the release chain. | `bin/vde-release.zsh <NEW_VERSION>` |
 
 ---
 
@@ -63,11 +66,12 @@ The `vde` command is the canonical entry point for the **Sovereign Evolution**. 
 These scripts provide specialized maintenance, automation, and development support.
 
 | Script | Purpose |
-|--------|---------|
+| -------- | --------- |
 | `vde-bootstrap` | Initial Hub installation and dependency check. |
-| `generate-all-configs` | Smelt all Spoke compose and SSH configurations. |
+| `vde-set-projects-dir` | **@armor Engine Core** (zsh): Re-point the Projects base — resolve/create/validate the new base, move per-alias subfolders (skipping collisions), update `.env` `VDE_PROJECTS_DIR`, and regenerate compose configs via `generate-all-configs`. |
+| `generate-all-configs` | Smelt all Spoke compose and SSH configurations. Invoked by `vde-set-projects-dir` after the base changes. |
 | `cleanup-ports` | Purge stale or orphaned entries from the port registry. |
-| `vde-prune.zsh` | Archive old plans/scripts and purge aged logs. |
+| `vde-prune.zsh` | Repository housekeeping maintenance: default/dry-run planning; interactive `--apply` or scripted `--apply --yes`; student `logs/`/`backup/` excluded; historical `docs/releases` retain prune behavior; current baseline protected. Supported timeframes `7d`, `3d`, `24h`, `12h`. Docker disk cleanup is handled by `vde clean`. |
 | `validate-schemas.zsh` | Verify Beskar Registry integrity against JSON schemas. |
 | `vde-tactical-sweep.zsh` | Perform a project-wide cleanup of containers and locks. |
 | `vde-poll` | Continuous health monitoring of the Spoke ecosystem. |
@@ -75,7 +79,7 @@ These scripts provide specialized maintenance, automation, and development suppo
 | `check-zsh-shebang.zsh` | CI ritual to enforce the Zsh-only mandate. |
 | `coverage.zsh` | Generate code coverage reports for the Forge. |
 | `targeted-test.zsh` | Execute specific BDD or unit test suites. |
-| `paired_update_enforcer` | Mandate L ritual to ensure PR/Remediation alignment. |
+| `paired_update_enforcer` | Paired-update check (Signet #641): `.gemini/STATE/session_handover.md` and `plans/session_handover_remediation.md` must carry the Paired Update Policy and link to each other, and a PR that changes one must change the other (diff against `VDE_PAIRED_BASE`, default `origin/develop`; `VDE_PAIRED_DIFF=skip` for promotions into main/stable). |
 | `add-vm-type` | Low-level script to register a new VM type in the Beskar Registry. |
 | `list-vms` | Low-level script to audit registered VM types. |
 | `uninstall-vm-type` | Low-level script to permanently remove a VM type. |
@@ -95,7 +99,7 @@ These scripts provide specialized maintenance, automation, and development suppo
 | `vde-armor-heal.zsh` | Emergency healing script for Project 1 (Armor) components. |
 | `vde-purify-paths.zsh` | Mass path purification utility. Replaces absolute path derivation logic (:a) with Zsh-native relative derivation. |
 | `vde-sync-context` | Review and refresh VDE context documentation against the current codebase state. |
-| `nuke-vde` | **The Great Quench**: Safe removal of all VDE artifacts. |
+| `nuke-vde` | **The Great Quench**: Remove VDE's own state (Spokes, images, Docker network/volumes, SSH config+keys at `$HOME/.ssh/vde`, logs, env-files, caches, locks). **Preserves** `projects/` and `data/` and offers to move them to a safe location first. |
 
 ---
 

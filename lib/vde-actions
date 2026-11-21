@@ -1,0 +1,497 @@
+#!/usr/bin/env zsh
+# @armor (Engine Core)
+# VDE Action Handlers
+#
+# Command bodies extracted verbatim from bin/vde: each function is the former body of
+# the matching `case ${ACTION}` arm, with only its indentation changed. NO BEHAVIOR CHANGE.
+#
+# CONTRACT: bin/vde calls these AFTER its argument handling; they take no positional
+# parameters, read the router's globals (ACTION, ACTION_ARGS, input_targets, targets,
+# force, _vde_help_status) and may `exit`, as the inline arms did.
+#
+# Handlers that act on several Spokes (stop, restart, remove) exit 0 when every target was
+# handled or already in the desired state, and 1 if any target was unknown or its docker
+# operation failed (Signet #590).
+# Source this library with: source "${VDE_ROOT_DIR}/lib/vde-actions"
+
+# ZSH-native logic demonstration (UAP Mandate 1)
+typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+
+if [[ "${_VDE_ACTIONS_LOADED:-}" = "1" ]]; then
+    return 0 2>/dev/null || exit 0
+fi
+_VDE_ACTIONS_LOADED=1
+
+# vde_spoke_env_warning ENV_FILE - prints ONE line when a Spoke would start without the SSH key
+# it gets from the root .env, and nothing when the key is there (Signet #666). The generated
+# manifests no longer load the root .env, so a missing file is no longer a Compose error: the
+# key would arrive empty, the entrypoint would write no authorized_keys, and the login would be
+# denied without a message. `vde start` shows this line as a warning instead.
+vde_spoke_env_warning() {
+    local env_file="${1}"
+    if [[ ! -f "${env_file}" ]]; then
+        print -r -- "no root .env at ${env_file}: this Spoke starts without VDE_AUTHORIZED_KEY, so its SSH login may be denied. Copy .env.template to .env, then run 'vde ssh-sync' to write your key into it."
+    elif ! grep -qE '^VDE_AUTHORIZED_KEY="?[^"[:space:]#]' "${env_file}"; then
+        print -r -- "VDE_AUTHORIZED_KEY is missing or empty in ${env_file}: this Spoke starts without it, so its SSH login may be denied. Run 'vde ssh-sync' to write your key into the file."
+    fi
+    return 0
+}
+
+# vde_spoke_env_scrub ENV_FILE - makes the root .env WIN for the two variables the Compose manifests
+# interpolate (VDE_AUTHORIZED_KEY, POSTGRES_DEV_PASSWORD) by unsetting, in this process, each of them
+# that ENV_FILE defines. A name the file does NOT define is left alone, so a value exported only in the
+# shell still reaches the Spoke (deliberate: the file wins, it does not forbid the shell).
+# Compose lets a process variable beat --env-file, and a shell or test
+# runner that loaded the .env itself holds the QUOTED key, which a Spoke then writes as an invalid
+# authorized_keys line (SSH denied). The Proof of Life caught exactly this (Signet #666).
+vde_spoke_env_scrub() {
+    local env_file="${1}" name
+    [[ -f "${env_file}" ]] || return 0
+    for name in VDE_AUTHORIZED_KEY POSTGRES_DEV_PASSWORD; do
+        grep -qE "^${name}=" "${env_file}" && unset "${name}"
+    done
+    return 0
+}
+
+# vde_action_start - vde start <alias...|default|all> [-f]  - ignite Spokes (disk/breath checks, locks, compose up)
+vde_action_start() {
+    vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
+    [[ -z "${targets}" ]] && vde_log_error "Usage: vde start <alias...|default>" && exit ${VDE_ERR_GENERAL}
+    
+    # System Breath Check
+    local max_vms=$(vde_check_system_breath)
+    local breath_rc=$?
+    max_vms="${max_vms:-3}"
+    if [[ ${breath_rc} -ne 0 ]] && [[ "${max_vms}" == "0" ]]; then
+        vde_log_error "Ignition aborted due to system resource constraints." "system"
+        exit ${breath_rc}
+    fi
+
+    # Check combat load
+    local running_count=$(docker_get_running | wc -w | tr -d ' ')
+    if (( running_count >= max_vms )); then
+        vde_log_error "Rule K Violation: Combat Load exceeded (${running_count}/${max_vms} VMs running)."
+        exit ${VDE_ERR_GENERAL}
+    fi
+
+    local GLOBAL_RC=0
+    for target_type in "${targets[@]}"; do
+        local CANONICAL_NAME=$(resolve_vm_name "${target_type}" 2>/dev/null)
+        if [[ -z "${CANONICAL_NAME}" ]]; then
+            vde_error_alias_not_found "${target_type}"
+            continue
+        fi
+        
+        local BASE_NAME="${CANONICAL_NAME#vde-}"
+        local target_type_val=$(get_vm_type "${CANONICAL_NAME}" 2>/dev/null || echo "language")
+        local ssh_port=$(get_vm_ssh_port "${CANONICAL_NAME}")
+        
+        if [[ "${force}" == "true" ]]; then
+            vde_log_info "Forcing re-ignition of ${CANONICAL_NAME}..." "docker"
+            vde_run "${CANONICAL_NAME}" docker stop "${CANONICAL_NAME}" >/dev/null 2>&1 || true
+            vde_run "${CANONICAL_NAME}" docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1 || true
+        fi
+
+        if is_vm_running "${CANONICAL_NAME}"; then
+            vde_log_info "${CANONICAL_NAME} is already running." "docker"
+            vde_print_next_steps "start" "${CANONICAL_NAME}"
+            continue
+        fi
+
+        # VM-level lock: prevent concurrent operations on the same Spoke
+        local vm_lock="${VDE_ROOT_DIR}/.locks/vms/${BASE_NAME}.lock"
+        claim_lock "${vm_lock}" || {
+            GLOBAL_RC=1
+            continue
+        }
+
+        vde_progress_spinner_start "Igniting ${CANONICAL_NAME} (SSH: ${ssh_port})"
+        
+        local compose_file=$(get_vm_compose_file "${CANONICAL_NAME}")
+        if [[ ! -f "${compose_file}" ]]; then
+            vde_progress_spinner_stop "" "Manifest not found for ${CANONICAL_NAME}. Run 'vde create ${BASE_NAME}' first." 1
+            GLOBAL_RC=1
+            continue
+        fi
+
+        # Pre-ignition check: image must exist
+        if ! image_exists "${CANONICAL_NAME}"; then
+            vde_log_warn "Image for ${CANONICAL_NAME} not found. Checking foundations..." "docker"
+            if ! image_exists "vde-base"; then
+                vde_log_error "Foundational image 'vde-base' is missing. Run 'vde init' to restore." "docker"
+                vde_progress_spinner_stop "" "Base image missing" 1
+                GLOBAL_RC=1
+                continue
+            fi
+            vde_run "${CANONICAL_NAME}" "${VDE_ROOT_DIR}/bin/vde-rebuild" "${BASE_NAME}" || continue
+        fi
+
+        # PREFLIGHT (Signet #616): Docker creates a missing bind-mount source as a
+        # root-owned DIRECTORY, and for the agent socket that blocks the VDE agent
+        # for good. Make sure the agent is listening, or refuse, before compose
+        # runs. Placed AFTER the image check above (which can trigger a rebuild that
+        # takes minutes) so the gap between "agent is up" and "compose mounts it" is
+        # only the discovery below. The output is captured and printed after the
+        # spinner stops, so it never runs on into the spinner's line. Only when the
+        # Spoke will mount VDE's own agent socket: a caller supplied
+        # VDE_HOST_SSH_AUTH_SOCK (e.g. a forwarded Docker Desktop socket) is theirs.
+        if [[ -z "${VDE_HOST_SSH_AUTH_SOCK:-}" || "${VDE_HOST_SSH_AUTH_SOCK}" == "${VDE_SSH_AGENT_SOCK}" ]]; then
+            local preflight_out preflight_rc=0
+            preflight_out=$(vde_preflight_agent_socket 2>&1) || preflight_rc=$?
+            if (( preflight_rc != 0 )); then
+                vde_progress_spinner_stop "" "${CANONICAL_NAME} was not started: the VDE SSH agent is not ready" 1
+                [[ -n "${preflight_out}" ]] && print -r -- "${preflight_out}" >&2
+                release_lock "${vm_lock}"
+                GLOBAL_RC=1
+                continue
+            fi
+        fi
+
+        # DISCOVERY: Resolve the authoritative host SSH agent socket (Phase 31)
+        # This ensures the Spoke is linked to the VDE isolated agent, not the host default.
+        if [[ -z "${VDE_HOST_SSH_AUTH_SOCK:-}" ]]; then
+            export VDE_HOST_SSH_AUTH_SOCK=$(vde_get_host_ssh_sock)
+            vde_log_debug "Auto-discovered VDE_HOST_SSH_AUTH_SOCK: ${VDE_HOST_SSH_AUTH_SOCK}" "ssh"
+        fi
+
+        # DISCOVERY: Resolve the HOST Docker socket's GID (Issue #457)
+        # Supplied to Compose as `group_add` so devuser gains access to the
+        # bind-mounted docker.sock WITHOUT the container ever chown'ing the
+        # host file itself (which corrupts host-side ownership -- see
+        # scripts/vde-entrypoint.zsh for the full incident writeup). Nothing
+        # GID-related is baked into the Dockerfile; it is supplied fresh at
+        # every ignition so the image stays portable across hosts.
+        #
+        # Fallback is devuser's OWN primary GID (1000, matching the UID/GID
+        # build args every image is built with) rather than 0/root -- if we
+        # can't resolve the real socket GID (stat missing, socket absent,
+        # e.g. Docker Desktop's non-standard macOS socket path), this makes
+        # group_add an inert no-op (devuser is already in its own group)
+        # instead of silently escalating devuser into the root group.
+        if [[ -z "${VDE_DOCKER_SOCK_GID:-}" ]]; then
+            if [[ -S "/var/run/docker.sock" ]]; then
+                if [[ "$(uname)" == "Darwin" ]]; then
+                    export VDE_DOCKER_SOCK_GID=$(stat -f '%g' /var/run/docker.sock 2>/dev/null)
+                else
+                    export VDE_DOCKER_SOCK_GID=$(stat -c '%g' /var/run/docker.sock 2>/dev/null)
+                fi
+            fi
+            export VDE_DOCKER_SOCK_GID="${VDE_DOCKER_SOCK_GID:-1000}"
+            vde_log_debug "Resolved VDE_DOCKER_SOCK_GID: ${VDE_DOCKER_SOCK_GID}" "docker"
+        fi
+
+        # DISCOVERY: Ensure HOST-owned bind-mount directories exist (Issue #459)
+        # Docker auto-creates a missing bind-mount source directory itself,
+        # owned root:root -- silently breaking devuser's ability to write
+        # to their own workspace/logs on a freshly-created VM. Pre-create
+        # these as the invoking host user before every ignition, mirroring
+        # the pattern bin/vde-init already uses for data/<service> at init
+        # time, but generalized to run lazily here so it also covers VM
+        # types added later via `vde add` (never pre-created at init).
+        #
+        # NOTE: every templates/compose-service.yml-derived VM also bind-
+        # mounts a nested data/<name>/pgdata directory (a pre-existing
+        # templating artifact applied even to non-Postgres services like
+        # redis/mysql -- not this Strike's concern to rename, but its
+        # existence IS this Strike's concern: that nested path needs its
+        # own mkdir, or Docker auto-vivifies IT as root one level deeper).
+        local vm_category=$(get_vm_category "${CANONICAL_NAME}" 2>/dev/null)
+        case "${vm_category}" in
+            languages)
+                mkdir -p "$(vde_projects_dir)/${BASE_NAME}" "${VDE_ROOT_DIR}/logs/${BASE_NAME}"
+                ;;
+            services)
+                mkdir -p "${VDE_ROOT_DIR}/data/${BASE_NAME}/pgdata" "${VDE_ROOT_DIR}/logs/${BASE_NAME}"
+                ;;
+            *)
+                mkdir -p "${VDE_ROOT_DIR}/logs/${BASE_NAME}"
+                ;;
+        esac
+
+        # Canonical Ignition Handshake
+        local vm_env_file
+        vm_env_file=$(get_vm_env_file "${CANONICAL_NAME}")
+        
+        # DISCOVERY: a recreated container presents a NEW SSH host key on
+        # the same localhost:<port>, so the stale known_hosts entry breaks
+        # the next connection. Plain ssh warns and continues (the Spoke
+        # config sets StrictHostKeyChecking no), but VSCode Remote-SSH
+        # fails hard and the Spoke looks dead for no visible reason.
+        # remove_known_hosts_entry() already existed in lib/vde-ssh with no
+        # caller; purge before every ignition. Harmless when the key has
+        # not changed, since the client simply re-learns it.
+        if ! typeset -f remove_known_hosts_entry >/dev/null 2>&1; then
+            [[ -f "${VDE_ROOT_DIR}/lib/vde-ssh" ]] && source "${VDE_ROOT_DIR}/lib/vde-ssh"
+        fi
+        if typeset -f remove_known_hosts_entry >/dev/null 2>&1; then
+            remove_known_hosts_entry "${CANONICAL_NAME}" "${ssh_port}" >/dev/null 2>&1 || true
+            vde_log_debug "Purged known_hosts for ${CANONICAL_NAME} (port ${ssh_port})" "ssh"
+        fi
+
+        local -a compose_up_cmd=(docker compose)
+        [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
+        
+        # Base manifest first, then any opt-in overlay (Signet #526).
+        # Compose resolves relative paths against the first -f file.
+        local -a compose_files
+        compose_files=( ${(f)"$(get_vm_compose_files "${CANONICAL_NAME}")"} )
+        local _cf
+        for _cf in "${compose_files[@]}"; do
+            compose_up_cmd+=(-f "${_cf}")
+        done
+        [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
+        
+        [[ -f "${VDE_ROOT_DIR}/.env" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")
+        vde_spoke_env_scrub "${VDE_ROOT_DIR}/.env"
+        local _spoke_env_gap
+        _spoke_env_gap="$(vde_spoke_env_warning "${VDE_ROOT_DIR}/.env")"
+        [[ -n "${_spoke_env_gap}" ]] && vde_log_warn "${CANONICAL_NAME}: ${_spoke_env_gap}" "ssh"
+        [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
+        
+        [[ -f "${VDE_ROOT_DIR}/${vm_env_file}" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/${vm_env_file}")
+        [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
+        
+        compose_up_cmd+=(up -d)
+        [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
+
+        if vde_run "${CANONICAL_NAME}" "${compose_up_cmd[@]}" >/dev/null 2>&1; then
+            vde_progress_spinner_stop "${CANONICAL_NAME} ignited"
+            vde_print_next_steps "start" "${CANONICAL_NAME}"
+        else
+            vde_progress_spinner_stop "" "Failed to ignite ${CANONICAL_NAME}" 1
+            GLOBAL_RC=1
+        fi
+        release_lock "${vm_lock}"
+    done
+    exit ${GLOBAL_RC}
+}
+
+# vde_action_stop - vde stop [-f] <alias...|default|all>  - quench running Spokes
+vde_action_stop() {
+    [[ -z "${targets}" ]] && vde_log_error "Usage: vde stop [-f] <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
+
+    local last_stopped=""
+    local action_rc=0
+    for vm_alias in "${targets[@]}"; do
+        local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+        if [[ -z "${CANONICAL_NAME}" ]]; then
+            vde_log_warn "Unknown VM: ${vm_alias}"
+            action_rc=1
+            continue
+        fi
+
+        if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+            vde_progress_spinner_start "Stopping ${CANONICAL_NAME}"
+            if vde_run "${CANONICAL_NAME}" docker stop "${CANONICAL_NAME}" >/dev/null 2>&1; then
+                vde_progress_spinner_stop "${CANONICAL_NAME} stopped"
+                last_stopped="${CANONICAL_NAME}"
+            else
+                vde_progress_spinner_stop "" "Failed to stop ${CANONICAL_NAME}" 1
+                action_rc=1
+            fi
+        else
+            vde_log_info "${CANONICAL_NAME} is not running." "vde"
+        fi
+    done
+    if [[ -n "${last_stopped}" ]]; then
+        vde_print_next_steps "stop" "${last_stopped}"
+    fi
+    exit ${action_rc}
+}
+
+# vde_action_restart - vde restart <alias...|default|all>  - stop then start Spokes
+vde_action_restart() {
+    [[ -z "${targets}" ]] && vde_log_error "Usage: vde restart <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
+    
+    local last_restarted=""
+    local action_rc=0
+    for vm_alias in "${targets[@]}"; do
+        local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+        if [[ -z "${CANONICAL_NAME}" ]]; then
+            vde_log_warn "Unknown VM: ${vm_alias}"
+            action_rc=1
+            continue
+        fi
+
+        vde_progress_spinner_start "Restarting ${CANONICAL_NAME}"
+        if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+            vde_run "${CANONICAL_NAME}" docker stop "${CANONICAL_NAME}" >/dev/null 2>&1
+        fi
+        if ./bin/vde start "${CANONICAL_NAME}" >/dev/null 2>&1; then
+            vde_progress_spinner_stop "${CANONICAL_NAME} restarted"
+            last_restarted="${CANONICAL_NAME}"
+        else
+            vde_progress_spinner_stop "" "Failed to restart ${CANONICAL_NAME}" 1
+            action_rc=1
+        fi
+    done
+    if [[ -n "${last_restarted}" ]]; then
+        vde_print_next_steps "restart" "${last_restarted}"
+    fi
+    exit ${action_rc}
+}
+
+# vde_action_remove - vde remove <alias...|default|all>  - remove Spoke containers
+vde_action_remove() {
+    [[ -z "${targets}" ]] && vde_log_error "Usage: vde remove <alias...|default|all>" && exit ${VDE_ERR_GENERAL}
+
+    local last_removed=""
+    local action_rc=0
+    for vm_alias in "${targets[@]}"; do
+        local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+        if [[ -z "${CANONICAL_NAME}" ]]; then
+            vde_log_warn "Unknown VM: ${vm_alias}"
+            action_rc=1
+            continue
+        fi
+
+        if docker ps -a --format '{{.Names}}' | grep -q "^${CANONICAL_NAME}$"; then
+            vde_progress_spinner_start "Removing container ${CANONICAL_NAME}"
+            if vde_run "${CANONICAL_NAME}" docker rm -f "${CANONICAL_NAME}" >/dev/null 2>&1; then
+                vde_progress_spinner_stop "${CANONICAL_NAME} removed"
+                last_removed="${CANONICAL_NAME}"
+            else
+                vde_progress_spinner_stop "" "Failed to remove ${CANONICAL_NAME}" 1
+                action_rc=1
+            fi
+        else
+            vde_log_info "No container found for ${CANONICAL_NAME}." "vde"
+        fi
+    done
+    if [[ -n "${last_removed}" ]]; then
+        vde_print_next_steps "rm" "${last_removed}"
+    fi
+    exit ${action_rc}
+}
+
+# vde_action_exec - vde exec <vm> <command>  - run a command in a Spoke without an interactive shell
+vde_action_exec() {
+    # Use first target as VM, rest as ACTION_ARGS
+    local vm_target="${targets[1]}"
+    [[ -z "${vm_target}" ]] && vde_log_error "Usage: vde exec <vm_name> <command>" && exit 1
+    vde_run "exec" "${VDE_ROOT_DIR}/bin/vde-exec" "${vm_target}" "${ACTION_ARGS[@]}"
+}
+
+# vde_action_enter - vde enter <vm> [command]  - enter a Spoke via the Transversal Bridge
+vde_action_enter() {
+    local vm_target="${targets[1]}"
+    [[ -z "${vm_target}" ]] && vde_log_error "Usage: vde enter <vm_name> [command]" && exit 1
+    vde_run "enter" "${VDE_ROOT_DIR}/bin/ssh-vm" "${vm_target}" "${ACTION_ARGS[@]}"
+}
+
+# vde_action_port - vde port <alias>  - print a Spoke's SSH port
+vde_action_port() {
+    local vm_alias=${targets[1]}
+    local CANONICAL_NAME=$(resolve_vm_name "${vm_alias}" 2>/dev/null)
+    vde_run "port" vde_query_json -r "(.vms.language[]?, .vms.service[]?) | select(.name == \"${CANONICAL_NAME}\") | .ssh_port // empty" "${VM_TYPES_JSON}"
+    exit $?
+}
+
+# vde_action_clean - vde clean [--dry-run]  - free Docker's build cache (Signet #617)
+# Build cache only: never images, containers or volumes. The same cleanup runs
+# automatically after a successful rebuild/create; this is for when it did not
+# (--keep-cache, or a build that was interrupted). Flags are peeled off by the
+# router (vde_split_clean_args), so any remaining argument is a mistake.
+vde_action_clean() {
+    if [[ ${#input_targets} -gt 0 ]]; then
+        vde_log_error "'vde clean' takes no arguments (got: ${input_targets[*]}). Usage: vde clean [--dry-run]"
+        exit ${VDE_ERR_INVALID_INPUT}
+    fi
+    local clean_rc=0
+    if (( ${VDE_CLEAN_DRY_RUN:-0} )); then
+        vde_prune_build_cache --dry-run || clean_rc=$?
+    else
+        vde_prune_build_cache || clean_rc=$?
+    fi
+    exit ${clean_rc}
+}
+
+# vde_action_cache - vde cache clean [--dry-run]  - an alias group for vde clean,
+# for the person who describes the problem as "the build cache"
+vde_action_cache() {
+    case "${input_targets[1]:-}" in
+        clean|cleanup|clear|prune)
+            input_targets=( "${(@)input_targets[2,-1]}" )
+            vde_action_clean
+            ;;
+        *)
+            print -u2 -r -- "Usage: vde cache clean [--dry-run]   (frees Docker's build cache; the same as: vde clean)"
+            exit ${VDE_ERR_INVALID_INPUT}
+            ;;
+    esac
+}
+
+# vde_suggest_command NAME - after an unknown command, point at the command a
+# student most likely meant. Prints to stderr; prints nothing when it has no idea
+# (a wrong hint is worse than none). Returns 0 if it suggested something.
+vde_suggest_command() {
+    case "${1:-}" in
+        disk|df|space|free|gc|clear|clear-cache|clearcache|tidy|reclaim)
+            print -u2 -r -- "Did you mean: vde clean   (frees Docker's build cache; add --dry-run to preview)"
+            ;;
+        build)
+            print -u2 -r -- "Did you mean: vde rebuild <name>   (builds a Spoke's image, e.g. 'vde rebuild python')"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    return 0
+}
+
+# vde_action_help - vde help  - print usage (exit status from _vde_help_status)
+vde_action_help() {
+    cat <<EOF
+VDE Unified Command - The Sovereign Orchestrator
+Usage: vde <command> [arguments]
+
+Core Commands:
+  init            Initialize the VDE Forge, generate configs, and smelting foundation images.
+  create <name>   Forge a specific VM Spoke or cluster. Resolves aliases and units.
+  rebuild <name>  Destroy and re-forge a Spoke (use --no-cache to ignore Docker layer cache).
+                  Docker's build cache is cleaned afterwards; --keep-cache keeps it.
+  clean           Free Docker's build cache (removes no images). --dry-run previews the size.
+                  Also: vde cleanup, vde cache clean.
+  prune           Repository housekeeping plan (dry-run by default); --apply --yes applies it; use clean for Docker disk space.
+  start <name>    Ignite a Spoke or cluster (e.g., 'vde start default').
+  stop <name>     Quench a running Spoke or cluster unit.
+  restart <name>  Reset a Spoke or cluster unit.
+  remove <name>   Remove Spoke containers and ephemeral state.
+  nuke            The Nuclear Option: Complete erasure of all VDE artifacts and data.
+  set-projects-dir   Change where your Projects base lives and relink existing project folders.
+
+Spoke Operations:
+  enter <name>    Enter a Spoke's login shell (Zsh) via the Transversal Bridge.
+  exec <name> <c> Execute a command inside a Spoke without interactive shell.
+  ssh <name>      Connect to a Spoke via raw SSH using the VDE identity.
+  logs <name>     Tail logs for a specific Spoke or cluster unit.
+
+Diagnostics & Discovery:
+  audit           Verify the structural integrity of the Sovereign Artifact Set.
+  check-tetrad    Verify the Unyielding Tetrad (Zsh, Git, Docker, SSH) and core integrity.
+  heal            Autonomously synchronize the Gospel with the physical Forge.
+  dns-check <s> <t> Verify DNS resolution between Source and Target Spokes.
+  usb-map <name>    Report stable per-port names for attached USB serial boards.
+  info <name>     Display detailed metadata and registry status for a Spoke.
+  ps              List all active VDE containers and their statuses.
+  networks        List and manage VDE Docker networks.
+  health          Execute the Sovereign Audit for the Hub and infrastructure.
+  function-trace  Trace the full function call chain for a command without executing it.
+  stats <name>    Display real-time resource usage for Spokes.
+  port <name>     Retrieve the specific SSH or service port for an alias.
+  validate        Verify the integrity of Beskar Registry schemas.
+  sync-context    Review and refresh VDE context docs against current codebase.
+
+Matrix Management:
+  matrix-audit    Exhaustive verification of every registered VM type (Serialized).
+  matrix-rebuild  Comprehensive non-cached re-forging of the absolute Spoke matrix.
+  cluster <act>   Manage named units (save, list, start, stop, remove).
+
+Paths:
+  path-of-the-foundling  Guide a new warrior through the VDE setup rituals.
+
+Version: $(vde_get_version)
+This is the Way.
+EOF
+    exit ${_vde_help_status}
+}

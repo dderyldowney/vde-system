@@ -1,7 +1,7 @@
 # Directory Structure
 <!-- @shared-law (Sovereign Law) -->
 
-The complete directory layout of the **Sovereign Baseline (1.5.5)** installation.
+The complete directory layout of the **Sovereign Baseline (1.5.7)** installation.
 
 [← Back to README](../../README.md)
 
@@ -11,9 +11,21 @@ The complete directory layout of the **Sovereign Baseline (1.5.5)** installation
 
 ```
 VDE_ROOT/
+├── .agents/            # Antigravity native skills (symlinks to .gemini/SKILLS and .gemini/COMMANDS)
+│   └── skills/         # One folder per skill or /vde-* command, each holding a SKILL.md symlink
 ├── .cache/             # Persistent associative array caches and port registry
+├── .claude/            # Claude Code native skills (symlinks to .gemini/SKILLS and .gemini/COMMANDS)
+│   └── skills/         # One folder per skill or /vde-* command, each holding a SKILL.md symlink
 ├── .docker-state/      # Real-time container state archives for status tracking
 ├── .gemini/            # Agent instructions, commands, and strike plans
+│   ├── COMMANDS/
+│   ├── PLANS/
+│   ├── RULES/
+│   ├── SKILLS/
+│   ├── STATE/
+│   │   ├── MEMORY.md           # Sovereign session record and mission history
+│   │   └── session_handover.md # Current session goals and constraints
+│   └── instructions.md
 ├── .gemini_security/   # Security remediation plans and vulnerability audits
 ├── .git/               # The Chronicler's archive (Git repository)
 ├── .locks/             # FIFO ticket-based concurrency locks (global and per-VM)
@@ -33,13 +45,28 @@ VDE_ROOT/
 ├── scripts/            # Hydration rituals (setup) and Spoke ignition logic
 ├── templates/          # Blueprints including forge-mythos rituals
 ├── tests/              # BDD Feature specifications and empirical proofs
-├── MEMORY.md           # Sovereign session record and mission history
 └── README.md           # Entry point and high-level mission overview
 ```
 
 ---
 
 ## Key Directories Explained
+
+### `.agents/`
+A hidden folder that holds only `skills/`. Each `.agents/skills/<name>/SKILL.md` is a relative symlink to a skill document in `.gemini/SKILLS/` or a command document in `.gemini/COMMANDS/`, so Antigravity discovers them natively as skills and `/vde-*` slash commands. There are 19 such symlinks.
+
+Other local files under `.agents/` stay git-ignored. Every other agent reads the same documents by their `.gemini/` path.
+
+### `.claude/`
+Claude Code's own folder. Only `skills/` is tracked: each `.claude/skills/<name>/SKILL.md` is a relative symlink to the same 19 documents in `.gemini/SKILLS/` and `.gemini/COMMANDS/` (the same links as `.agents/skills`), so Claude Code discovers them natively as skills and `/vde-*` slash commands. Everything else under `.claude/` (personal settings, backups, hooks) stays git-ignored and local.
+
+### `.gemini/`
+Agent instructions, commands, rules, skills, and strike plans. Every agent (Claude, Gemini, Kilo and others) reads project state from `.gemini/STATE/` at session start:
+
+- `.gemini/STATE/MEMORY.md`: Sovereign session record and mission history.
+- `.gemini/STATE/session_handover.md`: Current session goals and constraints.
+
+Only the tool-mandated entry points (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `kilo.json`) and the certified status record `PROJECT_STATUS.md` stay at the repository root.
 
 ### `.locks/`
 VDE uses a deterministic FIFO locking model to manage concurrency.
@@ -64,11 +91,23 @@ Modular Zsh 5.0+ libraries following the **ZSH ONLY** mandate.
 - `vde-ssh`: The Sovereign Bridge (SSH management).
 - `vde-docker`: Container lifecycle management.
 
-### `projects/`
-The primary workspace for language Spokes. Each subdirectory is mounted as a volume into the corresponding container at `$HOME/workspace/`.
+### `projects/` (The Projects Base)
+The primary workspace for language Spokes. By default the Projects base is
+`projects/` under the repository root, but it is **configurable** via the
+`VDE_PROJECTS_DIR` environment / `.env` key to any directory the student controls,
+inside or outside the repo (e.g. `$HOME/Projects`).
+
+Each Spoke alias gets its own subfolder in the `<base>/<alias>` layout, which is
+mounted into the corresponding container at `/home/devuser/workspace`. Re-point the
+base at any time with `vde set-projects-dir`, or set it during `vde init --projects-dir <path>`.
+
+The Projects base is **preserved by `vde nuke`** — it is never deleted, in-tree or
+external (nuke offers to move it to a safe location first).
 
 ### `data/`
-Persistent storage for service Spokes (e.g., PostgreSQL databases, Redis dumps) and the authoritative **Beskar Registry** (`vm-types.json`).
+Persistent storage for service Spokes (e.g., PostgreSQL databases, Redis dumps) and
+the authoritative **Beskar Registry** (`vm-types.json`). Like the Projects base, the
+database `data/` directory is **preserved by `vde nuke`** and never deleted.
 
 ### `env-files/`
 Configuration payloads sourced by Docker Compose. These files contain the **Phase 31 DNS aliases** and Spoke-specific metadata.

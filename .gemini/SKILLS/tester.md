@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: tester
+description: "Tester Agent for VDE under the Universal Agent Protocol: writes real behavioral tests via the vde CLI (RED-GREEN-Refactor, behave, zsh unit tests) and reports PASS/FAIL with file:line. Use for test tasks."
+---
 # Tester Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

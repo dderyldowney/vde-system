@@ -1,7 +1,7 @@
 # Best Practices
 <!-- @shared-law (Sovereign Law) -->
 
-Recommended practices for working with VDE effectively in the **Sovereign Baseline (1.5.5)**.
+Recommended practices for working with VDE effectively in the **Sovereign Baseline (1.5.7)**.
 
 [← Back to README](../../README.md)
 
@@ -62,7 +62,25 @@ vde enter python
 psql -h vde-postgres -U devuser  # Works via DNS discovery!
 ```
 
-### 5. Multi-Spoke Interaction
+### 5. Anchor VDE to a Central Projects Directory
+
+Point VDE at a projects base you already use, and keep that base **outside** the VDE folder so decommissioning VDE never puts your code at risk.
+
+```zsh
+# Set your base at onboarding (or re-point any time)
+vde init --projects-dir "$HOME/Projects"
+
+# Each Spoke mounts <base>/<alias> at $HOME/workspace inside the Spoke
+# e.g. $HOME/Projects/python  ->  vde enter python : ~/workspace
+```
+
+**Best Practices:**
+
+- Keep the base **outside** the VDE folder (e.g. `$HOME/Projects`). `vde nuke` preserves `projects/` and `data/`, but an external base means removing the VDE folder itself can never touch your code.
+- Reuse a directory you already keep under Git; VDE **adopts** a same-named folder without overwriting its contents.
+- Relocate safely with `vde set-projects-dir <new-path>` — it MOVES existing alias folders (skipping collisions, never deleting), updates `.env`, and regenerates configs. No rebuild required.
+
+### 6. Multi-Spoke Interaction
 
 All VMs share the `vde-net` bridge and have SSH agent forwarding enabled.
 

@@ -497,9 +497,11 @@ if [[ "$1" == "clone" ]]; then
 fi
 exit 0
 MOCK
-    # Replace placeholders (can't use them inside a quoted heredoc)
-    sed -i '' "s|MOCK_LOG_PLACEHOLDER|${git_log}|g" "${MOCK_BIN}/git"
-    sed -i '' "s|MOCK_HOME_PLACEHOLDER|${fake_home}|g" "${MOCK_BIN}/git"
+    # Replace placeholders (can't use them inside a quoted heredoc).
+    # Portable rewrite: `sed -i ''` is BSD-only and breaks on GNU/Linux sed,
+    # so write to a temp file and move it back instead of in-place editing.
+    sed "s|MOCK_LOG_PLACEHOLDER|${git_log}|g; s|MOCK_HOME_PLACEHOLDER|${fake_home}|g" \
+        "${MOCK_BIN}/git" > "${MOCK_BIN}/git.tmp" && mv "${MOCK_BIN}/git.tmp" "${MOCK_BIN}/git"
     chmod +x "${MOCK_BIN}/git"
 
     # uname needed for platform detection
@@ -518,6 +520,104 @@ MOCK
     rm -f "${git_log}"
     rm -rf "${fake_home}"
     mock_bin_teardown
+}
+
+# =============================================================================
+# Projects base (Signet #543): bootstrap is non-interactive, so the base can
+# only be chosen via --projects-dir or a pre-exported VDE_PROJECTS_DIR. These
+# tests prove that choice actually reaches the onboarding step (vde-init), with
+# a leading ~ expanded. We stub a VDE checkout whose bin/vde records the
+# VDE_PROJECTS_DIR it was handed.
+# =============================================================================
+# Build a fake ~/VDE with a mock bin/vde that logs VDE_PROJECTS_DIR; echoes the
+# log path. Also stubs git to succeed (existing-dir => update path).
+_setup_fake_forge() {  # $1 = fake HOME
+    local fake_home="$1"
+    local vde_log; vde_log="$(mktemp)"
+    mkdir -p "${fake_home}/VDE/.git" "${fake_home}/VDE/bin"
+    cat > "${fake_home}/VDE/bin/vde" <<'MOCK'
+#!/usr/bin/env bash
+echo "VDE_PROJECTS_DIR=${VDE_PROJECTS_DIR:-<unset>}" >> "VDE_LOG_PLACEHOLDER"
+exit 0
+MOCK
+    sed "s|VDE_LOG_PLACEHOLDER|${vde_log}|g" "${fake_home}/VDE/bin/vde" \
+        > "${fake_home}/VDE/bin/vde.tmp" && mv "${fake_home}/VDE/bin/vde.tmp" "${fake_home}/VDE/bin/vde"
+    chmod +x "${fake_home}/VDE/bin/vde"
+    # git present and succeeds (fetch/reset on the update path)
+    rm -f "${MOCK_BIN}/git"
+    printf '#!/usr/bin/env bash\nexit 0\n' > "${MOCK_BIN}/git"
+    chmod +x "${MOCK_BIN}/git"
+    echo "${vde_log}"
+}
+
+# =============================================================================
+# TEST 14: --projects-dir (with ~) propagates to onboarding
+# =============================================================================
+test_projects_dir_flag_propagates() {
+    test_start "projects base: --projects-dir (with ~) reaches onboarding"
+
+    mock_bin_setup
+    mock_bin_add "zsh" 'shift 2>/dev/null'
+    mock_bin_add_docker
+    mock_bin_add "ssh" 'shift 2>/dev/null'
+
+    local fake_home; fake_home="$(mktemp -d)"
+    local vde_log;   vde_log="$(_setup_fake_forge "${fake_home}")"
+
+    PATH="${MOCK_BIN}" HOME="${fake_home}" bash "${BOOTSTRAP}" --projects-dir '~/mydev' >/dev/null 2>&1 || true
+
+    local seen; seen="$(grep -E '^VDE_PROJECTS_DIR=' "${vde_log}" 2>/dev/null | tail -1)"
+    if [[ "${seen}" == "VDE_PROJECTS_DIR=${fake_home}/mydev" ]]; then
+        test_pass "projects base: --projects-dir (with ~) reaches onboarding"
+    else
+        test_fail "projects-dir flag propagation" "expected 'VDE_PROJECTS_DIR=${fake_home}/mydev', got '${seen}'"
+    fi
+
+    rm -f "${vde_log}"; rm -rf "${fake_home}"; mock_bin_teardown
+}
+
+# =============================================================================
+# TEST 15: a pre-exported VDE_PROJECTS_DIR propagates to onboarding
+# =============================================================================
+test_projects_dir_env_propagates() {
+    test_start "projects base: pre-exported VDE_PROJECTS_DIR reaches onboarding"
+
+    mock_bin_setup
+    mock_bin_add "zsh" 'shift 2>/dev/null'
+    mock_bin_add_docker
+    mock_bin_add "ssh" 'shift 2>/dev/null'
+
+    local fake_home; fake_home="$(mktemp -d)"
+    local vde_log;   vde_log="$(_setup_fake_forge "${fake_home}")"
+
+    VDE_PROJECTS_DIR="${fake_home}/fromenv" PATH="${MOCK_BIN}" HOME="${fake_home}" \
+        bash "${BOOTSTRAP}" >/dev/null 2>&1 || true
+
+    local seen; seen="$(grep -E '^VDE_PROJECTS_DIR=' "${vde_log}" 2>/dev/null | tail -1)"
+    if [[ "${seen}" == "VDE_PROJECTS_DIR=${fake_home}/fromenv" ]]; then
+        test_pass "projects base: pre-exported VDE_PROJECTS_DIR reaches onboarding"
+    else
+        test_fail "projects-dir env propagation" "expected 'VDE_PROJECTS_DIR=${fake_home}/fromenv', got '${seen}'"
+    fi
+
+    rm -f "${vde_log}"; rm -rf "${fake_home}"; mock_bin_teardown
+}
+
+# =============================================================================
+# TEST 16: an EMPTY --projects-dir value is an error, not a silent default (#564)
+# =============================================================================
+test_projects_dir_empty_flag_errors() {
+    test_start "projects base: empty --projects-dir= / --projects-dir '' exit 1 with a message"
+
+    local out1 rc1 out2 rc2
+    out1="$(bash "${BOOTSTRAP}" --projects-dir= 2>&1)"; rc1=$?
+    out2="$(bash "${BOOTSTRAP}" --projects-dir '' 2>&1)"; rc2=$?
+
+    if [[ "${rc1}" -eq 1 && "${rc2}" -eq 1 && "${out1}" == *"requires a path"* && "${out2}" == *"requires a path"* ]]; then
+        test_pass "projects base: empty --projects-dir exits 1 with a message"
+    else
+        test_fail "empty --projects-dir" "rc1=${rc1} rc2=${rc2} out1='${out1[1,120]}' out2='${out2[1,120]}'"
+    fi
 }
 
 # =============================================================================
@@ -542,6 +642,9 @@ main() {
     test_rerun_guidance
     test_existing_vde_updates
     test_fresh_install_clones_stable
+    test_projects_dir_flag_propagates
+    test_projects_dir_env_propagates
+    test_projects_dir_empty_flag_errors
 
     # Print summary
     echo ""

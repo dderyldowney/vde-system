@@ -1,0 +1,1 @@
+../../../.gemini/SKILLS/supervisor.md

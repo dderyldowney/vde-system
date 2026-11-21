@@ -1,0 +1,1 @@
+../../../.gemini/SKILLS/security-auditor.md

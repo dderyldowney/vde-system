@@ -35,8 +35,24 @@ done
 # Ignore files matching env.template, the env-files/ primer directory, and ghost files (*.bak).
 typeset staged_all=($(git diff --cached --name-only --diff-filter=ACM | grep -v "env.template" | grep -v "env-files/" | grep -v "\.bak$" || true))
 
+# A Compose pass-through carries no value, so it is dropped before the scan: a WHOLE added
+# line that is `NAME=${NAME:-}` (same name on both sides, empty default), optionally as a
+# YAML list item. Every other shape stays checked: a default with a value (NAME=${NAME:-x}),
+# a bare ${NAME}, a different name (NAME=${OTHER:-}), and a literal sharing a line with a
+# pass-through (Signet #666). The same-name test is done in zsh because a regex
+# back-reference is not portable across grep implementations.
+vde_rule12_drop_passthrough() {
+    local line
+    while IFS= read -r line; do
+        if [[ "${line}" =~ '^\+[[:space:]]*(-[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)=\$\{([A-Za-z_][A-Za-z0-9_]*):-\}[[:space:]]*$' ]] && [[ "${match[2]}" == "${match[3]}" ]]; then
+            continue
+        fi
+        print -r -- "${line}"
+    done
+}
+
 for file in "${staged_all[@]}"; do
-    if git diff --cached "$file" | grep -Ei "^[+].*(API_KEY|SECRET|PASSWORD)\s*=" > /dev/null 2>&1; then
+    if git diff --cached "$file" | grep -E "^[+]" | vde_rule12_drop_passthrough | grep -Ei "(API_KEY|SECRET|PASSWORD)\s*=" > /dev/null 2>&1; then
         echo -e "\033[0;31m[ERROR] Rule 12 Violation (Security Law):\033[0m"
         echo -e "  File '$file' contains potential hardcoded credentials."
         echo -e "  Please use .env files or the project's secret management system."
@@ -51,11 +67,101 @@ if [[ -f "${VDE_ROOT_DIR}/githooks/usp-validator.zsh" ]]; then
     fi
 fi
 
-# 4. Silent Spine Check
+# 4. Shibboleth (Rule C, Signets #626, #645, #647)
+# 4a. Every staged zsh file must carry the literal IN THE STAGED BYTES: a commit records the index, so a
+#     fix that only exists in the working copy does not count.
+# 4b. The baseline is shrink-only: a commit that stages it may not ADD lines.
+# Fail closed: the staged content cannot be verified without lib/vde-shibboleth.
+baseline_rel='docs/governance/shibboleth-baseline.txt'
+if ! staged_any="$(git diff --cached --name-only)"; then
+    echo -e "\033[0;31m[ERROR] Rule C: git could not list the staged files, so the commit cannot be verified.\033[0m"
+    exit 1
+fi
+if [[ -n "${staged_any}" ]]; then
+    if [[ ! -f "${VDE_ROOT_DIR}/lib/vde-shibboleth" ]]; then
+        echo -e "\033[0;31m[ERROR] Rule C: lib/vde-shibboleth is missing, so the staged zsh files and the shrink-only baseline cannot be verified.\033[0m"
+        exit 1
+    fi
+    source "${VDE_ROOT_DIR}/lib/vde-shibboleth"
+    if ! typeset -f vde_shib_sweep_snapshot >/dev/null || ! typeset -f vde_shib_staged_baseline_additions >/dev/null || ! typeset -f vde_shib_staged_baseline_removals >/dev/null; then
+        echo -e "\033[0;31m[ERROR] Rule C: lib/vde-shibboleth did not define its functions, so the staged zsh files and the shrink-only baseline cannot be verified.\033[0m"
+        exit 1
+    fi
+
+    # 4a. The staged zsh files.
+    snap_rc=0
+    snap_out="$(vde_shib_sweep_snapshot "${VDE_ROOT_DIR}" index)" || snap_rc=$?
+    if (( snap_rc != 0 )); then
+        echo -e "\033[0;31m[ERROR] Rule C: staged zsh files must carry the shibboleth.\033[0m"
+        while IFS= read -r line; do
+            [[ -z "${line}" ]] && continue
+            if [[ "${line}" == STAGED\ * ]]; then
+                print -r -- "  Shibboleth MISSING in the STAGED version of ${line#STAGED }: add '${VDE_SHIBBOLETH_LITERAL}' as its own line within the first 20 lines (Mandate C), then stage the file again."
+            else
+                print -r -- "  ${line}"
+            fi
+        done <<< "${snap_out}"
+        if (( snap_rc >= 2 )) && [[ -z "${snap_out}" ]]; then
+            print -r -- "  The staged content could not be verified (rc ${snap_rc}); the commit is blocked."
+        fi
+        exit 1
+    fi
+
+    # 4b. The shrink-only baseline, only when this commit stages it.
+    if ! staged_baseline="$(git diff --cached --name-only -- "${baseline_rel}")"; then
+        echo -e "\033[0;31m[ERROR] Rule C: git could not tell whether the baseline is staged, so the shrink-only guard cannot run.\033[0m"
+        exit 1
+    fi
+    if [[ -n "${staged_baseline}" ]]; then
+        added_rc=0
+        added="$(vde_shib_staged_baseline_additions "${VDE_ROOT_DIR}")" || added_rc=$?
+        if (( added_rc >= 2 )); then
+            # git (or the library) failed: say so. The text is an ERROR line, not an added entry.
+            echo -e "\033[0;31m[ERROR] Rule C: the shrink-only baseline could not be verified.\033[0m"
+            print -r -- "  ${added}"
+            exit 1
+        fi
+        if [[ -n "${added}" ]]; then
+            removed_rc=0
+            removed="$(vde_shib_staged_baseline_removals "${VDE_ROOT_DIR}")" || removed_rc=$?
+            if git cat-file -e "HEAD:${baseline_rel}" 2>/dev/null; then
+                echo -e "\033[0;31m[ERROR] Rule C: the shibboleth baseline is shrink-only.\033[0m"
+            else
+                echo -e "\033[0;31m[ERROR] Rule C: a new shibboleth baseline may only list files that already violate at HEAD.\033[0m"
+            fi
+            print -r -- "  Not allowed in ${baseline_rel}:"
+            while IFS= read -r line; do
+                if [[ "${line}" == baseline\ file\ deleted* ]]; then
+                    print -r -- "    ${line}"
+                else
+                    print -r -- "    + ${line}"
+                fi
+            done <<< "${added}"
+            if (( removed_rc == 0 )) && [[ -n "${removed}" ]]; then
+                print -r -- "  Removed from ${baseline_rel} (allowed):"
+                while IFS= read -r line; do
+                    print -r -- "    - ${line}"
+                done <<< "${removed}"
+            fi
+            if git cat-file -e "HEAD:${baseline_rel}" 2>/dev/null; then
+                print -r -- "  The baseline may only shrink: remove entries, and once it is empty keep the file empty. It must never be deleted."
+            else
+                print -r -- "  A baseline created from nothing may only grandfather files that already violate at HEAD; a file that is new in this commit must carry the shibboleth instead."
+            fi
+            print -r -- "  Fix the files instead: add '${VDE_SHIBBOLETH_LITERAL}' within the first 20 lines of each listed file."
+            exit 1
+        fi
+    fi
+fi
+
+# 5. Silent Spine Check
 # Executes ./bin/vde-spine-check.zsh and blocks commit if it fails.
 if [[ -f "./bin/vde-spine-check.zsh" ]]; then
-    if ! ./bin/vde-spine-check.zsh > /dev/null 2>&1; then
+    # Success stays silent. On failure the check's own output is shown, because it
+    # names the cause and the fix (for example a directory blocking the agent socket).
+    if ! spine_out=$(./bin/vde-spine-check.zsh 2>&1); then
         echo -e "\033[0;31m[ERROR] VDE Spine Check Failed:\033[0m"
+        print -r -- "${spine_out}" >&2
         echo -e "  System spine verification failed. Run './bin/vde-health' for diagnostics."
         exit 1
     fi

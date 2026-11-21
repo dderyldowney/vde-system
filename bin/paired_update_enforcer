@@ -1,24 +1,105 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+#
+# paired_update_enforcer (Signet #641): .gemini/STATE/session_handover.md and
+# plans/session_handover_remediation.md are a PAIR. Both keep a "Paired Update Policy"
+# section that links to the other, AND a change that touches one must touch the other.
+#
+#   VDE_PAIRED_BASE   ref to compare against (default origin/${VDE_ANVIL_BRANCH:-develop}; an
+#                     all-zero sha, a new branch's github.event.before, counts as unset);
+#                     an unresolvable ref FAILS, the check never skips silently
+#   VDE_PAIRED_DIFF   "on" (default) or "skip". "skip" verifies only the policy text and the
+#                     cross-links and says so loudly; any other value is an error. In CI the
+#                     enforcer derives it (section 1b) for promotions into main/stable, whose
+#                     changes were paired when they entered develop.
+#
+# In GitHub Actions (GITHUB_ACTIONS=true) the enforcer derives skip and base itself from the raw
+# GITHUB_* values unless they are set explicitly; section 1b below is the single source of those rules.
+#
+# The diff covers COMMITTED changes only (merge-base..HEAD): staged or uncommitted edits are not seen,
+# so a local run is meaningful after committing.
+
+VDE_ROOT_DIR="${0:A:h:h}"
+source "${VDE_ROOT_DIR}/lib/vde-constants"
 set -euo pipefail
 
-HANDOVER="session_handover.md"
-REMED=".gemini/PLANS/session_handover_remediation.md"
+HANDOVER=".gemini/STATE/session_handover.md"
+REMED="plans/session_handover_remediation.md"
 
+fail() { echo "ERROR: $*"; exit ${VDE_ERR_GENERAL}; }
+
+cd "${VDE_ROOT_DIR}"
 echo "Running paired-update enforcer..."
 
-if ! grep -q "Paired Update Policy" "${HANDOVER}"; then
-  echo "ERROR: Paired Update Policy missing in ${HANDOVER}"; exit ${VDE_ERR_GENERAL}
-fi
-if ! grep -q "Paired Update Policy" "${REMED}"; then
-  echo "ERROR: Paired Update Policy missing in ${REMED}"; exit ${VDE_ERR_GENERAL}
-fi
-if ! grep -q "session_handover_remediation.md" "${HANDOVER}"; then
-  echo "ERROR: Handover missing cross-link to remediation plan"; exit ${VDE_ERR_GENERAL}
-fi
-if ! grep -q "session_handover.md" "${REMED}"; then
-  echo "ERROR: Remediation plan missing cross-link to handover"; exit ${VDE_ERR_GENERAL}
+# 1. Static: both files exist, both carry the policy section, each links to the other.
+for f in "${HANDOVER}" "${REMED}"; do
+  [[ -f "${f}" ]] || fail "${f} not found (the paired-update policy files must exist)"
+done
+grep -qE '^#{1,6}[[:space:]]+Paired Update Policy' "${HANDOVER}" || fail "Paired Update Policy missing in ${HANDOVER}"
+grep -qE '^#{1,6}[[:space:]]+Paired Update Policy' "${REMED}" || fail "Paired Update Policy missing in ${REMED}"
+grep -qE '\]\([^)]*session_handover_remediation\.md\)' "${HANDOVER}" || fail "Handover missing cross-link to remediation plan"
+grep -qE '\]\([^)]*session_handover\.md\)' "${REMED}" || fail "Remediation plan missing cross-link to handover"
+
+# 1b. CI context (GitHub Actions). The decision lives HERE, not in the workflow YAML: Actions
+# string comparison is case-insensitive (a branch named "Stable" would equal "stable"), zsh's
+# is not. The workflow only passes raw context values. An explicit VDE_PAIRED_DIFF or
+# VDE_PAIRED_BASE always wins.
+if [[ "${GITHUB_ACTIONS:-}" == true ]]; then
+  ci_event="${GITHUB_EVENT_NAME:-}"
+  if [[ -z "${VDE_PAIRED_DIFF:-}" ]]; then
+    VDE_PAIRED_DIFF=on
+    if [[ "${ci_event}" == pull_request && -n "${VDE_PAIRED_HEAD_REPO:-}" && "${(L)VDE_PAIRED_HEAD_REPO}" == "${(L)GITHUB_REPOSITORY:-}" ]]; then
+      # same-repository promotions only: a fork branch merely NAMED develop or stable does not count
+      if [[ "${GITHUB_BASE_REF:-}" == stable && "${GITHUB_HEAD_REF:-}" == develop ]] \
+        || [[ "${GITHUB_BASE_REF:-}" == main && "${GITHUB_HEAD_REF:-}" == stable ]]; then
+        VDE_PAIRED_DIFF=skip
+      fi
+    elif [[ "${ci_event}" == push ]]; then
+      if [[ "${GITHUB_REF_TYPE:-}" == tag ]]; then
+        # only a release tag (X.X.X, the version-tag shape of the branching law) sits on already-paired history
+        if [[ "${GITHUB_REF_NAME:-}" == <->.<->.<-> ]]; then VDE_PAIRED_DIFF=skip; fi
+      elif [[ "${GITHUB_REF_NAME:-}" == stable || "${GITHUB_REF_NAME:-}" == main ]]; then
+        VDE_PAIRED_DIFF=skip
+      fi
+    fi
+  fi
+  if [[ -z "${VDE_PAIRED_BASE:-}" ]]; then
+    if [[ "${ci_event}" == pull_request && -n "${GITHUB_BASE_REF:-}" ]]; then
+      VDE_PAIRED_BASE="origin/${GITHUB_BASE_REF}"
+    elif [[ "${ci_event}" == push && "${GITHUB_REF_TYPE:-}" != tag && "${GITHUB_REF_NAME:-}" == develop ]]; then
+      VDE_PAIRED_BASE="${VDE_PAIRED_EVENT_BEFORE:-}"
+    fi
+  fi
 fi
 
- echo "Paired-update policy verified for both files."
+# 2. Diff: a change to one file of the pair must touch the other.
+case "${VDE_PAIRED_DIFF:-on}" in
+  skip)
+    echo "NOTE: paired-update diff check SKIPPED (VDE_PAIRED_DIFF=skip): only the policy text and cross-links were verified."
+    ;;
+  on)
+    base="${VDE_PAIRED_BASE:-}"
+    if [[ "${base}" =~ ^0+$ ]]; then base=""; fi   # an all-zero sha (a new branch's github.event.before) means "no base"
+    base="${base:-origin/${VDE_ANVIL_BRANCH:-develop}}"
+    git rev-parse --verify --quiet "${base}^{commit}" >/dev/null \
+      || fail "paired-update base ref '${base}' cannot be resolved: fetch it or set VDE_PAIRED_BASE (the check never skips silently)"
+    mb="$(git merge-base "${base}" HEAD)" \
+      || fail "no merge-base between '${base}' and HEAD (shallow clone? the CI job needs fetch-depth: 0)"
+    changed=$'\n'"$(git diff --name-only "${mb}" HEAD)"$'\n'
+    h_changed=0; r_changed=0
+    if [[ "${changed}" == *$'\n'"${HANDOVER}"$'\n'* ]]; then h_changed=1; fi
+    if [[ "${changed}" == *$'\n'"${REMED}"$'\n'* ]]; then r_changed=1; fi
+    if (( h_changed != r_changed )); then
+      if (( h_changed )); then moved="${HANDOVER}"; stale="${REMED}"; else moved="${REMED}"; stale="${HANDOVER}"; fi
+      fail "Paired Update violated: ${moved} changed but ${stale} did not (compared with ${base}). Update both files together."
+    fi
+    ;;
+  *)
+    fail "VDE_PAIRED_DIFF must be 'on' or 'skip', got '${VDE_PAIRED_DIFF}'"
+    ;;
+esac
+
+echo "Paired-update policy verified for both files."
 exit ${VDE_SUCCESS}

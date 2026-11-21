@@ -33,24 +33,38 @@ services:
       - "${VDE_DOCKER_SOCK_GID:-1000}"
 
     ports:
-      - "{{SSH_PORT}}:{{SSH_PORT}}"
+      - "{{SSH_PORT}}:{{SSH_PORT}}"{{EXTRA_PORTS}}
 
     volumes:
       - ../../../../:/vde:ro
-      - ../../../../projects/{{NAME}}:/home/devuser/workspace
+      - ${VDE_PROJECTS_DIR:-../../../../projects}/{{WORKSPACE}}:/home/devuser/workspace
       - ../../../../logs/{{NAME}}:/logs
       # Docker Socket Sovereignty (Physical Verification Law)
       - /var/run/docker.sock:/var/run/docker.sock
       # macOS Canonical Bridge (Hardened to use explicit host socket)
-      - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/host-services/ssh-auth.sock
+      # Long form: create_host_path false makes Docker REFUSE a missing agent socket
+      # instead of creating a root-owned directory in its place (Signet #618).
+      - type: bind
+        source: ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}
+        target: /run/host-services/ssh-auth.sock
+        bind:
+          create_host_path: false
       # VDE 2026 Sovereign Bridge
-      - ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}:/run/vde-ssh.sock
+      - type: bind
+        source: ${VDE_HOST_SSH_AUTH_SOCK:-/run/host-services/ssh-auth.sock}
+        target: /run/vde-ssh.sock
+        bind:
+          create_host_path: false
 
     environment:
       - SSH_AUTH_SOCK=/run/vde-ssh.sock
+      - VDE_AUTHORIZED_KEY=${VDE_AUTHORIZED_KEY:-}
+      - POSTGRES_DEV_PASSWORD=${POSTGRES_DEV_PASSWORD:-}
 
+    # The root .env is NOT loaded here (Signet #666): it holds the user's host-side
+    # secrets. The two variables above are interpolated from the --env-file that
+    # `vde start` passes.
     env_file:
-      - ../../../../.env
       - ../../../../env-files/{{NAME}}.env
 
     networks:

@@ -77,7 +77,7 @@
         },
         "service_ports": {
           "type": ["string", "null"],
-          "description": "Must be null for language VMs (no service ports)"
+          "description": "Null/empty for plain language VMs; a comma list of ports for hybrid language VMs (e.g. jupyterlab: 8888)"
         },
         "ssh_port": {
           "type": "integer",

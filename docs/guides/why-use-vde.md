@@ -2,7 +2,7 @@
 <!-- @shared-law (Sovereign Law) -->
 <p align="center"><img src="imgs/vde-system-logo.png" alt="Virtualized Development Environment System Logo"></p>
 
-# Why VDE? Your Development Playground Awaits! (1.5.5) 🎉
+# Why VDE? Your Development Playground Awaits! (1.5.7) 🎉
 
 [← Back to README](../../README.md)
 
@@ -85,6 +85,18 @@ vde enter python
 ```
 
 **And now...** 🎊 You are inside the Spoke as `devuser`. Your code lives at `$HOME/workspace/`, which is **persistently synced** to your host computer. Save your work there, and it will survive even if you rebuild the Spoke!
+
+---
+
+## Your Stuff Stays Yours 🗝️
+
+Here's the part that really sets you free: **your source code and your database data belong to *you*, and they live wherever *you* choose.**
+
+- 📂 **Pick your own home.** During onboarding you choose a **Projects base** — the folder your Spokes sync beneath. Keep the default, or point it at a directory you already use, like `~/Projects`. Each Spoke gets its own tidy subfolder (`<base>/rust`, `<base>/python`, ...), and VDE *never* touches files that are already there — it just moves in next door.
+- 🔀 **Change your mind anytime.** Run `vde set-projects-dir <path>` and VDE safely moves your work to the new spot. No rebuilds, nothing clobbered.
+- 🛡️ **Teardown can't hurt you.** Even `vde nuke` — the big red button that wipes VDE itself — leaves your `projects/` and your `data/` completely untouched, and *offers to move them somewhere safe first.* Your work outlives the Forge.
+
+No lock-in. No surprises. Just your code, in your place, on your terms. ✨
 
 ---
 

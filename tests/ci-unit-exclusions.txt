@@ -1,0 +1,11 @@
+# Unit suites that the CI runner (tests/run-sovereign-tests.zsh) deliberately does NOT run (Signet #630).
+# @forge (Governance Sentinel)
+#
+# Every tests/unit/*.test.zsh runs in CI unless it is named here. One entry per line:
+#     <suite file name><whitespace><reason>
+# A reason is mandatory, and an entry naming a suite that does not exist is an error: the runner
+# refuses to start in either case, so this list cannot rot silently. Blank lines and # comments are
+# ignored. Prefer a suite that skips LOUDLY inside itself (as vde-agent-sock does when no alpine
+# image is present) over an entry here; an entry here is for a suite CI genuinely cannot run.
+#
+# (no exclusions today: all unit suites run)

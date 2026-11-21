@@ -44,6 +44,12 @@ To maintain strict focus and project separation, the VDE utilizes two primary op
 
 **The Decision Rule**: When working on the Armor, if a change is needed to the Forge to better create the product, the mode must be explicitly switched to Forge mode.
 
+### Forge-only development artifacts (not part of the Armor)
+
+`plans/` and `conductor/` are development artifacts of the Forge. They are working material for the people and agents who build VDE, not part of the student-facing Armor. In armor-only mode nothing reads or executes them: no Armor command sources a script from either directory. Three things refer to them, none of which the Armor needs: the Forge's Heavy Governance Gate (`bin/vde-enforce-uap.zsh`) enforces a Ghost Zone rule on `plans/`: it reports any subdirectory of `plans/` other than `scripts` and `archive`, names it and halts the audit (Rule 3), but never deletes anything (move the directory under `plans/archive/` or remove it deliberately, then re-run the audit); the `vde prune` housekeeping command tidies old files under `plans/` and `plans/scripts/` and simply skips them when the directory does not exist; and the agent startup checklist reads `plans/session_handover_remediation.md`.
+
+Because they are not product code they are deliberately outside the audit's strict checks. In particular the zsh shibboleth check (`lib/vde-shibboleth`, enforced by `bin/vde-enforce-uap.zsh`) excludes `plans/` and `conductor/`, together with the retired code in `bin/archive/`. Every other tracked zsh file, including any under `docs/`, `tests/docker/` or `.github/`, is swept. That exclusion list lives in `VDE_SHIBBOLETH_EXCLUDED_PREFIXES` in `lib/vde-shibboleth`. The audit judges the COMMITTED bytes as well as the working copy (a fix that exists only in the working copy does not count until it is committed), and the pre-commit hook sweeps the STAGED zsh files. The shrink-only baseline check compares against `origin/develop` (override with `VDE_SHIB_BASE_REF`); the pre-push gate refreshes an `origin/*` base ref first (a local ref named by the override is yours to keep current), and a clone without that ref (a fork cloned from `main`, or offline with no cached ref) must fetch it or set the variable, or the audit fails closed. In a shallow checkout (what CI uses) there is no merge-base, so the check first deepens the clone until it finds one; if it cannot (offline, or a very old branch) it falls back to comparing against the base tip, which can block a branch whose baseline still lists an entry the base removed after the branch was cut until `develop` is merged forward, but never lets growth through.
+
 ---
 
 ## III. The Hierarchical Component Outline
@@ -65,7 +71,7 @@ To maintain strict focus and project separation, the VDE utilizes two primary op
     *   **The Foundation (@shared-law)**
         *   **The Spinal Cord**: The foundational bridge and shared law defining the relationship between Armor and Forge.
         *   **Docs (The Gospel)**: `docs/architecture/overview.md`, `docs/architecture/data-flow.md`, `docs/changelogs/current.md`, `docs/governance/vde-spec.md`, `USE_CASES.md`, `VDE_ANALYSIS.md`, `PROJECT_STATUS.md`, `docs/governance/sovereign-charter.md`, `docs/api/library-api.md`.
-        *   **Records**: `MEMORY.md`.
+        *   **Records**: `.gemini/STATE/MEMORY.md`.
         *   **Infrastructure**: `Makefile`, `.gitignore`, `.editorconfig`.
 
 ---
@@ -102,6 +108,37 @@ Architectural tags sit exclusively on **line 2 or 3**. Line 1 is reserved for sh
 
 ### 3. Verification
 Tag compliance is verified by the **UAP Sentinel** via the **Universal Architectural Regex**. Non-compliant artifacts constitute a **Protocol Fracture** and must be remediated before any further work proceeds.
+
+## V. The Agent Isolation Law (The Law of the Two Keyrings)
+
+VDE has its **own** ssh-agent, separate from the user's. This Law binds **both** projects: the Armor (the standalone, student-facing product) and the Forge (the development rig and its tests), in daily operation and in tests alike.
+
+### 1. VDE's Agent
+*   **Where it lives**: entirely inside `~/.ssh/vde` (the `VDE_SSH_DIR`). It listens on the dedicated socket `~/.ssh/vde/agent.sock` (`VDE_SSH_AGENT_SOCK`), and `~/.ssh/vde/agent_env` records it.
+*   **What it holds**: exactly VDE's allowed key set, preloaded onto it: `vde_student`, the key for the Spokes' `devuser` account.
+*   **What identifies it**: the socket path alone. An `agent_env` that records any other socket (the user's agent, a legacy agent on a random `/tmp` socket) is invalid and is replaced; an agent on any other socket is never VDE's to use, stop, clean up or kill.
+
+### 2. The User's Agent
+*   VDE tooling, tests and the Forge SHALL NOT use, read, load keys into, forward, or kill the user's personal agent (or the desktop session's agent), and SHALL NOT read the user's own keys in `~/.ssh`.
+*   VDE knows only two identities: `devuser`, the account inside the Spokes, and `~/.ssh/vde`. The local user is the person at the keyboard and is not VDE's concern.
+*   VDE's agent is never exported into the user's shell. It is started in a subprocess (`vde ssh-setup start`, the spine check, `ensure_ssh_agent`).
+
+### 3. Connections to Spokes
+*   Every host entry VDE generates pins `IdentityAgent` to VDE's socket with `IdentitiesOnly yes`, so `ForwardAgent` forwards only VDE's agent. This holds for the template (`templates/ssh-config.tmpl` and its generated artifacts), the `lib/vde-ssh` generators, and `bin/add-vm-type`; `bin/ssh-vm` pins the same agent.
+*   The socket VDE mounts into the Spokes is VDE's own (`vde_get_host_ssh_sock`); it never falls back to the caller's `SSH_AUTH_SOCK`.
+
+### 4. The Forge's Tests
+*   Step definitions and helpers use only VDE's agent, through `tests/features/steps/ssh_helpers.py`. If it is not running they start it the VDE way and never fall back to the user's agent.
+*   Cleanup helpers delegate to `bin/ssh-setup cleanup`, which is an allowlist: only a stray agent on a socket inside `~/.ssh/vde` is ever killed.
+
+### 5. The Fail-Safe
+Ownership is established by the dedicated socket path (section 1): VDE may adopt and record a responsive agent found on `~/.ssh/vde/agent.sock`. Outside that path ownership is never assumed: an agent on any other socket is left alone, and VDE says so.
+
+On the dedicated socket itself, when VDE cannot be sure what it would be acting on (a socket that does not answer, a recorded PID that cannot be found or now belongs to another process, a path that cannot be resolved), VDE kills, deletes and replaces nothing and reports it instead.
+
+A directory (or any other non-socket) found on the dedicated socket path is a blocked agent, not a stale one: Docker creates it, empty and owned by root, when a Spoke starts before the agent is listening (Signet #616). VDE removes it only with `rmdir`, which cannot remove a directory that has contents (and which succeeds on Docker's root-owned directory, because the user owns the folder it sits in). Otherwise it leaves the path untouched, names the cause and prints the exact command for the person to run; it never deletes data it did not create and never reaches for root. `vde start` therefore starts the VDE agent before it runs Docker, and refuses to start a Spoke when the agent cannot be started (`vde_preflight_agent_socket`). The generated Compose manifests close the same hole for anything that runs Docker Compose on them directly: both agent-socket mounts use the long form with `bind.create_host_path: false`, so Docker refuses to start the container instead of creating the directory (Signet #618).
+
+`ssh-setup cleanup` is the separate, narrower case of section 4: it kills only a stray agent whose own command line shows it was started on a socket inside `~/.ssh/vde` (never the dedicated one, the one `agent_env` records, or the one the caller exports), and compares resolved absolute paths only.
 
 ---
 

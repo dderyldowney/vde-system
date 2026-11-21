@@ -9,8 +9,10 @@ set -e
 # 2. Forbidden Patterns (No sleep, No bash-isms)
 # 3. Structural Integrity (Mandatory Configs)
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
-VDE_ROOT_DIR="${0:h:h}"
+# Absolute on purpose (:A): a relative root such as "." would make every rule below depend on the caller's directory.
+VDE_ROOT_DIR="${0:A:h:h}"
 
 # 0. Technical Integrity Gate (Project 1 Dependency)
 # The Forge cannot be lit without the Unyielding Tetrad.
@@ -33,22 +35,33 @@ warnings=0
 # GHOST ZONE CHECK (Zero-Tolerance)
 #===============================================================================
 
-# Rule 3 Enforcement: plans/ Subdirectory Lock
-if [[ -d "plans" ]]; then
-    for item in plans/*(N/); do
+# Rule 3 Enforcement: plans/ Subdirectory Lock (REPORT-ONLY, Signet #643)
+# The audit fails (zero tolerance) and names every offending directory, but it
+# NEVER deletes anything: an untracked file under an offender has no way back.
+# Hidden directories (plans/.<name>/) count: the (D) glob qualifier matches them.
+# The rule reads plans/ under the absolute VDE_ROOT_DIR, so it audits the repository the
+# enforcer lives in whatever the caller's working directory is.
+typeset plans_dir="${VDE_ROOT_DIR}/plans"
+if [[ -d "${plans_dir}" ]]; then
+    typeset -a ghost_zones=()
+    for item in "${plans_dir}"/*(DN/); do
         local sub_name="${item:t}"
         if [[ "${sub_name}" != "scripts" && "${sub_name}" != "archive" ]]; then
-            echo "\033[1;31m[CRITICAL FAILURE]\033[0m Ghost Zone 'plans/${sub_name}/' detected."
-            echo "Protocol Violation: Rule 3 (Ghost Zone Prohibition)."
-            echo "Purging unauthorized artifacts and halting session..."
-            rm -rf "${item}"
-            exit 1
+            ghost_zones+=("${sub_name}")
         fi
     done
+    if (( ${#ghost_zones} > 0 )); then
+        for sub_name in "${ghost_zones[@]}"; do
+            echo "\033[1;31m[CRITICAL FAILURE]\033[0m Ghost Zone 'plans/${sub_name}/' detected."
+            echo "Protocol Violation: Rule 3 (Ghost Zone Prohibition)."
+            echo "Nothing was deleted. Move 'plans/${sub_name}/' under plans/archive/ or remove it deliberately, then re-run the audit."
+        done
+        exit 1
+    fi
 fi
 
 # Mandatory config files (Mandate 0 & 14 integration)
-MANDATORY_FILES=("AGENTS.md" "GEMINI.md" "MEMORY.md")
+MANDATORY_FILES=("AGENTS.md" "GEMINI.md" ".gemini/STATE/MEMORY.md")
 
 # Colors for output
 RED='\033[0;31m'
@@ -182,6 +195,151 @@ check_dir "${VDE_ROOT_DIR}/tests"
 check_dir "${VDE_ROOT_DIR}/githooks"
 check_dir "${VDE_ROOT_DIR}/.github"
 check_dir "${VDE_ROOT_DIR}/.gemini_security"
+
+# Prints one shibboleth error line; `print -r` keeps backslashes in file names raw.
+shib_error() { printf '%b' "${RED}[UAP-ERROR]${NC} "; print -r -- "$*"; }
+
+# 3b. Shibboleth sweep (Mandate C, Signet #626): every tracked zsh file must carry the literal line; shrink-only baseline.
+if [[ ! -f "${VDE_ROOT_DIR}/lib/vde-shibboleth" ]]; then
+    echo -e "${RED}[UAP-ERROR]${NC} lib/vde-shibboleth missing; cannot enforce the shibboleth (Mandate C)."
+    errors=$((errors + 1))
+else
+    source "${VDE_ROOT_DIR}/lib/vde-shibboleth"
+    if ! typeset -f vde_shib_sweep >/dev/null || ! typeset -f vde_shib_sweep_snapshot >/dev/null || ! typeset -f vde_shib_baseline_growth >/dev/null || ! typeset -f vde_shib_ensure_base_ref >/dev/null; then
+        echo -e "${RED}[UAP-ERROR]${NC} lib/vde-shibboleth did not define its functions; the shibboleth cannot be enforced (Mandate C)."
+        errors=$((errors + 1))
+    else
+    # `|| shib_rc=$?`: this script runs under `set -e`, and a bare assignment from a
+    # failing command substitution would end the audit silently with no report.
+    typeset -A shib_missing_set=()
+    shib_rc=0
+    shib_out="$(vde_shib_sweep "${VDE_ROOT_DIR}")" || shib_rc=$?
+    if [[ $shib_rc -ne 0 ]]; then
+        while IFS= read -r shib_line; do
+            [[ -z "${shib_line}" ]] && continue
+            case "${shib_line}" in
+                MISSING\ *)
+                    shib_rel="${shib_line#MISSING }"
+                    shib_error "Shibboleth MISSING in ${shib_rel}: add '${VDE_SHIBBOLETH_LITERAL}' as its own line within the first 20 lines (Mandate C)."
+                    shib_missing_set[${shib_rel}]=1
+                    ;;
+                UNREADABLE\ *)
+                    shib_rel="${shib_line#UNREADABLE }"
+                    shib_error "Shibboleth UNREADABLE ${shib_rel}: the file cannot be read, so the shibboleth cannot be verified (fix its permissions)."
+                    ;;
+                STALE\ *)
+                    # Contract: `STALE <rel> :: <reason>`; split on the first ` :: ` (rel may contain spaces).
+                    shib_rest="${shib_line#STALE }"
+                    if [[ "${shib_rest}" == *" :: "* ]]; then
+                        shib_rel="${shib_rest%% :: *}"
+                        shib_reason="${shib_rest#* :: }"
+                    else
+                        shib_rel="${shib_rest}"
+                        shib_reason="unspecified"
+                    fi
+                    shib_error "Shibboleth baseline entry ${shib_rel} is stale (${shib_reason}); remove it from docs/governance/shibboleth-baseline.txt."
+                    ;;
+                *)
+                    shib_error "${shib_line}"
+                    ;;
+            esac
+            errors=$((errors + 1))
+        done <<< "${shib_out}"
+    fi
+    # Signet #645: the sweep above judges the WORKING copy, but the bytes a push carries are the
+    # COMMITTED ones. A file the working-copy sweep already reported is not reported twice.
+    shib_snap_rc=0
+    shib_snap_out="$(vde_shib_sweep_snapshot "${VDE_ROOT_DIR}" head)" || shib_snap_rc=$?
+    shib_snap_errors=0
+    if [[ $shib_snap_rc -ne 0 ]]; then
+        while IFS= read -r shib_line; do
+            [[ -z "${shib_line}" ]] && continue
+            case "${shib_line}" in
+                COMMITTED\ *)
+                    shib_rel="${shib_line#COMMITTED }"
+                    [[ -n "${shib_missing_set[${shib_rel}]:-}" ]] && continue
+                    shib_error "Shibboleth MISSING in the COMMITTED version of ${shib_rel}: HEAD has no shibboleth line in that file (a working-copy fix does not count until it is committed); add '${VDE_SHIBBOLETH_LITERAL}' as its own line within the first 20 lines and commit it (Mandate C)."
+                    ;;
+                *)
+                    shib_error "${shib_line}"
+                    ;;
+            esac
+            errors=$((errors + 1))
+            shib_snap_errors=$((shib_snap_errors + 1))
+        done <<< "${shib_snap_out}"
+    fi
+    # Fail closed: rc 2 (git could not answer) with no message must still fail the audit.
+    if [[ $shib_snap_rc -ge 2 && $shib_snap_errors -eq 0 ]]; then
+        shib_error "Shibboleth committed-content check failed (rc ${shib_snap_rc}) without a message; the bytes a push carries were not verified."
+        errors=$((errors + 1))
+        shib_snap_errors=$((shib_snap_errors + 1))
+    fi
+    if [[ $shib_rc -eq 0 && $shib_snap_errors -eq 0 ]]; then
+        [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-CHECK]${NC} Shibboleth sweep clean"
+    fi
+
+    # Shrink-only growth check: baseline entries absent from the base ref are errors.
+    shib_base="${VDE_SHIB_BASE_REF:-origin/${VDE_ANVIL_BRANCH:-develop}}"
+    # Best-effort, at most one fetch (never truncates history); a failed fetch is judged below.
+    vde_shib_ensure_base_ref "${VDE_ROOT_DIR}" "${shib_base}" || true
+    shib_grow_rc=0
+    shib_growth="$(vde_shib_baseline_growth "${VDE_ROOT_DIR}" "${shib_base}")" || shib_grow_rc=$?
+    case $shib_grow_rc in
+        0) ;;
+        1)
+            while IFS= read -r shib_grow_line; do
+                [[ -z "${shib_grow_line}" ]] && continue
+                if [[ "${shib_grow_line}" == "baseline file deleted"* ]]; then
+                    # The library already says what happened and what to do; "GREW" would mislead.
+                    shib_error "Shibboleth ${shib_grow_line}."
+                else
+                    shib_error "Shibboleth baseline GREW versus ${shib_base}: ${shib_grow_line}. The baseline is shrink-only: add the shibboleth to that file instead of listing it."
+                fi
+                errors=$((errors + 1))
+            done <<< "${shib_growth}"
+            ;;
+        2)
+            # rc 2: the library's own read/parse error text is the first line of its output.
+            shib_grow_first="${shib_growth%%$'\n'*}"
+            shib_error "Shibboleth baseline growth could not be checked: ${shib_grow_first}"
+            errors=$((errors + 1))
+            ;;
+        *)
+            # Fail closed: rc 3 (base ref unresolvable) or anything unexpected.
+            shib_error "Shibboleth baseline growth could not be checked: base ref '${shib_base}' is unavailable (fetch it, or set VDE_SHIB_BASE_REF)."
+            errors=$((errors + 1))
+            ;;
+    esac
+    # The growth above reads the WORKING-TREE baseline. An exemption a commit added and an uncommitted edit
+    # then removed would hide from it, yet the push carries the commit: judge the COMMITTED baseline too, and
+    # report an entry once (Signet #646). Only when the base resolved (rc 0 or 1 above).
+    if [[ $shib_grow_rc -le 1 ]]; then
+        shib_head_rc=0
+        shib_head_growth="$(vde_shib_baseline_growth "${VDE_ROOT_DIR}" "${shib_base}" "" head)" || shib_head_rc=$?
+        shib_seen_lines=("${(@f)shib_growth}")
+        case $shib_head_rc in
+            0) ;;
+            1)
+                while IFS= read -r shib_grow_line; do
+                    [[ -z "${shib_grow_line}" ]] && continue
+                    # already reported by the working-copy view
+                    (( ${shib_seen_lines[(Ie)${shib_grow_line}]} )) && continue
+                    if [[ "${shib_grow_line}" == "baseline file deleted"* ]]; then
+                        shib_error "Shibboleth ${shib_grow_line}."
+                    else
+                        shib_error "Shibboleth baseline GREW in the COMMITTED baseline versus ${shib_base}: ${shib_grow_line}. The baseline is shrink-only: add the shibboleth to that file instead of listing it."
+                    fi
+                    errors=$((errors + 1))
+                done <<< "${shib_head_growth}"
+                ;;
+            *)
+                shib_error "Shibboleth committed baseline growth could not be checked (rc ${shib_head_rc}): ${shib_head_growth%%$'\n'*}"
+                errors=$((errors + 1))
+                ;;
+        esac
+    fi
+    fi
+fi
 
 # 4. Continuous Security & Privacy Audit
 if [[ -f "${VDE_ROOT_DIR}/bin/vde-security-audit.zsh" ]]; then

@@ -103,7 +103,7 @@ def step_verify_hydration(context, script_path):
 
 @then('the SSH port should be atomically allocated and recorded in the registry')
 def step_verify_port_allocation(context):
-    # In 1.5.6, the authoritative port is recorded in .cache/vm-types.cache
+    # In 1.5.7, the authoritative port is recorded in .cache/vm-types.cache
     cache_file = VDE_ROOT / ".cache" / "vm-types.cache"
     assert cache_file.exists(), "VM types cache missing"
     
@@ -289,7 +289,7 @@ def step_verify_destroyed(context, container_name):
 @then('the SSH configuration should be preserved')
 def step_verify_ssh_preserved(context):
     # SSH config should NOT be deleted on 'remove' by mandate
-    # VDE 1.5.6 standard is ~/.ssh/vde/config
+    # VDE 1.5.7 standard is ~/.ssh/vde/config
     ssh_config = Path.home() / ".ssh" / "vde" / "config"
     
     assert ssh_config.exists(), f"VDE SSH config missing at {ssh_config}"
@@ -347,31 +347,83 @@ def step_enter_and_run(context, vm_alias, command):
 def step_output_contains(context, text):
     assert text in context.last_result.stdout, f"Output does not contain '{text}': {context.last_result.stdout}"
 
+def _ensure_vde_agent_running():
+    """Make sure VDE's own ssh-agent is up, starting it the VDE way if it is not.
+
+    VDE has its own agent and never uses the developer's personal one, so these
+    steps only ever talk to the agent on VDE's dedicated socket (through the
+    ssh_helpers VDE-agent functions), never to the inherited SSH_AUTH_SOCK.
+    """
+    from ssh_helpers import vde_agent_is_running
+
+    if not vde_agent_is_running():
+        run_vde_command("ssh-setup start")
+    assert vde_agent_is_running(), (
+        "VDE's own SSH agent is not running and could not be started "
+        "('vde ssh-setup start')"
+    )
+
+
+# The first wording is kept so existing feature files keep working; it means
+# VDE's agent, not the developer's personal one.
 @given('I have identities loaded in my host SSH agent')
+@given('I have identities loaded in the VDE SSH agent')
 def step_identities_loaded(context):
-    # Verify host has identities
-    import os
-    print(f"DEBUG: Host SSH_AUTH_SOCK={os.environ.get('SSH_AUTH_SOCK')}")
-    res = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True)
-    if res.returncode != 0:
-        # If no agent or no keys, attempt to add the vde_student key if it exists
-        vde_key = Path.home() / ".ssh" / "vde" / "vde_student"
-        if vde_key.exists():
-            subprocess.run(["ssh-add", str(vde_key)], capture_output=True)
-            res = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True)
-            
-    assert res.returncode == 0, "No identities loaded in host SSH agent and could not load vde_student."
+    from ssh_helpers import vde_agent_add_key, ssh_agent_has_keys
+
+    _ensure_vde_agent_running()
+    # Loads only vde_student, only into VDE's agent, and only if it is missing
+    assert vde_agent_add_key(), "Could not load vde_student into VDE's SSH agent."
+    assert ssh_agent_has_keys(), "No identities loaded in VDE's SSH agent."
 
 @then('the output should contain my host identities')
 def step_verify_forwarded_identities(context):
     # Use the orchestrator for high-fidelity proof (Rule 1 & 15)
     vm_alias = getattr(context, 'vm_alias', 'python')
     res = run_vde_command(f"exec {vm_alias} ssh-add -l")
-    
-    # ssh-add -l returns 0 if identities found, 1 if agent empty but reachable.
-    # Both are acceptable proof that the bridge is functional.
-    assert "SHA256:" in res.stdout or "The agent has no identities." in res.stdout, \
-        f"No identities found and agent possibly unreachable: {res.stdout}"
+
+    # The Spoke must see VDE's own agent, not the developer's and not an empty one,
+    # so VDE's key (vde_student) has to be among the forwarded identities. Matching
+    # on its fingerprint proves which agent was forwarded; the old check accepted any
+    # key, and even an empty agent, so it could not detect an isolation regression.
+    # One key per directory, from the two places VDE's key can live: under VDE_ROOT
+    # (a simulated Hub) and the real ~/.ssh/vde (where VDE's agent loads it from).
+    # Within a directory the public key is preferred: it needs no passphrase, so
+    # reading it can never prompt. The private key is the fallback (ssh-keygen -lf
+    # prints its fingerprint too), read with no stdin and a timeout so it cannot hang
+    # the run. Any of VDE's fingerprints appearing proves VDE's agent was forwarded.
+    candidates = []
+    for base in (VDE_ROOT / ".ssh" / "vde", Path.home() / ".ssh" / "vde"):
+        found = next((c for c in (base / "vde_student.pub", base / "vde_student") if c.exists()), None)
+        if found is not None:
+            candidates.append(found)
+    assert candidates, (
+        "VDE identity missing (looked in "
+        f"{VDE_ROOT / '.ssh' / 'vde'} and {Path.home() / '.ssh' / 'vde'})"
+    )
+
+    fingerprints, problems = [], []
+    for vde_key in candidates:
+        try:
+            keygen = subprocess.run(
+                ["ssh-keygen", "-lf", str(vde_key)],
+                capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=10,
+            )
+        except subprocess.TimeoutExpired:
+            problems.append(f"timed out reading {vde_key}")
+            continue
+        fields = keygen.stdout.split()
+        if keygen.returncode == 0 and len(fields) > 1:
+            fingerprints.append(fields[1])
+        else:
+            problems.append(f"{vde_key}: {keygen.stderr.strip() or keygen.stdout.strip()}")
+    assert fingerprints, f"Could not read the fingerprint of VDE's key: {'; '.join(problems)}"
+
+    assert any(fp in res.stdout for fp in fingerprints), (
+        f"VDE's key {', '.join(fingerprints)} is not among the identities forwarded into "
+        f"the Spoke; the Spoke must see VDE's own agent. exec rc={res.returncode}, "
+        f"stdout: {res.stdout!r}, stderr: {res.stderr!r}"
+    )
 
 @given('the Hub is active')
 def step_hub_active(context):
@@ -457,17 +509,14 @@ def step_identity_exists(context, identity, path):
     assert full_path.exists(), f"Identity {identity} missing at {full_path}"
 
 @when('the SSH agent is active on the Hub')
+@when("VDE's SSH agent is active on the Hub")
 def step_agent_active_hub(context):
-    # We already check this in some scenarios, but let's be explicit
-    assert "SSH_AUTH_SOCK" in os.environ, "SSH_AUTH_SOCK environment variable missing"
-    assert Path(os.environ["SSH_AUTH_SOCK"]).exists(), "SSH agent socket does not exist"
-    
-    # Ensure vde_student is loaded if possible
-    vde_key = Path.home() / ".ssh" / "vde" / "vde_student"
-    if vde_key.exists():
-        res = subprocess.run(["ssh-add", "-l"], capture_output=True, text=True)
-        if "vde_student" not in res.stdout:
-            subprocess.run(["ssh-add", str(vde_key)], capture_output=True)
+    # VDE's own agent, never the developer's personal one (see _ensure_vde_agent_running)
+    from ssh_helpers import vde_agent_add_key
+
+    _ensure_vde_agent_running()
+    # Ensure vde_student is loaded (into VDE's agent only, and only if missing)
+    assert vde_agent_add_key(), "Could not load vde_student into VDE's SSH agent."
 @given('the 4 Pillars (Zsh, Git, Docker, SSH) have passed their individual proofs')
 def step_pillars_passed(context):
     """Run bin/vde-spine-check.zsh to verify all pillars in a single ritual."""

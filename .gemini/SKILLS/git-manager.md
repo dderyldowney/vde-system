@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: git-manager
+description: "Git Manager Agent for the VDE project under the Universal Agent Protocol. Use for commits: dual approval gate, no push without instruction, structured commit messages, finalization steps."
+---
 # Git Manager Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 
@@ -20,4 +25,4 @@ You are a specialized Git Agent for the VDE project, operating under the **Unive
 ## Interaction Protocol
 
 - Execute `/vde-commit` workflow only after all previous gates pass.
-- Maintain `MEMORY.md` and handover files during the finalization phase.
+- Maintain `.gemini/STATE/MEMORY.md` and handover files during the finalization phase.

@@ -196,6 +196,9 @@ export VM_TYPES_CONF
 VM_TYPES_JSON="${VM_TYPES_JSON:-${DATA_DIR}/vm-types.json}"
 export VM_TYPES_JSON
 VM_TYPES_CACHE="${VM_TYPES_CACHE:-${VDE_CACHE_DIR}/vm-types.cache}"
+# This file is itself a cache input: a cache built by an older loader may hold
+# values this loader would now normalise differently (#576).
+_VM_COMMON_SOURCE="${(%):-%x}"
 export VM_TYPES_CACHE
 VM_DOCKER_CONFIG="${VM_DOCKER_CONFIG:-${DATA_DIR}/vm-docker-config.json}"
 export VM_DOCKER_CONFIG
@@ -310,7 +313,7 @@ load_vm_types() {
 
     # 1. Try cache FIRST for maximum performance (unless --no-cache requested)
     local use_cache=0
-    if [[ "${no_cache}" -eq 0 ]] && _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}"; then
+    if [[ "${no_cache}" -eq 0 ]] && _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}" "${_VM_COMMON_SOURCE}"; then
         # Verify cache file has no syntax errors before sourcing
         if zsh -n "${VM_TYPES_CACHE}" 2>/dev/null; then
             # Load from cache - suppress output unless debugging
@@ -337,7 +340,7 @@ load_vm_types() {
         
         {
             # Double-check if another process just finished smelting the cache while we waited
-            if [[ "${no_cache}" -eq 0 ]] && _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}"; then
+            if [[ "${no_cache}" -eq 0 ]] && _is_cache_valid "${VM_TYPES_CACHE}" "${VM_TYPES_JSON}" "${VM_TYPES_CONF}" "${_VM_COMMON_SOURCE}"; then
                 if zsh -n "${VM_TYPES_CACHE}" 2>/dev/null; then
                     . "${VM_TYPES_CACHE}" >/dev/null 2>&1 && {
                         use_cache=1
@@ -378,8 +381,8 @@ load_vm_types() {
                     _info "Parsing VM types from JSON via JQ: ${VM_TYPES_JSON}"
                     local _v_p_configs
                     _v_p_configs=$(vde_query_json -r '
-                        (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
-                        (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\(.pkgs//"-"|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\(.service_ports//""|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
+                        (.vms.language[] | "VM_TYPE[\(.name)]=\("lang"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\((.pkgs//"")|if .=="-" then "" else . end|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\((.service_ports//"")|if .=="-" then "" else . end|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);lang_vms_array+=(\(.name|@sh))"),
+                        (.vms.service[] | "VM_TYPE[\(.name)]=\("service"|@sh);VM_ALIASES[\(.name)]=\(.aliases|join(",")|@sh);VM_DISPLAY[\(.name)]=\(.display|@sh);VM_INSTALL[\(.name)]=\((.pkgs//"")|if .=="-" then "" else . end|@sh);VM_CUSTOM_CMD[\(.name)]=\(.custom_cmd//""|@sh);VM_SVC_PORTS[\(.name)]=\((.service_ports//"")|if .=="-" then "" else . end|@sh);VM_SSH_PORT[\(.name)]=\(.ssh_port//""|@sh);service_vms_array+=(\(.name|@sh))")
                     ' "${VM_TYPES_JSON}" 2>/dev/null)
 
                     if [[ -n "${_v_p_configs}" ]]; then
@@ -406,6 +409,11 @@ load_vm_types() {
                         [[ "${_v_cat}" == "lang" ]] && lang_vms_array+=("${_v_name}")
                         [[ "${_v_cat}" == "service" ]] && service_vms_array+=("${_v_name}")
                         
+                        # A registry "-" means "none"; the JSON path loads that as
+                        # empty, so normalise here for source parity (#576).
+                        [[ "${_v_pkgs}" == "-" ]] && _v_pkgs=""
+                        [[ "${_v_env}" == "-" ]] && _v_env=""
+
                         VM_ALIASES[${_v_name}]="${_v_aliases}"
                         VM_DISPLAY[${_v_name}]="${_v_disp}"
                         VM_INSTALL[${_v_name}]="${_v_pkgs}"
@@ -571,6 +579,29 @@ get_vm_compose_file() {
     fi
 }
 
+# get_vm_compose_files - Derives the ordered compose file list for a Spoke
+# Args: <vm_name>
+# Prints one path per line: the base compose file first, then any overlay.
+#
+# The base file MUST come first: compose resolves relative paths (build
+# context, env_file) against the first -f file, and overlays carry none.
+#
+# The USB serial overlay (Signet #526) is opt-in by file presence; no
+# registry field is consulted. Callers expand with ${(f)...} and pass each
+# path with its own -f.
+get_vm_compose_files() {
+    local vm_name="${1}"
+    local base_file
+    base_file=$(get_vm_compose_file "${vm_name}")
+
+    echo "${base_file}"
+
+    local usb_overlay="${base_file:h}/docker-compose.usb.yml"
+    [[ -f "${VDE_ROOT_DIR}/${usb_overlay}" ]] && echo "${usb_overlay}"
+
+    return 0
+}
+
 # get_vm_env_file - Derives env file path from Hub name
 # Args: <vm_name>
 get_vm_env_file() {
@@ -595,6 +626,17 @@ get_vm_image() {
     echo "vde-${raw_name}:latest"
 }
 
+# vde_workspace_subpath - Workspace directory under the projects base (#572)
+# Args: <raw_name>. Hybrid jupyterlab keeps its notebooks with the Python work;
+# every other language VM uses its own name. Shared by get_vm_mounts and the
+# compose generator so the two cannot drift.
+vde_workspace_subpath() {
+    case "${1}" in
+        jupyterlab) echo "python/jupyterlabs" ;;
+        *)          echo "${1}" ;;
+    esac
+}
+
 # get_vm_mounts - Derives volume mounts from Hub name/category
 # Args: <vm_name>
 # Returns: format: src:dst|src:dst
@@ -608,12 +650,14 @@ get_vm_mounts() {
     local src_path dst_path
     # Base mounts for all VMs
     local mounts=".:/vde:ro"
+
+    # Projects source honors the configured base (#566). With no override the
+    # in-tree default is kept as the historical relative "projects".
+    local proj_base; proj_base="$(vde_projects_dir)"
+    [[ "${proj_base}" == "${VDE_ROOT_DIR}/projects" ]] && proj_base="projects"
     
-    if [[ "${raw_name}" == "jupyterlab" ]]; then
-        src_path="projects/python/jupyterlabs"
-        dst_path="/home/devuser/workspace"
-    elif [[ "${category}" == "languages" ]]; then
-        src_path="projects/${raw_name}"
+    if [[ "${category}" == "languages" ]]; then
+        src_path="${proj_base}/$(vde_workspace_subpath "${raw_name}")"
         dst_path="/home/devuser/workspace"
     elif [[ "${category}" == "services" ]]; then
         src_path="data/${raw_name}"
@@ -621,7 +665,7 @@ get_vm_mounts() {
         # Spoke override for postgres
         [[ "${raw_name}" == *"postgres"* ]] && dst_path="/var/lib/postgresql/data"
     else
-        src_path="projects/${raw_name}"
+        src_path="${proj_base}/${raw_name}"
         dst_path="/home/devuser/workspace"
     fi
     
@@ -1414,7 +1458,7 @@ ensure_vm_directories() {
     fi
 
     if [[ "${vm_type}" = "lang" ]]; then
-        dirs=("${config_dest}" "${VDE_ROOT_DIR}/projects/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
+        dirs=("${config_dest}" "$(vde_projects_dir)/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
     else
         dirs=("${config_dest}" "${VDE_ROOT_DIR}/data/${raw_name}" "${VDE_ROOT_DIR}/logs/${raw_name}")
     fi

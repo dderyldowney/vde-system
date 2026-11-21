@@ -1,0 +1,77 @@
+# VDE embedded development -- Hub-side USB rules.
+# Diagnosed 2026-10-06 on deryl-macbook-pro (T2 MacBook Pro, VIA Labs dock).
+
+# ---------------------------------------------------------------------------
+# 1. KEEP THE DOCK AWAKE
+# The VIA Labs hubs runtime-suspend after a device is removed and then fail to
+# detect the next attach. Symptom: every downstream port reports "not attached"
+# and the board looks dead, while power/runtime_status reads "suspended".
+# Verify: cat /sys/bus/usb/devices/1-3/power/runtime_status   # want: active
+# ---------------------------------------------------------------------------
+SUBSYSTEM=="usb", ATTR{idVendor}=="2109", ATTR{idProduct}=="2817", TEST=="power/control", ATTR{power/control}="on"
+SUBSYSTEM=="usb", ATTR{idVendor}=="2109", ATTR{idProduct}=="0817", TEST=="power/control", ATTR{power/control}="on"
+SUBSYSTEM=="usb", ATTR{idVendor}=="10c4", ATTR{idProduct}=="ea60", TEST=="power/control", ATTR{power/control}="on"
+
+# ---------------------------------------------------------------------------
+# 2. KEEP ModemManager OFF THE BOARDS
+# ModemManager probes new serial devices and holds the port for a few seconds,
+# which makes the first upload after plugging in fail. ID_MM_CANDIDATE=1 was
+# confirmed set on this host's CP210x.
+# Per docs/guides/usb-serial-boards.md. CP210x and CH340 shown.
+# ---------------------------------------------------------------------------
+# NOTE: these MUST match SUBSYSTEM=="tty", not "usb". ModemManager reads
+# ID_MM_DEVICE_IGNORE from the tty device, and udev properties do not propagate
+# from a parent to its children -- a SUBSYSTEM=="usb" rule sets the property on
+# the wrong device and has no effect. ATTRS{} (plural) walks up to the USB
+# parent, so the vendor/product match still works from the tty.
+# Verify: udevadm info -q property -n /dev/ttyUSB0 | grep ID_MM_DEVICE_IGNORE
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", ENV{ID_MM_DEVICE_IGNORE}="1"
+# Arduino CDC-ACM boards (Mega2560 R3 = 2341:0042). A CDC-ACM device looks like
+# a modem to ModemManager, so these need the ignore even more than a UART
+# bridge does. Verified 2026-10-06: the Mega arrived with ID_MM_CANDIDATE=1 set
+# and no ignore, which is the "first upload after plugging in fails" cause.
+# Whole-vendor match: covers Uno/Leonardo/Micro/Due as well.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2a03", ENV{ID_MM_DEVICE_IGNORE}="1"
+
+# ---------------------------------------------------------------------------
+# 2b. FIXED HOST-SIDE NAMES PER BOARD
+# The ttyUSB<#> minor moves on replug, so a bare /dev/ttyUSB1 in a flash
+# command is a moving target and an easy way to aim a payload at the wrong
+# board. Each board here uses a DIFFERENT bridge chip, so vid:pid identifies
+# it unambiguously -- unlike the CP2102's serial, which is the generic "0001"
+# and collides across identical boards.
+#
+# These are host-side only. Inside a Spoke use /dev/vde/by-port/<port>
+# (section 3); a container gets no udev events and so sees none of these.
+#
+# Verified 2026-10-06: esp32 (CP2102). mega2560 (CH340) NOT yet verified --
+# board not in hand; confirm the vid:pid with lsusb when it arrives.
+#
+#   espflash --port /dev/esp32
+#   arduino-cli upload -b arduino:avr:mega -p /dev/mega2560
+# ---------------------------------------------------------------------------
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="esp32"
+# Mega2560: ELEGOO ships the ATmega16U2 USB interface with Arduino's genuine
+# vendor id, NOT a CH340/CP2102 serial-bridge clone -- so it is CDC-ACM
+# (/dev/ttyACM<#>, major 166) and a distinct vendor from the ESP32's CP2102.
+# Verified on hardware 2026-10-06: 2341:0042 "Arduino SA Mega 2560 R3 (CDC ACM)".
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0042", SYMLINK+="mega2560"
+# CH340/CH341-bridged clones, kept for other boards that may turn up.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="ch340"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="5523", SYMLINK+="ch341"
+# ST-LINK virtual COM port (serial console only -- SWD flashing needs raw USB
+# on major 189, which a Spoke cannot reach; flash the STM32 from the Hub).
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="374b", SYMLINK+="stlink-vcp"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="3748", SYMLINK+="stlink-vcp"
+
+# ---------------------------------------------------------------------------
+# 3. MIGRATE SPOKE PORT NAMES WITH THE BOARD
+# A container gets no udev events, so /dev/vde/by-port/<port> goes stale when a
+# replug moves the board to a new minor. This re-points it on the kernel event.
+# Event-driven, NOT a watcher: fires once per event, no sleep, no poll loop
+# (AGENTS.md:69). Dispatched via systemd-run --no-block so udev is never
+# blocked waiting on Docker.
+# ---------------------------------------------------------------------------
+SUBSYSTEM=="tty", KERNEL=="ttyUSB*|ttyACM*", ACTION=="add|remove", RUN+="/usr/bin/systemd-run --no-block --collect /usr/local/bin/vde-usb-remap"
