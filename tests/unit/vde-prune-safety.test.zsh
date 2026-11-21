@@ -38,7 +38,7 @@ print -r -- 'tracked old log' > "${SCRATCH}/logs/old.log"
 print -r -- 'student backup' > "${SCRATCH}/backup/old-backup"
 print -r -- 'tracked old plan' > "${SCRATCH}/plans/old.md"
 print -r -- 'historical release' > "${SCRATCH}/docs/releases/1.5.5.md"
-print -r -- 'Version: 1.5.6' > "${SCRATCH}/docs/governance/vde-spec.md"
+print -r -- 'Version: 1.5.7' > "${SCRATCH}/docs/governance/vde-spec.md"
 git -C "${SCRATCH}" add .
 git -C "${SCRATCH}" commit -qm 'scratch fixture'
 touch -d '10 days ago' "${SCRATCH}/logs/old.log" "${SCRATCH}/backup/old-backup" "${SCRATCH}/plans/old.md" "${SCRATCH}/docs/releases/1.5.5.md"

@@ -1,6 +1,6 @@
 # QUICK-START
 <!-- @shared-law (Sovereign Law) -->
-# Quick Start (Sovereign Baseline 1.5.6)
+# Quick Start (Sovereign Baseline 1.5.7)
 
 Get up and running with VDE in minutes.
 

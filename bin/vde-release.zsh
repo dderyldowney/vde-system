@@ -3,7 +3,7 @@
 # bin/vde-release.zsh
 # VDE Sovereign Release Automation
 # Usage: bin/vde-release.zsh <NEW_VERSION>
-# Example: bin/vde-release.zsh 1.5.6
+# Example: bin/vde-release.zsh 1.5.7
 #
 # Follows Forge law:
 # 1. Set new version in vde-spec.md FIRST (new Sovereign Baseline)
@@ -68,7 +68,7 @@ if [[ -z "$NEW_VERSION" ]]; then
     echo ""
     echo "Usage: bin/vde-release.zsh <NEW_VERSION>"
     echo ""
-    echo "Example: bin/vde-release.zsh 1.5.6"
+    echo "Example: bin/vde-release.zsh 1.5.7"
     echo ""
     echo "What this script does:"
     echo "  1. Validates environment (on develop, clean tree)"
@@ -87,7 +87,7 @@ fi
 
 # Validate SemVer
 if ! echo "$NEW_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-    die "Version must be MAJOR.MINOR.STEP format (e.g., 1.5.6)"
+    die "Version must be MAJOR.MINOR.STEP format (e.g., 1.5.7)"
 fi
 
 # ──────────────────────────────────────────────

@@ -1,7 +1,7 @@
 # SECURITY
 <!-- @shared-law (Security Policy Documentation) -->
 
-## Sovereign Baseline: 1.5.6
+## Sovereign Baseline: 1.5.7
 
 This document defines the security policy, reporting procedures, and automated enforcement mechanisms for the **Virtualized Development Environment (VDE)**.
 
@@ -11,7 +11,8 @@ This document defines the security policy, reporting procedures, and automated e
 
 | Version | Supported | Notes |
 |---------|-----------|-------|
-| 1.5.6 | ✅ Yes | Current Sovereign Baseline |
+| 1.5.7 | ✅ Yes | Current Sovereign Baseline (reaches `stable` when the 1.5.7 release is promoted) |
+| 1.5.6 | ✅ Yes | Supported until 1.5.7 is promoted to `stable`, then superseded |
 | `stable` branch | ✅ Yes | Recommended for production |
 | `develop` branch | ⚠️ Development | Integration branch — not for production |
 
@@ -75,7 +76,7 @@ The Universal Agent Protocol Sentinel runs automated security audits on every ac
 ### Pre-Push Security Hook
 
 No code leaves the local Forge without certification:
-- **Proof of Life** — Full lifecycle verification (6 scenarios, 72 steps)
+- **Proof of Life** — Full lifecycle verification (6 scenarios, 73 steps)
 - **Sovereign Audit** — Technical integrity verification
 - **Gospel Audit** — Sovereign Artifact Set synchronization check
 

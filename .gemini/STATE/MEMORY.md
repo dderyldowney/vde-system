@@ -1,13 +1,13 @@
 # VDE Memory: Standing Watch
 # @shared-law (Forge Component)
 
-## SOVEREIGN BASELINE: 1.5.6
-- VDE 1.5.6 is the unique, global Sovereign Baseline.
-- All prior versions (1.5.5, 1.5.4, 1.5.2, 1.5.1, 1.5.0) are of historical archival value only.
-- Heartbeat Certified: 2026-09-29 (6/6 scenarios, 72/72 steps)
-- **Latest Release**: Tag 1.5.6 on main (SHA 4d02d116, the stable-into-main merge; contains code baseline 762d66ac from docs/releases/1.5.6.md)
-- **develop HEAD**: fbb60eef at the 1.5.6 roll (Merge PR #464); later doc-only PRs advance it
-- **stable HEAD**: 7cc412f1 at the 1.5.6 roll (Merge PR #467); main merge is 4d02d116
+## SOVEREIGN BASELINE: 1.5.7
+- VDE 1.5.7 is the unique, global Sovereign Baseline (cut 2026-11-21 at the User's direction; Signet #672).
+- All prior versions (1.5.6 and earlier) are of historical archival value only.
+- Heartbeat Certified: 2026-11-21 (6/6 scenarios, 73/73 steps)
+- **Latest Release**: Tag 1.5.6 on main (SHA 4d02d116) until 1.5.7 is tagged on main after the stable mirror; code baseline for 1.5.7 is c4560371 (docs/releases/1.5.7.md)
+- **develop HEAD**: c4560371 before the 1.5.7 roll PR
+- **stable HEAD / main**: still at the 1.5.6 roll until the develop -> stable -> main chain is approved and run
 
 ## 2026-05-06
 ## Security Audit: Postgres Dev Secret Build Arg Exposure

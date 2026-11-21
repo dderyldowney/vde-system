@@ -1,7 +1,7 @@
-# VDE Test Status Report (measured on 1.5.6)
+# VDE Test Status Report (Sovereign Certification v1.5.7)
 <!-- @forge (Governance Sentinel) -->
 
-Measured on 2026-09-30 at commit `6308fe33` (Linux, Docker 29.8.2). The suite as a whole is **not** at 100%; the failing scenarios and their causes are listed in [docs/development/testing.md](../docs/development/testing.md).
+Measured on 2026-09-30 at commit `6308fe33` (the 1.5.6 baseline; only the Proof of Life was re-run for 1.5.7, on 2026-11-21: 6 of 6 scenarios, 73 of 73 steps) (Linux, Docker 29.8.2). The suite as a whole is **not** at 100%; the failing scenarios and their causes are listed in [docs/development/testing.md](../docs/development/testing.md).
 
 | Suite | Result |
 | :--- | :--- |
@@ -38,7 +38,7 @@ The rows in the tables below are exercised by these results: the four pillars by
 | :--- | :--- | :--- |
 | **UAP Enforcement** | ✅ PASS | `bin/vde-enforce-uap.zsh` strictly active. |
 | **Spine Check** | ✅ PASS | `bin/vde-spine-check.zsh` silent pre-flight. |
-| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (1.5.6) |
+| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (measured on the 1.5.6 baseline) |
 
 ---
 **Measured**: 2026-09-30

@@ -1,7 +1,7 @@
 # Rebuild Guidelines
 <!-- @shared-law (Sovereign Law) -->
 
-When and how to rebuild containers in the **Sovereign Baseline (1.5.6)**.
+When and how to rebuild containers in the **Sovereign Baseline (1.5.7)**.
 
 [← Back to README](../../README.md)
 

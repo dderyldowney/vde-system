@@ -1,7 +1,7 @@
 # Best Practices
 <!-- @shared-law (Sovereign Law) -->
 
-Recommended practices for working with VDE effectively in the **Sovereign Baseline (1.5.6)**.
+Recommended practices for working with VDE effectively in the **Sovereign Baseline (1.5.7)**.
 
 [← Back to README](../../README.md)
 
