@@ -11,8 +11,8 @@ This document defines the security policy, reporting procedures, and automated e
 
 | Version | Supported | Notes |
 |---------|-----------|-------|
-| 1.5.7 | ✅ Yes | Current Sovereign Baseline (reaches `stable` when the 1.5.7 release is promoted) |
-| 1.5.6 | ✅ Yes | Supported until 1.5.7 is promoted to `stable`, then superseded |
+| 1.5.7 | ✅ Yes | Current Sovereign Baseline (released 2026-11-21; on `stable` and `main`) |
+| 1.5.6 | ⚠️ Superseded | Upgrade to 1.5.7 |
 | `stable` branch | ✅ Yes | Recommended for production |
 | `develop` branch | ⚠️ Development | Integration branch — not for production |
 
