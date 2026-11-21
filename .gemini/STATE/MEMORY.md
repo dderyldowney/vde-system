@@ -7,7 +7,7 @@
 - Heartbeat Certified: 2026-11-21 (6/6 scenarios, 73/73 steps)
 - **Latest Release**: Tag 1.5.7 on main (SHA daffb810, the stable-into-main merge; contains code baseline c4560371 from docs/releases/1.5.7.md), published 2026-11-21
 - **develop HEAD**: debc2e81 at the 1.5.7 roll (PR #673); later doc-only PRs advance it
-- **stable HEAD**: daffb810 after the 1.5.7 roll: `.github/workflows/update-stable-alias.yml` force-pushes `stable` to `main` on every push to `main` (it moved stable from 66a04308 to daffb810, 13 s after PR #675). `stable` is for release plus updates, so a develop -> stable roll without a release is normal and leaves it ahead of `main` until the next release.
+- **stable HEAD**: read it with `git ls-remote origin stable`. It equalled `main` after the 1.5.7 release because `.github/workflows/update-stable-alias.yml` force-pushes `stable` to `main` on every push to `main` (it moved stable from 66a04308 to daffb810, 13 s after PR #675). `stable` is for release plus updates, so a develop -> stable roll without a release is normal and leaves it ahead of `main` until the next release.
 
 ## 2026-05-06
 ## Security Audit: Postgres Dev Secret Build Arg Exposure
@@ -81,15 +81,15 @@ Per VDE Protocol: No environment-specific logic shall be implemented without emp
 ## NEXT STRIKES QUEUE
 Done as of 2026-11-21: 1.5.7 released; `vde upgrade` (#679), the 1.5.7 record (#678), the state files (#681), the `vde upgrade` review fixes (#684, Signet #683) and the develop -> stable roll (#682, merge commit, no release). VERIFY with `gh pr list --state merged --limit 10` before relying on this line.
 In the User's order:
-1. **1.5.9, the docs release** (programme below): `develop` is ready to start it; Signet first, each part its own Strike.
-2. **1.5.8, the security release** (#668): its own Signet, PR and release chain, with the User's approval at each outward step.
+1. **1.5.8, the SECURITY release** (#668 plus the security-related items parked earlier, and ONLY security-related work): its own Signet, PR and release chain, with the User's approval at each outward step. Security comes BEFORE docs, even if session time is mixed.
+2. **1.5.9, the docs release** (programme below): starts only after 1.5.8 ships; Signet first, each part its own Strike.
 3. **#671** — fix(armor): alias uniqueness inside the lock and stale SSH port locks (#538 items 1, 6, 7).
 4. Ask the User about **#621** and **#629**.
 
 Left open until after these: #441 function-trace JSONL export, #442 Ollama daemon connection, #539 USB debug probe, #653, #628, #615, #627, #631.
 
 ### Version plan (the User, 2026-11-21)
-**1.5.7 is the CURRENT RELEASE** (tag on `main` at daffb810). **1.5.8 = the security release** (#668: every Spoke can read the root `.env` through the `/vde:ro` repo mount). **1.5.9 = the docs release** (the programme below; it was first planned as 1.5.8). Versions are MAJOR.MINOR.STEP, so there is no 1.5.7.x. The User asked for `develop` to be ready to start the 1.5.9 docs work; the order of the security release and the docs work is the User's call, but the numbers stay.
+**1.5.7 is the CURRENT RELEASE** (tag on `main` at daffb810). **1.5.8 = the security release** (#668, plus the security-related items parked earlier; only security-related work enters it; the details stay in the issues, not here). **1.5.9 = the docs release** (the programme below; it was first planned as 1.5.8). Versions are MAJOR.MINOR.STEP, so there is no 1.5.7.x. Order: security (1.5.8) FIRST, then docs (1.5.9); the User confirmed security before docs even if session time is mixed. What is already merged stays; the 1.5.8 notes name it plainly (the `vde upgrade` command and its hardening) and headline the security items. Expect major changes to the docs in 1.5.9.
 
 ### 1.5.9 = THE DOCS RELEASE (scope APPROVED by the User, 2026-11-21; renumbered from 1.5.8)
 1.5.9 is all about documentation. Each part is its own Strike (Signet first).
