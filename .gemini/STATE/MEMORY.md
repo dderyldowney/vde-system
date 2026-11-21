@@ -5,9 +5,9 @@
 - VDE 1.5.7 is the unique, global Sovereign Baseline (cut 2026-11-21 at the User's direction; Signet #672).
 - All prior versions (1.5.6 and earlier) are of historical archival value only.
 - Heartbeat Certified: 2026-11-21 (6/6 scenarios, 73/73 steps)
-- **Latest Release**: Tag 1.5.6 on main (SHA 4d02d116) until 1.5.7 is tagged on main after the stable mirror; code baseline for 1.5.7 is c4560371 (docs/releases/1.5.7.md)
-- **develop HEAD**: c4560371 before the 1.5.7 roll PR
-- **stable HEAD / main**: still at the 1.5.6 roll until the develop -> stable -> main chain is approved and run
+- **Latest Release**: Tag 1.5.7 on main (SHA daffb810, the stable-into-main merge; contains code baseline c4560371 from docs/releases/1.5.7.md), published 2026-11-21
+- **develop HEAD**: debc2e81 at the 1.5.7 roll (PR #673); later doc-only PRs advance it
+- **stable HEAD**: 66a04308 at the 1.5.7 roll (PR #674); main merge is daffb810 (PR #675)
 
 ## 2026-05-06
 ## Security Audit: Postgres Dev Secret Build Arg Exposure
@@ -79,5 +79,10 @@ bin/vde path-of-the-foundling
 Per VDE Protocol: No environment-specific logic shall be implemented without empirical testing on target environment. WSL2 fixes blocked pending volunteer beta testers.
 
 ## NEXT STRIKES QUEUE
-1. **#442** — feat(forge): establish canonical connection to local Ollama daemon
-2. **#441** — feat(governance): enhance function-trace with JSONL export and secure dry-run
+In the User's order (2026-11-21, after the 1.5.7 release):
+1. **#676** — feat(armor): `vde upgrade` updates an install to its branch's latest and says what to rebuild
+2. The project-wide docs rework: student-facing docs only, manual-style voice, mythos replaced by industry terms (Hub and Spoke stay; `path-of-the-foundling` stays); its Signet opens when it starts
+3. **#671** — fix(armor): alias uniqueness inside the lock and stale SSH port locks (#538 items 1, 6, 7)
+4. Ask the User about **#621** and **#629**
+
+Left open until after these: #441 function-trace JSONL export, #442 Ollama daemon connection, #539 USB debug probe, #653, #628, #615, #627, #631.

@@ -5,17 +5,20 @@
 This file is one half of a pair with [plans/session_handover_remediation.md](../../plans/session_handover_remediation.md). A change that touches either file MUST touch the other in the same PR, so accomplishments (here) and outstanding debt (there) cannot drift apart. `bin/paired_update_enforcer` (CI workflow "Paired Update Check") compares the files a PR changed against its base and fails when only one of the two changed.
 
 ## SOVEREIGN STATE
-- **Baseline**: 1.5.7 (Sovereign Baseline) — CERTIFIED on the release branch (Signet #672); tag, stable and main follow only on the User's written approval
-- **develop**: `c4560371` (Merge PR #670) before the 1.5.7 roll PR
-- **main**: `4d02d116` (production — 1.5.6) until the 1.5.7 mirror
-- **stable**: `7cc412f1` at the 1.5.6 roll until the develop -> stable merge (merge, never rebase or squash)
+- **Baseline**: 1.5.7 (Sovereign Baseline) — RELEASED 2026-11-21, tag 1.5.7 on `main` (daffb810): https://github.com/dderyldowney/vde-system/releases/tag/1.5.7
+- **develop**: `debc2e81` at the 1.5.7 roll (PR #673); later doc-only PRs advance it
+- **main**: `daffb810` (production — 1.5.7, Merge PR #675 stable → main)
+- **stable**: `66a04308` (Merge PR #674 develop → stable)
 - **Status**: 100% GREEN
 - **Heartbeat**: 6/6 scenarios, 73/73 steps
 - **Gospel Audit**: GOSPEL-SUCCESS
 
 ## NEXT STRIKE
-- **#671** — vde add checks alias uniqueness inside the lock and reclaims stale SSH port locks (#538 items 1, 6, 7). Signet open, investigation done (alias scan at bin/add-vm-type:194 precedes claim_lock at :280; find_available_ssh_port in lib/vde-docker keeps probe-failed locks forever and probes before consulting the registry); no branch or code yet.
-- Then ASK about #621 and #629, then the docs audience split.
+Queue, in the User's order:
+1. **#676** — `vde upgrade` command (Signet open, nothing built).
+2. The project-wide **docs rework** (student-facing docs only; voice, glossary and scope are agreed; Signet not yet open).
+3. **#671** — alias uniqueness inside the lock and stale SSH port locks (#538 items 1, 6, 7; Signet open, investigation done, no code).
+4. Then ask about #621 and #629.
 
 ## CURRENT PROGRAMME: USB hardware access for embedded work
 
