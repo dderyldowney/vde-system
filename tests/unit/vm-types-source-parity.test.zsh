@@ -70,7 +70,7 @@ fi
 test_start "JSON null and CONF '-' both load as empty (nullable fields)"
 typeset fx_conf="${scratch}/fx.conf" fx_json="${scratch}/fx.json"
 print -r -- 'lang|vde-fx|fx|Fx|-|zsh /vde/scripts/setup/fx-init.zsh|-|2290' > "${fx_conf}"
-print -r -- '{"version":"1.5.6","vms":{"language":[{"name":"vde-fx","aliases":["fx"],"display":"Fx","pkgs":null,"custom_cmd":"zsh /vde/scripts/setup/fx-init.zsh","service_ports":null,"ssh_port":2290}],"service":[]}}' > "${fx_json}"
+print -r -- '{"version":"1.5.7","vms":{"language":[{"name":"vde-fx","aliases":["fx"],"display":"Fx","pkgs":null,"custom_cmd":"zsh /vde/scripts/setup/fx-init.zsh","service_ports":null,"ssh_port":2290}],"service":[]}}' > "${fx_json}"
 typeset fxj fxc
 fxj="$(dump_registry "${fx_json}" "${fx_conf}")"; fxc="$(dump_registry "${scratch}/absent.json" "${fx_conf}")"
 if [[ -n "${fxj}" && "${fxj}" == "${fxc}" ]]; then

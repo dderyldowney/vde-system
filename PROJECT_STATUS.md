@@ -1,9 +1,9 @@
-## Project Status: 1.5.6 (Sovereign Baseline) - Certified
+## Project Status: 1.5.7 (Sovereign Baseline) - Certified
 <!-- @shared-law (Forge Component) -->
 
-- **Version**: 1.5.6
+- **Version**: 1.5.7
 - **Status**: Stable / Certified
-- **Summary**: Point release closing two host-ownership-corruption defects (#457 docker.sock group, #459 root-owned bind-mount dirs). All Proof of Life scenarios pass (6/6 scenarios, 72/72 steps). The Forge heartbeat is strong.
-- **Proof of Life**: 2026-09-29 - 6 scenarios passed, 72 steps passed
-- **Release SHA**: 762d66ac (code baseline, as recorded in docs/releases/1.5.6.md). The 1.5.6 tag and GitHub Release point at 4d02d116 on `main` (the stable-into-main merge), which contains it.
-- **Previous Baseline SHA**: 55d287dd (1.5.5, tag 1.5.5 on main)
+- **Summary**: First baseline since 1.5.6: about 100 merged changes (configurable Projects directory, USB hardware access and the embed Spoke, pyenv Python, build-cache hygiene, CLI exit-status correctness, Spoke env isolation, installer hardening, the enforced Zsh shibboleth). See docs/releases/1.5.7.md.
+- **Proof of Life**: 2026-11-21 - 6 scenarios passed, 73 steps passed
+- **Release SHA**: c4560371 (code baseline: `develop` at the last code change, as recorded in docs/releases/1.5.7.md). The 1.5.7 tag and GitHub Release are recorded here once cut on `main`.
+- **Previous Baseline SHA**: 762d66ac (1.5.6 code baseline; tag 1.5.6 on main at 4d02d116)

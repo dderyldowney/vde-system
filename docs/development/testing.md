@@ -1,4 +1,4 @@
-# VDE Testing Strategy - 1.5.6 (The Sovereign Baseline)
+# VDE Testing Strategy - 1.5.7 (The Sovereign Baseline)
 <!-- @shared-law (Sovereign Law) -->
 
 This document defines the absolute empirical standards for the Virtual Development Environment (VDE). All functional code MUST be verified by this suite.
@@ -13,7 +13,7 @@ The System Spine tetrad is the foundational audit gate. If any pillar fails, the
 | III    | **Docker** | `docker run --rm` diagnostic probe (The World-Forge) |
 | IV     | **SSH**    | `ssh-add -l` identity check (The Bridge) |
 
-## 2. BDD PERFORMANCE METRICS (1.5.6)
+## 2. BDD PERFORMANCE METRICS (1.5.7)
 Measured on **2026-09-30** at commit `6308fe33`: full run of `behave tests/features/` on Linux with Docker 29.8.2 (6 min 17 s, the Python `jsonschema` module available to subprocesses). The suite is **not** at 100%.
 
 | Metric | Count | Status |
@@ -103,4 +103,4 @@ CI's "Sovereign Tests" job runs `tests/run-sovereign-tests.zsh`, which DISCOVERS
 - A suite passes or fails by its exit status alone.
 
 ---
-**Status:** SYSTEM CERTIFIED (1.5.6)
+**Status:** SYSTEM CERTIFIED (1.5.7)

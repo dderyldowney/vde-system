@@ -1,7 +1,7 @@
 # SECURITY
 <!-- @shared-law (Security Policy Documentation) -->
 
-## Sovereign Baseline: 1.5.6
+## Sovereign Baseline: 1.5.7
 
 This document defines the security policy, reporting procedures, and automated enforcement mechanisms for the **Virtualized Development Environment (VDE)**.
 
@@ -11,7 +11,8 @@ This document defines the security policy, reporting procedures, and automated e
 
 | Version | Supported | Notes |
 |---------|-----------|-------|
-| 1.5.6 | ✅ Yes | Current Sovereign Baseline |
+| 1.5.7 | ✅ Yes | Current Sovereign Baseline |
+| 1.5.6 | ⚠️ Superseded | Upgrade to 1.5.7 |
 | `stable` branch | ✅ Yes | Recommended for production |
 | `develop` branch | ⚠️ Development | Integration branch — not for production |
 

@@ -1,17 +1,21 @@
-# VDE Session Handover: 2026-10-05
+# VDE Session Handover: 2026-11-21
 # @shared-law (Forge Component)
 
 ## Paired Update Policy
 This file is one half of a pair with [plans/session_handover_remediation.md](../../plans/session_handover_remediation.md). A change that touches either file MUST touch the other in the same PR, so accomplishments (here) and outstanding debt (there) cannot drift apart. `bin/paired_update_enforcer` (CI workflow "Paired Update Check") compares the files a PR changed against its base and fails when only one of the two changed.
 
 ## SOVEREIGN STATE
-- **Baseline**: 1.5.6 (Sovereign Baseline) — CERTIFIED
-- **develop**: `2fe4cbb0` (Merge PR #536)
-- **main**: `4d02d116` (production — 1.5.6, Merge PR #468 stable → main)
-- **stable**: `7cc412f1` at the 1.5.6 roll (Merge PR #467)
+- **Baseline**: 1.5.7 (Sovereign Baseline) — CERTIFIED on the release branch (Signet #672); tag, stable and main follow only on the User's written approval
+- **develop**: `c4560371` (Merge PR #670) before the 1.5.7 roll PR
+- **main**: `4d02d116` (production — 1.5.6) until the 1.5.7 mirror
+- **stable**: `7cc412f1` at the 1.5.6 roll until the develop -> stable merge (merge, never rebase or squash)
 - **Status**: 100% GREEN
-- **Heartbeat**: 6/6 scenarios, 72/72 steps
+- **Heartbeat**: 6/6 scenarios, 73/73 steps
 - **Gospel Audit**: GOSPEL-SUCCESS
+
+## NEXT STRIKE
+- **#671** — vde add checks alias uniqueness inside the lock and reclaims stale SSH port locks (#538 items 1, 6, 7). Signet open, investigation done (alias scan at bin/add-vm-type:194 precedes claim_lock at :280; find_available_ssh_port in lib/vde-docker keeps probe-failed locks forever and probes before consulting the registry); no branch or code yet.
+- Then ASK about #621 and #629, then the docs audience split.
 
 ## CURRENT PROGRAMME: USB hardware access for embedded work
 
