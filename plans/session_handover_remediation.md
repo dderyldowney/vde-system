@@ -18,7 +18,7 @@ This file is one half of a pair with [.gemini/STATE/session_handover.md](../.gem
 - **plans/session_handover_remediation.md**: Restored from git history (was missing pre-migration).
 
 ## Sovereign Baseline: 1.5.7 (full-suite figures below measured 2026-09-30 at commit `6308fe33`, the 1.5.6 baseline)
-- Version: 1.5.7 (The Sovereign Baseline); Proof of Life re-certified 2026-11-21, 6 of 6 scenarios, 73 of 73 steps
+- Version: 1.5.7 (The Sovereign Baseline); Proof of Life re-certified 2026-11-21, 6 of 6 scenarios, 73 of 73 steps; released as tag 1.5.7 on `main` (daffb810; code baseline `c4560371`)
 - Heartbeat: Proof of Life 6 of 6 scenarios passed. Full BDD suite: 107 of 116 scenarios passed, 9 failed (details in `docs/development/testing.md`).
 - Enforcer: `bin/vde-enforce-uap.zsh` success, exit 0.
 - Documentation: not re-verified for 1.5.7. Known gap: the 1.5.5 entries in `docs/changelogs/current.md` are dead links.
