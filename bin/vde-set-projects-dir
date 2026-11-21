@@ -74,23 +74,58 @@ EOF
 }
 
 # vde_spd_running_spokes - Print the running container names, one per line.
-# Returns non-zero when Docker is installed but cannot be queried, so callers
-# refuse instead of reading a failed query as "nothing is running". With no
-# docker binary at all, nothing can be running (Signet #669).
+# Returns non-zero when the running Spokes cannot be determined: Docker missing,
+# not running, not permitted, or not answering within VDE_SPD_DOCKER_TIMEOUT
+# seconds (default 20). Callers refuse instead of reading a failed query as
+# "nothing is running" (Signet #669).
 vde_spd_running_spokes() {
-    command -v docker >/dev/null 2>&1 || return 0
-    docker ps --format '{{.Names}}' 2>/dev/null
+    command -v docker >/dev/null 2>&1 || return 1
+    if command -v timeout >/dev/null 2>&1; then
+        timeout -k 5 "${VDE_SPD_DOCKER_TIMEOUT:-20}" docker ps --format '{{.Names}}' 2>/dev/null
+    else
+        docker ps --format '{{.Names}}' 2>/dev/null
+    fi
 }
 
-# vde_spd_is_running <alias> - True when vde-<alias> runs, OR when Docker cannot be queried.
+# vde_spd_workspace_owners <alias> - Print the container name of every Spoke whose
+# workspace lives under <base>/<alias>: the Spoke itself plus any whose workspace is
+# nested in it (JupyterLab keeps its notebooks in python/jupyterlabs; see
+# vde_workspace_subpath in lib/vm-common).
+vde_spd_workspace_owners() {
+    emulate -L zsh
+    local alias_name="${1}" key raw sub
+    print -r -- "vde-${alias_name}"
+    for key in ${(k)VM_TYPE}; do
+        raw="${key#vde-}"
+        sub="$(vde_workspace_subpath "${raw}")"
+        [[ "${sub}" == "${alias_name}/"* ]] && print -r -- "vde-${raw}"
+    done
+}
+
+# vde_spd_blockers <alias> <running-names> - Print each running Spoke (one per line)
+# that mounts <alias>'s folder. The ONE place that decides "is something using this
+# folder", shared by the pre-move guard and the post-copy re-check.
+vde_spd_blockers() {
+    emulate -L zsh
+    local owner
+    for owner in ${(u)${(f)"$(vde_spd_workspace_owners "${1}")"}}; do
+        [[ $'\n'"${2}"$'\n' == *$'\n'"${owner}"$'\n'* ]] && print -r -- "${owner}"
+    done
+    return 0
+}
+
+# vde_spd_is_running <alias> - True when any Spoke that mounts <alias>'s folder runs,
+# OR when Docker cannot be queried.
 vde_spd_is_running() {
+    emulate -L zsh
     local names
     names="$(vde_spd_running_spokes)" || return 0
-    [[ $'\n'"${names}"$'\n' == *$'\n'"vde-${1}"$'\n'* ]]
+    [[ -n "$(vde_spd_blockers "${1}" "${names}")" ]]
 }
 
-# Set while the old copy of an alias is being deleted after its move succeeded.
-typeset VDE_SPD_OLD_COPY=""
+# Set from just before a cross-filesystem copy is published until its old source is
+# gone, so an interrupt in that window can name the folder to delete.
+typeset VDE_SPD_PUBLISH_SRC="" VDE_SPD_PUBLISH_DEST=""
 
 # vde_spd_move_alias <src> <dest> - Move one alias folder. Returns 0 on success.
 # Same device: a plain rename. Different device: `mv` would be copy-then-delete,
@@ -117,7 +152,15 @@ vde_spd_move_alias() {
     fi
     # A leftover temp comes from an earlier interrupted run. The source was still
     # whole then (it is deleted only after the rename), so discarding it is safe.
-    [[ -e "${tmp}" ]] && rm -rf -- "${tmp}"
+    if [[ -e "${tmp}" ]]; then
+        rm -rf -- "${tmp}" 2>/dev/null
+        # If it could not be removed (for example it belongs to another user), copying
+        # now would nest the copy INSIDE it. Refuse instead.
+        if [[ -e "${tmp}" ]]; then
+            print -u2 -r -- "  ! Could not remove the leftover '${tmp}' from an earlier run; remove it by hand and run this command again."
+            return 1
+        fi
+    fi
     if cp -a "${src}" "${tmp}" 2>/dev/null; then
         # A Spoke may have started while the copy ran: it mounts the OLD base until
         # .env changes, so any write it makes would be lost with the source. Keep the
@@ -127,13 +170,14 @@ vde_spd_move_alias() {
             print -u2 -r -- "  ! '${src:t}' is running, or Docker cannot be queried, after the copy; the copy was discarded and the folder left in place. Stop the Spoke and run this command again."
             return 1
         fi
+        VDE_SPD_PUBLISH_SRC="${src}"; VDE_SPD_PUBLISH_DEST="${dest}"
         if mv "${tmp}" "${dest}" 2>/dev/null; then
-            VDE_SPD_OLD_COPY="${src}"
             rm -rf -- "${src}" \
                 || print -u2 -r -- "  ! Moved '${src:t}', but could not fully remove the old copy at ${src}; remove it by hand."
-            VDE_SPD_OLD_COPY=""
+            VDE_SPD_PUBLISH_SRC=""; VDE_SPD_PUBLISH_DEST=""
             return 0
         fi
+        VDE_SPD_PUBLISH_SRC=""; VDE_SPD_PUBLISH_DEST=""
     fi
     rm -rf -- "${tmp}"
     return 1
@@ -143,13 +187,13 @@ vde_spd_move_alias() {
 # "move" (moving folders / writing .env) or "regen" (.env already updated).
 typeset VDE_SPD_PHASE=""
 
-# _vde_spd_interrupted <signal-number> - INT/TERM handler: say how to finish, then exit.
+# _vde_spd_interrupted <signal-number> - INT/TERM/HUP handler: say how to finish, then exit.
 _vde_spd_interrupted() {
     local sig="${1}"
     echo "" >&2
-    if [[ -n "${VDE_SPD_OLD_COPY}" ]]; then
-        echo "Interrupted while removing the old copy: your folder was already moved to its new place, but ${VDE_SPD_OLD_COPY} was not fully removed. Check the new copy, delete ${VDE_SPD_OLD_COPY} by hand, then re-run the same command to finish; do not start Spokes until then." >&2
-    elif [[ "${VDE_SPD_PHASE}" == "regen" ]]; then
+    if [[ -n "${VDE_SPD_PUBLISH_SRC}" && -e "${VDE_SPD_PUBLISH_DEST}" && -e "${VDE_SPD_PUBLISH_SRC}" ]]; then
+        echo "Interrupted while removing the old copy: your folder was already moved to its new place, but ${VDE_SPD_PUBLISH_SRC} was not fully removed. Check the new copy, delete ${VDE_SPD_PUBLISH_SRC} by hand, then re-run the same command to finish; do not start Spokes until then." >&2
+    elif [[ "${VDE_SPD_PHASE}" == "regen" || "$(vde_projects_dir_from_env_file)" == "${NEW_BASE}" ]]; then
         echo "Interrupted after the base was updated: Spoke configurations were not regenerated; recreate affected Spokes (vde remove <name> && vde create <name>) so they mount the new location." >&2
     else
         echo "Interrupted while moving: re-run the same command to finish (vde set-projects-dir ${NEW_BASE}); do not start Spokes until then, they would mount the old base." >&2
@@ -162,6 +206,7 @@ _vde_spd_interrupted() {
 vde_set_projects_dir_update_env() {
     local new_base="${1}"
     local env_file="${VDE_ROOT_DIR}/.env"
+    [[ -L "${env_file}" ]] && env_file="${env_file:A}"   # rewrite the file the link points at
 
     if [[ ! -f "${env_file}" ]]; then
         : > "${env_file}"
@@ -182,8 +227,15 @@ vde_set_projects_dir_update_env() {
         fi
     done
     (( found )) || lines+=("VDE_PROJECTS_DIR=${new_base}")
-    print -rl -- "${lines[@]}" > "${env_file}"
-    chmod 600 "${env_file}" 2>/dev/null || true
+    # Temp + rename in the same directory: a failed or interrupted write can never
+    # truncate .env (which would lose every other setting in it).
+    local tmp
+    tmp="$(mktemp "${env_file}.vde-tmp.XXXXXX")" || return 1   # O_EXCL: never follows a planted link
+    if ! { print -rl -- "${lines[@]}" > "${tmp}" && chmod 600 "${tmp}"; }; then
+        rm -f -- "${tmp}"
+        return 1
+    fi
+    mv -f -- "${tmp}" "${env_file}" || { rm -f -- "${tmp}"; return 1; }
 }
 
 #===============================================================================
@@ -229,6 +281,8 @@ NEW_BASE="${VDE_PB_RESULT}"
 # No-op when the base is unchanged
 if [[ "${NEW_BASE}" == "${OLD_BASE}" ]]; then
     echo "Projects base is already '${NEW_BASE}'. Nothing to move."
+    # The exported value may be what made them equal while .env says otherwise.
+    vde_warn_stale_projects_env
     exit ${VDE_SUCCESS}
 fi
 
@@ -250,10 +304,16 @@ fi
 
 # .env is rewritten only AFTER the folders move. If it cannot be written, the move
 # would strand your projects at a base that .env does not name, so verify it first.
-typeset _spd_envw="${VDE_ROOT_DIR}/.env"
-[[ -e "${_spd_envw}" ]] || _spd_envw="${VDE_ROOT_DIR}"
-if [[ ! -w "${_spd_envw}" ]]; then
-    vde_error_simple "Cannot write ${_spd_envw}; refusing to move anything, so your projects are never stranded at a base that .env does not name."
+typeset _spd_envf="${VDE_ROOT_DIR}/.env"
+[[ -L "${_spd_envf}" ]] && _spd_envf="${_spd_envf:A}"
+typeset _spd_envbad=""
+if [[ -e "${_spd_envf}" && ! -w "${_spd_envf}" ]]; then
+    _spd_envbad="${_spd_envf}"
+elif [[ ! -w "${_spd_envf:h}" ]]; then
+    _spd_envbad="${_spd_envf:h} (the rewrite creates a temporary file beside .env)"
+fi
+if [[ -n "${_spd_envbad}" ]]; then
+    vde_error_simple "Cannot write ${_spd_envbad}; refusing to move anything, so your projects are never stranded at a base that .env does not name."
     exit ${VDE_ERR_PERMISSION}
 fi
 
@@ -261,7 +321,7 @@ fi
 # bind-mounted. A cross-filesystem copy-then-delete loses every write made after
 # the copy. Only aliases that WOULD move are checked: a collision is skipped and
 # an unregistered name is never touched.
-typeset -a move_candidates=() running_blocking=() running_list=()
+typeset -a move_candidates=() running_blocking=()
 if [[ -d "${OLD_BASE}" ]]; then
     for alias_dir in "${OLD_BASE}"/*(N/); do
         alias_name="${alias_dir:t}"
@@ -270,22 +330,22 @@ if [[ -d "${OLD_BASE}" ]]; then
         move_candidates+=("${alias_name}")
     done
 fi
-# One Docker snapshot, and only when something would move. A failed query is NOT
-# "nothing is running": refuse, because the guard must fail closed.
+# One Docker snapshot, and only when something would move. A query that fails,
+# times out, or has no docker to ask is NOT "nothing is running": refuse, because
+# the guard must fail closed.
 if (( ${#move_candidates} > 0 )); then
     typeset running_names
     if ! running_names="$(vde_spd_running_spokes)"; then
-        vde_error_simple "Cannot tell which Spokes are running (docker ps failed: is Docker running, and may your user use it?). Refusing to move workspaces a running Spoke may have mounted. Nothing was moved."
+        vde_error_simple "Cannot tell which Spokes are running (Docker is missing, not running, not permitted, or did not answer in time). Refusing to move workspaces a running Spoke may have mounted. Nothing was moved."
         exit ${VDE_ERR_GENERAL}
     fi
-    running_list=( ${(f)running_names} )
     for alias_name in "${move_candidates[@]}"; do
-        (( ${running_list[(Ie)vde-${alias_name}]} )) && running_blocking+=("${alias_name}")
+        running_blocking+=( ${(f)"$(vde_spd_blockers "${alias_name}" "${running_names}")"} )
     done
 fi
 if (( ${#running_blocking} > 0 )); then
-    vde_error_simple "Refusing to re-point: these Spokes are running with their workspace mounted from ${OLD_BASE}: ${(j:, :)${(@)running_blocking/#/vde-}}. Nothing was moved."
-    echo "  Stop them first (for example: vde stop ${running_blocking[1]}), then run this command again." >&2
+    vde_error_simple "Refusing to re-point: these Spokes are running with their workspace mounted from ${OLD_BASE}: ${(j:, :)${(u)running_blocking}}. Nothing was moved."
+    echo "  Stop them first (for example: vde stop ${running_blocking[1]#vde-}), then run this command again." >&2
     exit ${VDE_ERR_GENERAL}
 fi
 
@@ -316,8 +376,9 @@ fi
 # the student's other directories. Nesting inside each alias folder (e.g.
 # python/jupyterlabs) is preserved by moving the whole directory. Student data
 # is never deleted or overwritten.
-typeset -i moved=0 skipped=0
+typeset -i moved=0 skipped=0 failed=0
 VDE_SPD_PHASE="move"
+trap '_vde_spd_interrupted 1' HUP
 trap '_vde_spd_interrupted 2' INT
 trap '_vde_spd_interrupted 15' TERM
 if [[ -d "${OLD_BASE}" ]]; then
@@ -343,16 +404,30 @@ if [[ -d "${OLD_BASE}" ]]; then
             echo "  ✓ Moved '${alias_name}'"
             (( ++moved ))
         else
-            # Always shown (stderr), never log-only: .env is about to name the new base
-            # while this folder is still at the old one (Signet #669, #545 item 6).
-            echo "  ! Could not move '${alias_name}'; left in place at ${alias_dir}. Move it to ${dest} by hand: your Spoke will mount the new base." >&2
+            # Always shown (stderr), never log-only (Signet #669, #545 item 6).
+            echo "  ! Could not move '${alias_name}'; left in place at ${alias_dir}. Fix the cause (free space, permissions) and run this command again." >&2
             (( ++skipped ))
+            (( ++failed ))
         fi
     done
 fi
 
+# A folder that could not be moved means the move is NOT finished: leave .env on the
+# old base so re-running the same command retries it (folders that moved are already
+# absent from the old base). Pointing .env at a base that lacks a workspace would also
+# turn the re-run into a silent "nothing to move".
+if (( failed > 0 )); then
+    trap - INT TERM HUP
+    VDE_SPD_PHASE=""
+    echo "ACTION REQUIRED: ${failed} folder(s) could not be moved (see the messages above). .env was NOT changed and still names ${OLD_BASE}; the folders that did move are already at ${NEW_BASE}. Fix the cause (free space, permissions), then run the same command again to finish, and do not start Spokes until then." >&2
+    exit ${VDE_ERR_GENERAL}
+fi
+
 # Update the runtime source of truth
-vde_set_projects_dir_update_env "${NEW_BASE}"
+if ! vde_set_projects_dir_update_env "${NEW_BASE}"; then
+    vde_error_simple "Your folders were moved, but .env could not be updated. Set VDE_PROJECTS_DIR=${NEW_BASE} in ${VDE_ROOT_DIR}/.env by hand before starting any Spoke."
+    exit ${VDE_ERR_PERMISSION}
+fi
 VDE_SPD_PHASE="regen"
 
 # Regenerate Compose configs so EVERY Spoke -- including ones created before this
@@ -374,7 +449,7 @@ if [[ -x "${VDE_ROOT_DIR}/bin/generate-all-configs" ]]; then
     fi
 fi
 
-trap - INT TERM
+trap - INT TERM HUP
 VDE_SPD_PHASE=""
 
 # Summary
@@ -386,7 +461,7 @@ echo ""
 echo "  New base:       ${NEW_BASE}"
 echo "  Folders moved:  ${moved}"
 if (( skipped > 0 )); then
-    echo "  Folders skipped: ${skipped} (already existed or could not be moved; left in place at the old base for you to merge or move)"
+    echo "  Folders skipped: ${skipped} (name already existed; left for you to merge)"
 fi
 echo ""
 echo "  .env updated:   VDE_PROJECTS_DIR=${NEW_BASE}"

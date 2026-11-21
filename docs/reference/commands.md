@@ -91,16 +91,22 @@ vde set-projects-dir
 - **Refuses** (exit 1, nothing created or moved, `.env` unchanged) while a Spoke of
   an alias that would be moved is running; stop it (`vde stop <name>`) and re-run.
   A running Spoke of an alias that is skipped (collision) or unregistered does not block.
-  It also refuses (exit 1) when Docker is installed but cannot be queried, and (exit 4)
-  when `.env` is not writable, both before anything moves. A Spoke that starts while a
-  cross-filesystem copy is running is detected once the copy finishes: the copy is
-  discarded and the source kept.
+  It also refuses (exit 1) when Docker cannot be queried (missing, not running, not
+  permitted, or silent for 20 s where the `timeout` command exists, which stock macOS
+  lacks; `VDE_SPD_DOCKER_TIMEOUT` overrides), and (exit 4) when
+  `.env` or the directory holding it is not writable, both before anything moves.
+  Moving `python` is also blocked by a running `vde-jupyterlab` (its notebooks live in
+  `python/jupyterlabs`). A Spoke that starts while a cross-filesystem copy is running is
+  detected once the copy finishes: the copy is discarded and the source kept.
+  Known limits: a Spoke that starts in the instant between that check and the deletion
+  of the old folder is not detected, and nothing stops a host editor writing to the
+  folder while it is copied; close such tools first.
 - A move across filesystems copies to `<alias>.vde-moving`, renames it to `<alias>`
   only after the copy succeeded, then deletes the source. A failed copy leaves the
   source whole and removes its own temp; a leftover temp from an earlier interrupted
   run is discarded and retried; a temp that is a symbolic link is refused. A move
   within one filesystem is a plain rename.
-- On INT/TERM it prints how to finish. Re-running the same command completes an
+- On INT/TERM/HUP (Ctrl-C, kill, closed terminal) it prints how to finish. Re-running the same command completes an
   interrupted move (moved aliases are absent at the old base; `.env` is written after
   the moves). Do not start Spokes in between: they would mount the old base. One
   exception: an interrupt while the old copy of a cross-filesystem move is being
@@ -110,7 +116,11 @@ vde set-projects-dir
 - Warns (stderr) when an exported `VDE_PROJECTS_DIR` differs from the `.env` value,
   because the exported value outranks `.env`; `vde start` warns the same way.
   Run `unset VDE_PROJECTS_DIR` to use `.env`. Precedence itself is unchanged.
-- Reports exactly what was moved and what was skipped.
+- Reports exactly what was moved and what was skipped. If a folder could not be moved,
+  the command leaves `.env` on the old base, prints `ACTION REQUIRED` and exits 1; fix
+  the cause and run the same command again (folders already moved are not touched).
+  `.env` is rewritten through a temporary file and a rename, so a failed write cannot
+  truncate it.
 
 ### Spoke Creation
 

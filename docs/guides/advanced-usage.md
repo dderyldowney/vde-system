@@ -255,10 +255,11 @@ vde set-projects-dir "$HOME/Projects"
 This safely **moves** your existing alias folders from the old base to the new one, updates `.env`, and regenerates Spoke configs. These guarantees matter:
 
 - Name **collisions are skipped**: if `<new-base>/python` already exists, the old one is left in place rather than overwritten or deleted.
-- It **refuses to run while a Spoke is running** whose folder it would move, because writes made during a move could be lost. Stop that Spoke (`vde stop python`), then run the command again. Nothing is moved until every such Spoke is stopped.
+- It **refuses to run while a Spoke is running** whose folder it would move, because writes made during a move could be lost. Stop that Spoke (`vde stop python`), then run the command again. Nothing is moved until every such Spoke is stopped. Moving `python` also needs JupyterLab stopped, because its notebooks live inside `python/jupyterlabs`. Close editors and other tools that have files open in the folder, too.
 - A move to a **different disk or filesystem** is copied to `<alias>.vde-moving` first and renamed only when the copy is complete; your old folder is deleted last. A failed or interrupted copy therefore never leaves a half-finished folder, and your original stays untouched until the copy succeeds.
 - If the command is **interrupted** (Ctrl-C, closed terminal), run **the same command again** to finish, and do not start Spokes until it has completed. One exception: if the interrupt lands while the old folder is being deleted after a move to another disk, the message tells you which old folder is left behind. Check the new copy, then delete the old folder yourself.
-- If Docker cannot be queried, or `.env` cannot be written, the command stops **before** moving anything and tells you why.
+- If Docker cannot be queried (not installed, not running, not allowed, or, on systems that have the `timeout` command, silent for 20 seconds), or `.env` (or the folder it lives in) cannot be written, the command stops **before** moving anything and tells you why.
+- If one folder cannot be moved, the command says which one, finishes the rest, prints `ACTION REQUIRED` and **exits with an error**, leaving `.env` on the old base. Fix the cause (free space, permissions) and run the same command again; folders that already moved are not touched. Do not start Spokes in between.
 - **No image rebuild** is required: Spokes pick up the new location on their next start.
 
 One thing to watch: a `VDE_PROJECTS_DIR` that your shell exports (for example from `~/.zshrc`) **outranks** the value in `.env`. If the two differ, `vde set-projects-dir` and `vde start` print a warning; run `unset VDE_PROJECTS_DIR` and remove the export from your shell profile so Spokes use the new base.

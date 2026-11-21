@@ -97,9 +97,10 @@ exit 0
 EOF
 }
 typeset SPD_OUT SPD_RC
-_run_spd() {  # $1=forge ; rest=args ; PATH puts the forge's stubs first
+typeset -a SPD_ENV=()   # extra NAME=value pairs for the next _run_spd
+_run_spd() {  # $1=forge ; rest=args ; PATH puts the forge's stubs first; 60s cap so a hang is a FAIL, not a stall
     local forge="$1"; shift
-    SPD_OUT="$(env -u VDE_PROJECTS_DIR VDE_NO_CACHE=1 PATH="${forge}/stubs:${PATH}" \
+    SPD_OUT="$(timeout 60 env -u VDE_PROJECTS_DIR VDE_NO_CACHE=1 "${SPD_ENV[@]}" PATH="${forge}/stubs:${PATH}" \
         "${forge}/bin/vde-set-projects-dir" "$@" 2>&1)"
     SPD_RC=$?
 }
@@ -171,7 +172,19 @@ test_crossfs_failed_copy_leaves_source_authoritative() {
     assert_false "no (partial) alias at destination" "[[ -e '${new}/python' ]]"
     assert_false "no .vde-moving temp left behind" "[[ -e '${new}/python.vde-moving' ]]"
     assert_has   "visibly reports the failed alias by name" "Could not move 'python'; left in place at ${old}/python" "${SPD_OUT}"
-    assert_has   "summary says it could not be moved (not 'already existed')" "could not be moved" "${SPD_OUT}"
+    assert_eq    "a failed move is a failed command (VDE_ERR_GENERAL), not success" "${VDE_ERR_GENERAL}" "${SPD_RC}"
+    assert_has   "says action is required" "ACTION REQUIRED" "${SPD_OUT}"
+    assert_has   "says .env was NOT switched" ".env was NOT changed" "${SPD_OUT}"
+    assert_eq    ".env still names the old base (a re-run can finish the job)" "${old}" "$(_env_val "${forge}")"
+    assert_false "no 'Re-pointed' banner after a failure" "[[ '${SPD_OUT}' == *'Projects Base Re-pointed'* ]]"
+
+    # The student fixes the cause (here: the cp stub goes away) and re-runs the same command.
+    rm -f "${forge}/stubs/cp"
+    _run_spd "${forge}" "${new}"
+    assert_eq    "re-run succeeds" "${VDE_SUCCESS}" "${SPD_RC}"
+    assert_true  "python is now at the new base" "[[ -f '${new}/python/hello.txt' && -f '${new}/python/sub/deep.txt' ]]"
+    assert_false "and gone from the old base" "[[ -e '${old}/python' ]]"
+    assert_eq    ".env now names the new base" "${new:A}" "$(_env_val "${forge}")"
 }
 
 test_crossfs_real_move_completes() {
@@ -334,7 +347,8 @@ test_spd_warns_on_stale_export() {
 
 test_vde_start_calls_the_helper() {
     test_start "10: bin/vde's start arm calls the helper before vde_action_start"
-    local arm; arm="$(awk '/^    start\)/{f=1} f{print} f&&/;;/{exit}' "${VDE_SRC}")"
+    # Comment lines are dropped first: a call that exists only in a comment must not count.
+    local arm; arm="$(awk '/^    start\)/{f=1} f{print} f&&/;;/{exit}' "${VDE_SRC}" | grep -vE '^[[:space:]]*#')"
     assert_has "start arm warns" "vde_warn_stale_projects_env" "${arm}"
     local pre="${arm%%vde_action_start*}"
     assert_has "warning precedes the action" "vde_warn_stale_projects_env" "${pre}"
@@ -458,8 +472,194 @@ EOF
     assert_eq    ".env still names the old base" "${old}" "$(_env_val "${forge}")"
 }
 
+# =============================================================================
+# Sourcery review of PR #670: each case below reproduces a verified finding.
+# =============================================================================
+test_noop_base_still_warns_about_stale_export() {
+    test_start "10: the 'already the base' early exit still warns when the export outranks .env"
+    local envbase="${SANDBOX_ROOT}/n-env" exp="${SANDBOX_ROOT}/n-exp"
+    mkdir -p "${envbase}" "${exp}"
+    local forge; forge="$(_make_forge "${envbase}")"
+    SPD_OUT="$(env VDE_PROJECTS_DIR="${exp}" VDE_NO_CACHE=1 PATH="${forge}/stubs:${PATH}" \
+        "${forge}/bin/vde-set-projects-dir" "${exp}" 2>&1)"; SPD_RC=$?
+    assert_eq  "exits cleanly" "${VDE_SUCCESS}" "${SPD_RC}"
+    assert_has "reports nothing to move" "Nothing to move" "${SPD_OUT}"
+    assert_has "warns the export outranks .env" "unset VDE_PROJECTS_DIR" "${SPD_OUT}"
+}
+
+test_running_jupyterlab_blocks_moving_python() {
+    test_start "7: vde-jupyterlab mounts python/jupyterlabs, so it blocks moving the python folder"
+    local old="${SANDBOX_ROOT}/j1-old" new="${SANDBOX_ROOT}/j1-new"
+    _mk_alias "${old}" python
+    local forge; forge="$(_make_forge "${old}")"
+    _stub_docker_running "${forge}" vde-jupyterlab
+    _run_spd "${forge}" "${new}"
+    assert_eq    "refuses with VDE_ERR_GENERAL" "${VDE_ERR_GENERAL}" "${SPD_RC}"
+    assert_has   "names the running JupyterLab Spoke" "vde-jupyterlab" "${SPD_OUT}"
+    assert_true  "python untouched" "[[ -f '${old}/python/hello.txt' ]]"
+    assert_false "new base never created" "[[ -e '${new}' ]]"
+}
+
+test_hung_docker_query_times_out_and_refuses() {
+    test_start "7: a Docker query that never answers times out and refuses (does not hang)"
+    local old="${SANDBOX_ROOT}/h1-old" new="${SANDBOX_ROOT}/h1-new"
+    _mk_alias "${old}" python
+    local forge; forge="$(_make_forge "${old}")"
+    mkfifo "${forge}/never"
+    _stub "${forge}" docker <<EOF
+[[ "\$1" == ps ]] && cat "${forge}/never"
+exit 0
+EOF
+    SPD_ENV=(VDE_SPD_DOCKER_TIMEOUT=2)
+    _run_spd "${forge}" "${new}"
+    SPD_ENV=()
+    assert_eq    "refuses with VDE_ERR_GENERAL (not a 124 hang-kill)" "${VDE_ERR_GENERAL}" "${SPD_RC}"
+    assert_has   "says it cannot tell what is running" "Cannot tell which Spokes are running" "${SPD_OUT}"
+    assert_true  "source intact" "[[ -f '${old}/python/hello.txt' ]]"
+}
+
+test_missing_docker_fails_closed() {
+    test_start "7: no docker executable cannot be read as 'nothing is running'"
+    local fn; fn="$(awk '/^vde_spd_running_spokes\(\) \{/,/^\}$/' "${SPD_SRC}")"
+    local rc; rc="$(PATH=/nonexistent "$(whence -p zsh)" -fc "${fn}
+vde_spd_running_spokes >/dev/null 2>&1; print \$?")"
+    assert_eq "vde_spd_running_spokes fails when docker is not on PATH" "1" "${rc}"
+}
+
+test_hangup_prints_how_to_finish() {
+    test_start "8: SIGHUP (terminal closed) prints the same recovery message as INT/TERM"
+    local old="${SANDBOX_ROOT}/u1-old" new="${SANDBOX_ROOT}/u1-new"
+    _mk_alias "${old}" python; _mk_alias "${old}" rust
+    local forge; forge="$(_make_forge "${old}")"
+    _stub "${forge}" mv <<EOF
+${REAL_MV} "\$@" || exit \$?
+if [[ ! -e "${forge}/signaled" ]] && (( \${#\${(M)@:#*/python}} )); then : > "${forge}/signaled"; kill -HUP \$PPID; fi
+EOF
+    _run_spd "${forge}" "${new}"
+    assert_true  "run did not succeed" "(( ${SPD_RC} != 0 ))"
+    assert_has   "says it was interrupted while moving" "Interrupted while moving" "${SPD_OUT}"
+    assert_eq    ".env still names the old base" "${old}" "$(_env_val "${forge}")"
+}
+
+test_signal_right_after_env_write_reports_post_update() {
+    test_start "8: a signal in the gap right after .env is written is reported as 'base updated'"
+    local old="${SANDBOX_ROOT}/g1-old" new="${SANDBOX_ROOT}/g1-new"
+    _mk_alias "${old}" python
+    local forge; forge="$(_make_forge "${old}")"
+    local name
+    for name in chmod mv; do                       # the last command of the .env writer, old or new
+        _stub "${forge}" ${name} <<EOF
+$(whence -p ${name}) "\$@" || exit \$?
+if [[ ! -e "${forge}/envsig" ]] && grep -qF "VDE_PROJECTS_DIR=${new}" "${forge}/.env" 2>/dev/null; then : > "${forge}/envsig"; kill -TERM \$PPID; fi
+EOF
+    done
+    _run_spd "${forge}" "${new}"
+    assert_true  "run did not succeed" "(( ${SPD_RC} != 0 ))"
+    assert_has   "reports the post-update interruption" "Interrupted after the base was updated" "${SPD_OUT}"
+    assert_eq    ".env names the new base" "${new:A}" "$(_env_val "${forge}")"
+}
+
+test_signal_right_after_publish_reports_old_copy() {
+    test_start "8: a signal right after the temp is renamed into place names the old copy to delete"
+    _xdev_ok || { test_skip "no usable second device (/dev/shm)"; return; }
+    local old="${SANDBOX_ROOT}/p1-old" new="${SHM_ROOT}/p1-new"
+    _mk_alias "${old}" python
+    local forge; forge="$(_make_forge "${old}")"
+    _stub "${forge}" mv <<EOF
+${REAL_MV} "\$@" || exit \$?
+if (( \${#\${(M)@:#*.vde-moving}} )); then kill -TERM \$PPID; fi
+EOF
+    _run_spd "${forge}" "${new}"
+    assert_true  "run did not succeed" "(( ${SPD_RC} != 0 ))"
+    assert_has   "says the old copy was not fully removed" "not fully removed" "${SPD_OUT}"
+    assert_has   "names the folder to delete" "delete ${old}/python by hand" "${SPD_OUT}"
+    assert_true  "the published copy is complete" "[[ -f '${new}/python/hello.txt' ]]"
+}
+
+test_unremovable_stale_temp_is_refused() {
+    test_start "6: a stale <alias>.vde-moving that cannot be removed is refused (the copy never nests inside it)"
+    if (( EUID == 0 )); then test_skip "running as root: file modes cannot make the temp unremovable"; return; fi
+    _xdev_ok || { test_skip "no usable second device (/dev/shm)"; return; }
+    local old="${SANDBOX_ROOT}/k1-old" new="${SHM_ROOT}/k1-new"
+    _mk_alias "${old}" python
+    mkdir -p "${new}/python.vde-moving/locked"
+    print stale > "${new}/python.vde-moving/locked/f"
+    chmod 555 "${new}/python.vde-moving/locked"
+    local forge; forge="$(_make_forge "${old}")"
+    _run_spd "${forge}" "${new}"
+    chmod -R u+w "${new}/python.vde-moving"
+
+    assert_true  "source intact" "[[ -f '${old}/python/hello.txt' ]]"
+    assert_false "nothing published at <dest>/python" "[[ -e '${new}/python' ]]"
+    assert_false "the copy did not nest inside the stale temp" "[[ -e '${new}/python.vde-moving/python' ]]"
+    assert_has   "tells the student to remove the leftover" "leftover" "${SPD_OUT}"
+}
+
+test_unwritable_env_dir_refuses_before_moving() {
+    test_start "8: an .env whose DIRECTORY is read-only (atomic rewrite impossible) is refused before moving"
+    if (( EUID == 0 )); then test_skip "running as root: directory modes cannot block writes"; return; fi
+    local old="${SANDBOX_ROOT}/q1-old" new="${SANDBOX_ROOT}/q1-new"
+    _mk_alias "${old}" python
+    local forge; forge="$(_make_forge "${old}")"
+    # .env is a symlink to a writable FILE inside a read-only directory: an in-place
+    # write would work, but the temp+rename rewrite could not create its temp there.
+    local rodir="${SANDBOX_ROOT}/q1-ro"; mkdir -p "${rodir}"
+    print -r -- "VDE_PROJECTS_DIR=${old}" > "${rodir}/real.env"
+    rm -f "${forge}/.env"; ln -s "${rodir}/real.env" "${forge}/.env"
+    chmod 555 "${rodir}"
+    _run_spd "${forge}" "${new}"
+    chmod 755 "${rodir}"
+    assert_eq    "refuses with VDE_ERR_PERMISSION" "${VDE_ERR_PERMISSION}" "${SPD_RC}"
+    assert_true  "python still at the old base" "[[ -f '${old}/python/hello.txt' ]]"
+    assert_false "new base never created" "[[ -e '${new}' ]]"
+}
+
+test_env_rewrite_is_atomic_and_follows_symlink() {
+    test_start "8: .env is rewritten via temp+rename: other keys kept, symlink kept, no temp left"
+    local old="${SANDBOX_ROOT}/s2-old" new="${SANDBOX_ROOT}/s2-new" real="${SANDBOX_ROOT}/s2-real.env"
+    _mk_alias "${old}" python
+    local forge; forge="$(_make_forge "${old}")"
+    print -rl -- "KEEP_ME=1" "VDE_PROJECTS_DIR=${old}" "LAST=2" > "${real}"
+    rm -f "${forge}/.env"; ln -s "${real}" "${forge}/.env"
+    _run_spd "${forge}" "${new}"
+    assert_eq    "re-point succeeds" "${VDE_SUCCESS}" "${SPD_RC}"
+    assert_true  ".env is still a symlink" "[[ -L '${forge}/.env' ]]"
+    assert_eq    "target now names the new base" "VDE_PROJECTS_DIR=${new:A}" "$(grep '^VDE_PROJECTS_DIR=' "${real}")"
+    assert_true  "other keys preserved" "grep -qx 'KEEP_ME=1' '${real}' && grep -qx 'LAST=2' '${real}'"
+    assert_eq    "no temp file left beside .env" "0" "$(ls -A "${SANDBOX_ROOT}" | grep -c 's2-real.env.vde-tmp')"
+    assert_eq    "no temp file left in the forge" "0" "$(ls -A "${forge}" | grep -c '\.env\.vde-tmp')"
+}
+
+test_env_update_failure_is_reported_and_leaves_env_intact() {
+    test_start "8: if the .env rewrite fails after the moves, say so, exit non-zero, and keep .env untouched"
+    local old="${SANDBOX_ROOT}/z1-old" new="${SANDBOX_ROOT}/z1-new"
+    _mk_alias "${old}" python
+    local forge; forge="$(_make_forge "${old}")"
+    # The rename that would publish the new .env fails (a full disk, an I/O error...).
+    _stub "${forge}" mv <<EOF
+if (( \${#\${(M)@:#*.env.vde-tmp.*}} )); then exit 1; fi
+exec ${REAL_MV} "\$@"
+EOF
+    _run_spd "${forge}" "${new}"
+    assert_eq    "exits VDE_ERR_PERMISSION" "${VDE_ERR_PERMISSION}" "${SPD_RC}"
+    assert_has   "tells the student the exact line to set by hand" "Set VDE_PROJECTS_DIR=${new:A}" "${SPD_OUT}"
+    assert_eq    ".env still holds its previous (complete) content" "${old}" "$(_env_val "${forge}")"
+    assert_eq    "no temp file left behind" "0" "$(ls -A "${forge}" | grep -c '\.env\.vde-tmp')"
+}
+
 test_running_spoke_of_moved_alias_blocks
 test_running_spoke_of_unmoved_alias_does_not_block
+test_env_update_failure_is_reported_and_leaves_env_intact
+test_noop_base_still_warns_about_stale_export
+test_running_jupyterlab_blocks_moving_python
+test_hung_docker_query_times_out_and_refuses
+test_missing_docker_fails_closed
+test_hangup_prints_how_to_finish
+test_signal_right_after_env_write_reports_post_update
+test_signal_right_after_publish_reports_old_copy
+test_unremovable_stale_temp_is_refused
+test_unwritable_env_dir_refuses_before_moving
+test_env_rewrite_is_atomic_and_follows_symlink
 test_docker_query_failure_refuses
 test_running_match_is_exact
 test_spoke_started_during_copy_discards_the_copy
