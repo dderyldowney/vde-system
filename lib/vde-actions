@@ -37,6 +37,22 @@ vde_spoke_env_warning() {
     return 0
 }
 
+# vde_spoke_env_scrub ENV_FILE - makes the root .env WIN for the two variables the Compose manifests
+# interpolate (VDE_AUTHORIZED_KEY, POSTGRES_DEV_PASSWORD) by unsetting, in this process, each of them
+# that ENV_FILE defines. A name the file does NOT define is left alone, so a value exported only in the
+# shell still reaches the Spoke (deliberate: the file wins, it does not forbid the shell).
+# Compose lets a process variable beat --env-file, and a shell or test
+# runner that loaded the .env itself holds the QUOTED key, which a Spoke then writes as an invalid
+# authorized_keys line (SSH denied). The Proof of Life caught exactly this (Signet #666).
+vde_spoke_env_scrub() {
+    local env_file="${1}" name
+    [[ -f "${env_file}" ]] || return 0
+    for name in VDE_AUTHORIZED_KEY POSTGRES_DEV_PASSWORD; do
+        grep -qE "^${name}=" "${env_file}" && unset "${name}"
+    done
+    return 0
+}
+
 # vde_action_start - vde start <alias...|default|all> [-f]  - ignite Spokes (disk/breath checks, locks, compose up)
 vde_action_start() {
     vde_ensure_disk_space "${VDE_DISK_THRESHOLD:-95}" || exit $?
@@ -226,6 +242,7 @@ vde_action_start() {
         [[ -n "${VDE_TRACE_MODE}" ]] && vde_trace_debug "compose_up_cmd=${compose_up_cmd[*]}"
         
         [[ -f "${VDE_ROOT_DIR}/.env" ]] && compose_up_cmd+=(--env-file "${VDE_ROOT_DIR}/.env")
+        vde_spoke_env_scrub "${VDE_ROOT_DIR}/.env"
         local _spoke_env_gap
         _spoke_env_gap="$(vde_spoke_env_warning "${VDE_ROOT_DIR}/.env")"
         [[ -n "${_spoke_env_gap}" ]] && vde_log_warn "${CANONICAL_NAME}: ${_spoke_env_gap}" "ssh"

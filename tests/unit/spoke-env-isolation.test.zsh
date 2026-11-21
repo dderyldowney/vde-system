@@ -141,10 +141,12 @@ render_env_defects() {
     print -r -- 'DATABASE_URL=postgresql://devuser:${POSTGRES_DEV_PASSWORD:-vde_dev_pass}@postgres:5432/x' \
         > "${root}/env-files/${name}.env"
     cp "configs/docker/${category}/${name}/docker-compose.yml" "${mdir}/"
-    # Compose lets a variable in the PROCESS environment beat --env-file, so the two names
-    # under test are removed from the caller's environment before every compose call.
-    with_flag="$(env -u "${PW_NAME}" -u VDE_AUTHORIZED_KEY VDE_HOST_SSH_AUTH_SOCK=/nonexistent/agent.sock VDE_DOCKER_SOCK_GID=1000 \
-        docker compose --env-file "${root}/.env" -f "${mdir}/docker-compose.yml" config 2>&1)"
+    # Compose lets a variable in the PROCESS environment beat --env-file. The WITH case therefore
+    # runs through the product's own scrub (vde_spoke_env_scrub, which `vde start` calls before
+    # Compose): a same-named variable in the caller's shell must not beat the root .env. The
+    # WITHOUT case has no root .env, so there the two names are removed by hand.
+    with_flag="$(VDE_HOST_SSH_AUTH_SOCK=/nonexistent/agent.sock VDE_DOCKER_SOCK_GID=1000 \
+        zsh -c 'source "${VDE_ROOT_DIR}/lib/vde-actions"; vde_spoke_env_scrub "$1/.env"; docker compose --env-file "$1/.env" -f "$2" config 2>&1' _ "${root}" "${mdir}/docker-compose.yml")"
     without_flag="$(env -u "${PW_NAME}" -u VDE_AUTHORIZED_KEY VDE_HOST_SSH_AUTH_SOCK=/nonexistent/agent.sock VDE_DOCKER_SOCK_GID=1000 \
         docker compose -f "${mdir}/docker-compose.yml" config 2>&1)"
     rm -rf -- "${root}"
@@ -175,7 +177,9 @@ else
     typeset defects
     # The two names are exported with a decoy value on purpose: a caller that has them set
     # must not change what the scratch tree renders.
-    defects="$( export "${PW_NAME}=ambient_decoy" VDE_AUTHORIZED_KEY=ambient_decoy_key
+    # The key decoy keeps its QUOTES, the way a naive .env loader (tests/features/environment.py)
+    # exports it: that is what broke the Proof of Life heartbeat.
+    defects="$( export "${PW_NAME}=ambient_decoy" VDE_AUTHORIZED_KEY='"ssh-ed25519 AAAAdecoy decoy@host"'
                 render_env_defects languages python
                 render_env_defects services postgres )"
     defects="${defects//$'\n'$'\n'/$'\n'}"
@@ -240,6 +244,14 @@ if grep -vE '^[[:space:]]*#' lib/vde-actions | grep -qF 'vde_spoke_env_warning "
     test_pass "lib/vde-actions calls vde_spoke_env_warning on the root .env"
 else
     test_fail "lib/vde-actions" "vde_action_start never calls vde_spoke_env_warning for the root .env"
+fi
+
+test_start "vde_action_start scrubs the shell's copies of the two variables before Compose"
+# A source pin like check 3: comment lines are ignored, dead code is not detected.
+if grep -vE '^[[:space:]]*#' lib/vde-actions | grep -qF 'vde_spoke_env_scrub "${VDE_ROOT_DIR}/.env"'; then
+    test_pass "lib/vde-actions calls vde_spoke_env_scrub on the root .env"
+else
+    test_fail "lib/vde-actions" "vde_action_start never calls vde_spoke_env_scrub: a quoted key exported by the caller would beat the root .env"
 fi
 
 echo ""
