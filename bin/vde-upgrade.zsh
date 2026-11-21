@@ -176,19 +176,19 @@ upgrade_busy() {
 
 # upgrade_bounded SECONDS COMMAND... - run COMMAND, kill it after SECONDS, and return 124 when
 # it was killed. Needs nothing but the shell, so a machine without timeout(1) is bounded too.
-# The watchdog runs with its output closed and removes its own sleep when it is stopped: a
-# stray sleep that kept the caller's pipe open would make anything reading this script's
-# output (a pipeline, $(...)) wait for the whole deadline after the work was done.
+# The wait is zselect, a shell builtin (the repo's approved wait primitive, never sleep): there
+# is no child process left behind to keep the caller's pipe open, and the watchdog runs with
+# its output closed as well, so anything reading this script's output (a pipeline, $(...))
+# gets it the moment the work is done.
 upgrade_bounded() {
   local limit="$1" pid watchdog rc
   shift
   "$@" &
   pid=$!
   (
-    sleep "${limit}" &
-    local sleeper=$!
-    trap 'kill ${sleeper} 2>/dev/null; exit 0' TERM
-    wait ${sleeper} && kill "${pid}" 2>/dev/null
+    zmodload zsh/zselect 2>/dev/null
+    zselect -t $(( limit * 100 ))
+    kill "${pid}" 2>/dev/null
   ) >/dev/null 2>&1 &
   watchdog=$!
   wait "${pid}" 2>/dev/null

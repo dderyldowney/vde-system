@@ -624,7 +624,8 @@ exit 255' > "${fakebin}/ssh"; chmod +x "${fakebin}/ssh"
   [[ "$(< "${log}")" == *"MyOwnOption=1"* && "$(< "${log}")" != *"BatchMode=yes"* ]] \
     && test_pass "case29b a GIT_SSH_COMMAND you set is used as it is, with nothing appended" || test_fail "case29b a GIT_SSH_COMMAND you set is used as it is, with nothing appended" "ssh-args=$(< "${log}")"
   print -r -- '#!/usr/bin/env zsh
-sleep 30' > "${fakebin}/ssh"
+zmodload zsh/zselect
+zselect -t 3000' > "${fakebin}/ssh"
   f="$(make_fixture c29c)"; git -C "${f}/install" remote set-url origin "ssh://git@example.invalid/none.git"
   t0=${SECONDS}; PATH="${fakebin}:${PATH}" VDE_UPGRADE_NET_TIMEOUT=2 run_up "${f}"
   [[ "${UP_RC}" == 3 && "${UP_OUT}" == *"did not answer"* && $(( SECONDS - t0 )) -lt 20 ]] \
