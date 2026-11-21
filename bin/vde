@@ -250,6 +250,9 @@ case ${ACTION} in
     prune)
         vde_run "prune" "${VDE_ROOT_DIR}/bin/vde-prune.zsh" "${input_targets[@]}"
         ;;
+    upgrade)
+        vde_run "upgrade" "${VDE_ROOT_DIR}/bin/vde-upgrade.zsh" "${input_targets[@]}"
+        ;;
     rebuild-cache)
         vde_run "rebuild-cache" "${VDE_ROOT_DIR}/bin/vde-rebuild-cache" "${input_targets[@]}"
         ;;
