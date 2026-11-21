@@ -123,9 +123,17 @@ upgrade_same_as_incoming() {
 # unless the update touches the same path. Three kinds of local state stand in the way: edits
 # to tracked files, and untracked or ignored files the update adds.
 upgrade_preflight() {
-  local old="$1" new="$2" p
-  local -a mine stray
+  local old="$1" new="$2" p entry
+  local -a mine stray flagged
   upgrade_array mine git diff -z --no-renames --name-only HEAD
+  # A tracked file marked assume-unchanged (h) or skip-worktree (S, s) is invisible to git diff,
+  # so look at it directly. A file that is simply absent (a sparse checkout) is not an edit.
+  upgrade_array flagged git ls-files -z -v
+  for entry in ${flagged}; do
+    [[ "${entry[1]}" == (h|s|S) ]] || continue
+    p="${entry[3,-1]}"
+    [[ -e "${p}" ]] && ! upgrade_same_as_incoming "${p}" HEAD && mine+=( "${p}" )
+  done
   upgrade_array incoming git diff -z --no-renames --name-only "${old}" "${new}"
   upgrade_array stray git ls-files -z --others
   clash=( ${mine:*incoming} )
@@ -140,18 +148,30 @@ upgrade_preflight() {
 }
 
 # upgrade_busy ROOT - prints the name of a running rebuild or start (a live per-Spoke lock) and
-# returns 0; returns 1 when nothing is running.
+# returns 0; returns 1 when nothing is running. claim_lock (lib/vm-lock) writes PID:PGID:TIMESTAMP
+# to a lock's pid file, so only the part before the first colon is the pid. The locks directory is
+# VDE_LOCKS_DIR when set, as everywhere else in VDE, otherwise <install>/.locks.
 upgrade_busy() {
-  local lock pid
-  for lock in "${1}"/.locks/vms/*.lock(N/); do
+  local locks="${VDE_LOCKS_DIR:-${1}/.locks}" lock rec pid
+  for lock in "${locks}"/vms/*.lock(N/); do
     [[ -r "${lock}/pid" ]] || continue
-    pid="$(< "${lock}/pid")"
-    if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
+    rec="$(< "${lock}/pid")"
+    pid="${rec%%:*}"
+    if [[ "${pid}" == <-> ]] && kill -0 "${pid}" 2>/dev/null; then
       print -r -- "${lock:t:r}"
       return 0
     fi
   done
   return 1
+}
+
+# upgrade_restore REV PATH... - put back files that were set aside, with their executable bit.
+upgrade_restore() {
+  local rev="$1" p; shift
+  for p in "$@"; do
+    git show "${rev}:${p}" > "${p}" 2>/dev/null
+    [[ "$(git ls-tree "${rev}" -- "${p}" | cut -c1-6)" == 100755 ]] && chmod +x "${p}"
+  done
 }
 
 main() {
@@ -188,6 +208,7 @@ main() {
 
   # A stalled network or a credential prompt must not hang the upgrade.
   export GIT_TERMINAL_PROMPT=0 GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=30
+  export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh} -o BatchMode=yes -o ConnectTimeout=30 -o ServerAliveInterval=15 -o ServerAliveCountMax=2"
   local -a bound=()
   command -v timeout >/dev/null 2>&1 && bound=( timeout 120 )
 
@@ -266,16 +287,30 @@ Nothing was changed. Move them aside and run vde upgrade again."
     return $?
   fi
 
+  # Nobody may have switched branches or moved HEAD since the checks above.
+  if [[ "$(git symbolic-ref --quiet --short HEAD 2>/dev/null)" != "${branch}" || "$(git rev-parse HEAD)" != "${old}" ]]; then
+    upgrade_refuse ${UP_DRIFT} "this checkout changed while the upgrade was being prepared (it is no longer on '${branch}' at ${old[1,7]}). Nothing was changed; run vde upgrade again."
+    return $?
+  fi
+
   # Files already identical to the incoming ones lose nothing, but git will not overwrite an
-  # untracked or ignored file itself. Set them aside; put them back if the merge fails.
+  # untracked or ignored file itself. Set them aside, checking each once more as it goes; put
+  # them back if anything has changed or the merge fails.
   local p
-  for p in ${identical}; do rm -f -- "${p}"; done
+  local -a removed=()
+  for p in ${identical}; do
+    if upgrade_same_as_incoming "${p}" "${new}"; then
+      rm -f -- "${p}"
+      removed+=( "${p}" )
+    else
+      upgrade_restore "${new}" "${removed[@]}"
+      upgrade_refuse ${UP_DRIFT} "${p} changed while the upgrade was being prepared, so it was left alone. Nothing was changed; run vde upgrade again."
+      return $?
+    fi
+  done
   # Hooks off: an update must not be able to run code through a hook it brings.
   if ! git -c core.hooksPath=/dev/null merge --ff-only --quiet "${new}" 2>&1; then
-    for p in ${identical}; do
-      git show "${new}:${p}" > "${p}" 2>/dev/null
-      [[ "$(git ls-tree "${new}" -- "${p}" | cut -c1-6)" == 100755 ]] && chmod +x "${p}"
-    done
+    upgrade_restore "${new}" "${removed[@]}"
     upgrade_refuse ${UP_DRIFT} "git could not fast-forward '${branch}' (see its message above). Nothing was changed."
     return $?
   fi

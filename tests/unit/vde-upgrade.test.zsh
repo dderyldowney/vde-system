@@ -523,6 +523,68 @@ touch "$(git rev-parse --git-dir)/hook-ran"' > "${f}/seed/.githooks/post-merge";
     && test_pass "case26 upgraded, the hook file arrived, and it did not run" || test_fail "case26 upgraded, the hook file arrived, and it did not run" "rc=${UP_RC} ran=$([[ -f "${f}/install/.git/hook-ran" ]] && echo yes || echo no) out=${UP_OUT}"
 }
 
+test_case27_the_busy_check_reads_the_real_lock_record() {
+  test_start "27: a live lock in the REAL claim_lock format (PID:PGID:TIMESTAMP), in the default or a configured locks directory, blocks the upgrade"
+  local f before
+  f="$(make_fixture c27a)"; publish "${f}" stable file-a "new" "1.5.7"
+  mkdir -p "${f}/install/.locks/vms/vde-base.lock"; print -r -- "$$:$$:$(date +%s)" > "${f}/install/.locks/vms/vde-base.lock/pid"
+  before="$(head_of "${f}")"; run_up "${f}"
+  [[ "${UP_RC}" == 9 && "$(head_of "${f}")" == "${before}" ]] \
+    && test_pass "case27a PID:PGID:TIMESTAMP with a live pid: exit 9, nothing changed" || test_fail "case27a PID:PGID:TIMESTAMP with a live pid: exit 9, nothing changed" "rc=${UP_RC} out=${UP_OUT}"
+  f="$(make_fixture c27b)"; publish "${f}" stable file-a "new" "1.5.7"
+  mkdir -p "${TMP_ROOT}/elsewhere-locks/vms/vde-python.lock"; print -r -- "$$:$$:$(date +%s)" > "${TMP_ROOT}/elsewhere-locks/vms/vde-python.lock/pid"
+  before="$(head_of "${f}")"; VDE_LOCKS_DIR="${TMP_ROOT}/elsewhere-locks" run_up "${f}"
+  [[ "${UP_RC}" == 9 && "$(head_of "${f}")" == "${before}" ]] \
+    && test_pass "case27b a lock under a configured VDE_LOCKS_DIR is honoured" || test_fail "case27b a lock under a configured VDE_LOCKS_DIR is honoured" "rc=${UP_RC} out=${UP_OUT}"
+  f="$(make_fixture c27c)"; publish "${f}" stable file-a "new" "1.5.7"
+  mkdir -p "${f}/install/.locks/vms/vde-base.lock"; print -r -- "999999:999999:$(date +%s)" > "${f}/install/.locks/vms/vde-base.lock/pid"
+  run_up "${f}"
+  [[ "${UP_RC}" == 0 ]] \
+    && test_pass "case27c a stale record (dead pid) in the real format does not block" || test_fail "case27c a stale record (dead pid) in the real format does not block" "rc=${UP_RC} out=${UP_OUT}"
+}
+
+test_case28_hidden_local_edits_are_still_edits() {
+  test_start "28: a file marked assume-unchanged or skip-worktree that the update changes is a conflict, not an invisible edit"
+  local f before
+  f="$(make_fixture c28a)"; publish "${f}" stable file-a "new" "1.5.7"
+  git -C "${f}/install" update-index --assume-unchanged file-a; print -r -- "my hidden edit" > "${f}/install/file-a"
+  before="$(head_of "${f}")"; run_up "${f}"
+  [[ "${UP_RC}" == 13 && "${UP_OUT}" == *"changes files you have edited"* && "$(cat "${f}/install/file-a")" == "my hidden edit" && "$(head_of "${f}")" == "${before}" ]] \
+    && test_pass "case28a assume-unchanged: exit 13 from the script's OWN check, the edit kept" || test_fail "case28a assume-unchanged: exit 13 from the script's OWN check, the edit kept" "rc=${UP_RC} out=${UP_OUT}"
+  f="$(make_fixture c28b)"; publish "${f}" stable file-a "new" "1.5.7"
+  git -C "${f}/install" update-index --skip-worktree file-a; print -r -- "my hidden edit" > "${f}/install/file-a"
+  run_up "${f}"
+  [[ "${UP_RC}" == 13 && "${UP_OUT}" == *"changes files you have edited"* && "$(cat "${f}/install/file-a")" == "my hidden edit" ]] \
+    && test_pass "case28b skip-worktree: exit 13 from the script's OWN check, the edit kept" || test_fail "case28b skip-worktree: exit 13 from the script's OWN check, the edit kept" "rc=${UP_RC} out=${UP_OUT}"
+}
+
+test_case29_ssh_is_bounded_and_never_prompts() {
+  test_start "29: git reaches origin over SSH with a connect timeout and no prompts, even when the timeout command does not exist"
+  local f fakebin="${TMP_ROOT}/fakebin29" log="${TMP_ROOT}/ssh29.log"
+  f="$(make_fixture c29)"
+  mkdir -p "${fakebin}"
+  print -r -- '#!/bin/sh
+echo "$@" >> "'"${log}"'"
+exit 255' > "${fakebin}/ssh"; chmod +x "${fakebin}/ssh"
+  git -C "${f}/install" remote set-url origin "ssh://git@example.invalid/none.git"
+  : > "${log}"
+  PATH="${fakebin}:${PATH}" run_up "${f}"
+  [[ "${UP_RC}" == 3 && "$(< "${log}")" == *"ConnectTimeout="* && "$(< "${log}")" == *"BatchMode=yes"* ]] \
+    && test_pass "case29 exit 3, and ssh was given ConnectTimeout and BatchMode=yes" || test_fail "case29 exit 3, and ssh was given ConnectTimeout and BatchMode=yes" "rc=${UP_RC} ssh-args=$(< "${log}") out=${UP_OUT}"
+}
+
+test_case30_the_router_keeps_the_scripts_own_message_and_status() {
+  test_start "30: bin/vde runs vde-upgrade.zsh directly, so its status and message are not rewritten by the error mapper (3 would read 'Unknown VM')"
+  local block
+  block="$(sed -n '/^    upgrade)/,/^        ;;/p' "${VDE_ROOT_DIR}/bin/vde")"
+  [[ "${block}" == *"vde-upgrade.zsh"* && "${block}" != *"vde_run"* ]] \
+    && test_pass "case30a the upgrade) case calls the script without vde_run" || test_fail "case30a the upgrade) case calls the script without vde_run" "block: ${block}"
+  grep -q 'a rebuild or start is running' "${VDE_ROOT_DIR}/docs/reference/commands.md" \
+    && test_pass "case30b commands.md documents exit status 9" || test_fail "case30b commands.md documents exit status 9" "not documented"
+  grep -q 'git pull --ff-only' "${VDE_ROOT_DIR}/docs/releases/1.5.7.md" \
+    && test_pass "case30c the 1.5.7 record tells existing installs to pull fast-forward only" || test_fail "case30c the 1.5.7 record tells existing installs to pull fast-forward only" "still a plain git pull"
+}
+
 test_case1_the_script_exists_and_is_executable
 test_case2_happy_path_fast_forwards_and_reports_versions
 test_case3_already_up_to_date_is_a_no_op
@@ -549,6 +611,10 @@ test_case23_dockerfile_forms_are_all_understood
 test_case24_nested_compose_files_count_as_spoke_inputs
 test_case25_same_bytes_is_not_always_the_same_file
 test_case26_a_hook_the_update_brings_does_not_run
+test_case27_the_busy_check_reads_the_real_lock_record
+test_case28_hidden_local_edits_are_still_edits
+test_case29_ssh_is_bounded_and_never_prompts
+test_case30_the_router_keeps_the_scripts_own_message_and_status
 
 echo
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"

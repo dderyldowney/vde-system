@@ -251,7 +251,10 @@ case ${ACTION} in
         vde_run "prune" "${VDE_ROOT_DIR}/bin/vde-prune.zsh" "${input_targets[@]}"
         ;;
     upgrade)
-        vde_run "upgrade" "${VDE_ROOT_DIR}/bin/vde-upgrade.zsh" "${input_targets[@]}"
+        # Run directly, not through the run wrapper: the error mapper would answer this script's
+        # own statuses (3 = cannot be updated, 9 = a rebuild is running) with VM-oriented messages.
+        "${VDE_ROOT_DIR}/bin/vde-upgrade.zsh" "${input_targets[@]}"
+        exit $?
         ;;
     rebuild-cache)
         vde_run "rebuild-cache" "${VDE_ROOT_DIR}/bin/vde-rebuild-cache" "${input_targets[@]}"

@@ -331,7 +331,7 @@ vde upgrade
 
 - It refuses, and changes nothing, if the install is not a git clone, `HEAD` is detached, there is no `origin` or `origin` lacks your branch, your branch has diverged from `origin`, or you have edited a file the update also changes. Edits to other files are kept.
 - It tells you what to rebuild. If the update changes something baked into the base image (`vde-base`) it says **REBUILD YOUR BASE IMAGE**: rebuild the base, then every Spoke you use, with `vde rebuild base <spoke> [<spoke> ...]`. If it changes only how Spokes are built it says to rebuild the Spokes; otherwise nothing. A plain `vde rebuild <spoke>` reuses your existing base image. See [Rebuild Guidelines](../operations/rebuild-guidelines.md#base-image-or-spoke-which-one-to-rebuild).
-- Exit status: `0` done or already current, `2` bad option, `3` this install cannot be updated, `13` your copy and `origin` disagree.
+- Exit status: `0` done or already current, `2` bad option, `3` this install cannot be updated (not a git clone, detached `HEAD`, no `origin`, `origin` lacks your branch or cannot be reached), `9` a rebuild or start is running (wait, then run it again), `13` your copy and `origin` disagree (diverged history, or files of yours the update would overwrite).
 
 ### The Pruning Ritual
 
