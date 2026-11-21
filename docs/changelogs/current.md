@@ -18,6 +18,8 @@ These changes were forged on `develop` and are part of the 1.5.7 Sovereign Basel
 
 Changes forged on `develop` after 1.5.7, awaiting coronation as the next Sovereign Baseline. The SPEC (`docs/governance/vde-spec.md`) remains the sole authority for the next version number.
 
+- **`vde upgrade`** (Signet [#676](https://github.com/dderyldowney/vde-system/issues/676), PR [#679](https://github.com/dderyldowney/vde-system/pull/679)): a new command that brings an install up to date with the branch it is on and tells you which images to rebuild (the base image first when something baked into `vde-base` changed). `vde upgrade --dry-run` previews. See [`bin/vde-upgrade.zsh`](../../bin/vde-upgrade.zsh) and [Rebuild Guidelines](../operations/rebuild-guidelines.md#base-image-or-spoke-which-one-to-rebuild).
+
 ---
 ## 📦 Release History
 

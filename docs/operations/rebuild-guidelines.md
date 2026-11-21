@@ -21,6 +21,39 @@ When and how to rebuild containers in the **Sovereign Baseline (1.5.7)**.
 
 ---
 
+## Base Image or Spoke: Which One to Rebuild
+
+Every Spoke image is built **on top of** the base image, `vde-base`. Knowing which layer a change lives in tells you what to rebuild.
+
+- **`vde-base`** holds the operating system (Debian), the `devuser` account, zsh and oh-my-zsh, the Spoke SSH config (`configs/ssh/config.spoke`), and the scripts every Spoke starts with: `scripts/vde-entrypoint.zsh`, `scripts/vde-motd.zsh`, `scripts/vde-usb-map.zsh`.
+- **A Spoke** is `FROM vde-base`, plus `lib/` and its own `scripts/setup/<spoke>-init.zsh` hydration script.
+
+Two facts follow from that:
+
+1. **A Spoke keeps the base it was built on.** Rebuilding the base does not touch your existing Spokes; each one must be rebuilt to pick the new base up.
+2. **A plain `vde rebuild <spoke>` reuses the base image already on your machine.** It never refreshes the base. To refresh the base, name `base` first.
+
+| What changed | Rebuild | Command |
+|--------------|---------|---------|
+| `vde-base.Dockerfile`, `vde-entrypoint.zsh`, `vde-motd.zsh`, `vde-usb-map.zsh` or `config.spoke` | The base, **then every Spoke you use** | `vde rebuild base <spoke> [<spoke> ...]` |
+| `lib/`, a `scripts/setup/<spoke>-init.zsh`, a Spoke Dockerfile | Only the Spokes you use | `vde rebuild <spoke> [<spoke> ...]` |
+| Documentation or tests only | Nothing | |
+| You want newer operating-system packages | The base from scratch, then your Spokes | `vde rebuild --no-cache --pull base <spoke> [<spoke> ...]` |
+
+Naming `base` before the Spokes rebuilds the base once, then each Spoke in order. `--no-cache` ignores Docker's layer cache; `--pull` also asks Docker for a newer Debian image.
+
+### After `vde upgrade`
+
+`vde upgrade` reads the Dockerfiles in the version you just installed and tells you which case you are in:
+
+- **"REBUILD YOUR BASE IMAGE"**: the update changed something baked into `vde-base`. Rebuild the base and then every Spoke you use. Until you do, your Spokes keep running the old base, and a running Spoke keeps its old image until it is rebuilt and restarted.
+- **"REBUILD YOUR SPOKES"**: the update changed how Spokes are built but not the base. Rebuild the Spokes you use; a plain `vde rebuild <spoke>` is right here.
+- **"nothing to rebuild"**: the update touched no image inputs.
+
+When in doubt after an upgrade, rebuild the base and your Spokes: `vde rebuild base <spoke> [<spoke> ...]`. It costs time, never correctness.
+
+---
+
 ## Rebuild Commands
 
 ### Single VM

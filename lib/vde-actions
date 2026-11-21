@@ -459,6 +459,7 @@ Core Commands:
   remove <name>   Remove Spoke containers and ephemeral state.
   nuke            The Nuclear Option: Complete erasure of all VDE artifacts and data.
   set-projects-dir   Change where your Projects base lives and relink existing project folders.
+  upgrade         Update this install to the latest of the branch it is on (--dry-run previews). Never merges or rewrites your history.
 
 Spoke Operations:
   enter <name>    Enter a Spoke's login shell (Zsh) via the Transversal Bridge.

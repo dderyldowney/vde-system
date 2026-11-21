@@ -5,17 +5,30 @@
 This file is one half of a pair with [plans/session_handover_remediation.md](../../plans/session_handover_remediation.md). A change that touches either file MUST touch the other in the same PR, so accomplishments (here) and outstanding debt (there) cannot drift apart. `bin/paired_update_enforcer` (CI workflow "Paired Update Check") compares the files a PR changed against its base and fails when only one of the two changed.
 
 ## SOVEREIGN STATE
-- **Baseline**: 1.5.7 (Sovereign Baseline) — CERTIFIED on the release branch (Signet #672); tag, stable and main follow only on the User's written approval
-- **develop**: `c4560371` (Merge PR #670) before the 1.5.7 roll PR
-- **main**: `4d02d116` (production — 1.5.6) until the 1.5.7 mirror
-- **stable**: `7cc412f1` at the 1.5.6 roll until the develop -> stable merge (merge, never rebase or squash)
+- **Baseline**: 1.5.7 (Sovereign Baseline) — RELEASED 2026-11-21, tag 1.5.7 on `main` (daffb810; code baseline `c4560371`): https://github.com/dderyldowney/vde-system/releases/tag/1.5.7
+- **develop**: `debc2e81` at the 1.5.7 roll (PR #673); later doc-only PRs advance it
+- **main**: `daffb810` (production — 1.5.7, Merge PR #675 stable → main)
+- **stable**: `daffb810` (PR #674 rolled develop into it at 66a04308; the Update Stable Alias workflow then reset it to `main` on the #675 push). `stable` is for release plus updates; it may sit ahead of `main` between releases.
 - **Status**: 100% GREEN
 - **Heartbeat**: 6/6 scenarios, 73/73 steps
 - **Gospel Audit**: GOSPEL-SUCCESS
 
 ## NEXT STRIKE
-- **#671** — vde add checks alias uniqueness inside the lock and reclaims stale SSH port locks (#538 items 1, 6, 7). Signet open, investigation done (alias scan at bin/add-vm-type:194 precedes claim_lock at :280; find_available_ssh_port in lib/vde-docker keeps probe-failed locks forever and probes before consulting the registry); no branch or code yet.
-- Then ASK about #621 and #629, then the docs audience split.
+Queue, in the User's order:
+1. **#679** (Signet #676) — `vde upgrade`: merge it, all feedback cleared.
+2. Roll `develop` into `stable` ONLY (no tag, no Release, no `main` mirror; merge commit; the User's written approval).
+3. **1.5.8, the docs release** (approved scope below; each part is its own Strike, Signet first).
+4. **#671** — alias uniqueness inside the lock and stale SSH port locks (#538 items 1, 6, 7; Signet open, investigation done, no code).
+5. Then ask about #621 and #629.
+
+### 1.5.8 = THE DOCS RELEASE (scope APPROVED by the User, 2026-11-21)
+1.5.8 is all about documentation. Nothing starts until the two goals above are done. Each part is its own Strike (Signet first).
+- **Audience and voice.** Rewrite the docs for BOTH students AND VDE developers in a plain, direct, 1970s helper-manual voice: second person, concrete payoff first, short declarative sentences, a verification line in every step ("you should now see X; if not, see <page>"), dry wit sparingly. The excitement comes from competence transfer, not enthusiasm.
+- **No mythos outside the AI.** Remove ALL mythos from everything student-facing AND developer-facing, including the VDE developer documentation. The mythos lives only in agent-facing files (`CLAUDE.md`, `AGENTS.md`, `.gemini/`). Use industry terms (Signet = Issue, Chronicle = Pull request, Strike = change, etc.). KEEP: Hub and Spoke (the real design philosophy) and the command `vde path-of-the-foundling` (the init + teaching path).
+- **Real, true commands.** Every command, flag and path in a rewritten doc is verified by running it or by reading the code that parses it. Show how to pass flags.
+- **Inside vs outside the container.** Explain what lives in a Spoke and what lives on the host, where a student's projects really are, and how to change it at install time (`--projects-dir` / `VDE_PROJECTS_DIR`; bootstrap has no prompt) and afterwards (`vde set-projects-dir`).
+- **Link the docs to the code.** Pages that describe a library file or script link to that file (`lib/`, `bin/`, `scripts/`, `configs/`, `tests/`) so developers can open it. Surfacing the code means access from the docs, not relocating files. Docs heavily outweigh code today: take a census (code vs docs vs vendored) first; the vendored zsh manual (`docs/shell_manuals/zsh/zsh_5_9_us.md`, 31,344 lines) is 54% of all markdown and `bin/archive/` is 592 KB. Move or delete NOTHING without the User's decision; check `tests/` and the files that name `bin/archive/` first.
+- **Simplify.** A full docs / doctree audit so information is easier to find and use.
 
 ## CURRENT PROGRAMME: USB hardware access for embedded work
 
@@ -28,7 +41,7 @@ Students plug development boards into the Hub and use them from inside a Spoke.
 
 Boards surface as `/dev/ttyUSB<n>` and `/dev/ttyACM<n>`: eight and four slots, hotplug tolerant, enumerated device-cgroup rules (no wildcards), stable names under `/dev/vde/by-port/` keyed to the physical socket. See `docs/guides/usb-serial-boards.md` and `docs/guides/embedded-development.md`.
 
-## NEXT STRIKE
+## DEFERRED: #539 (hardware-gated)
 
 - **#539** — USB debug-probe access (SWD/JTAG) for `vde-embed` only. Grants bus 1 (128 enumerated rules on major 189) plus `/dev/bus/usb:ro`; bus 7 (the T2 virtual controller holding every internal device) stays kernel-refused. Includes udev rules installed on the Hub and `devuser` added to `dialout` and `plugdev`. **Gated on an STM32F3DISCOVERY arriving 2026-10-12 to 2026-10-14**; the mechanism is provable before then, the probe-specific behaviour is not.
 
@@ -74,7 +87,7 @@ Tags (X.X.X) and GitHub Releases occur EXCLUSIVELY on `main`. No tags on `develo
 ## NEXT STEPS
 - Forge standing watch on `develop`
 
-## OPEN ISSUES FOR NEXT STRIKE
+## DEFERRED: #441 and #442 (after the queue above)
 - **#442** — feat(forge): establish canonical connection to local Ollama daemon
 - **#441** — feat(governance): enhance function-trace with JSONL export and secure dry-run
 
