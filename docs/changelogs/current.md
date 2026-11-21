@@ -14,6 +14,11 @@ These changes were forged on `develop` and are part of the 1.5.7 Sovereign Basel
 - **`vde nuke` Data Integrity** (Signet [#543](https://github.com/dderyldowney/VDE-SYSTEM/issues/543)): The teardown ritual now **preserves** the projects base and the service database `data/` directory (in-tree or external) and **offers to move** both to safety before proceeding, removing only VDE's own operational state.
 
 ---
+## 🔨 On The Anvil (develop, unreleased)
+
+Changes forged on `develop` after 1.5.7, awaiting coronation as the next Sovereign Baseline. The SPEC (`docs/governance/vde-spec.md`) remains the sole authority for the next version number.
+
+---
 ## 📦 Release History
 
 - [1.5.7](../releases/1.5.7.md)

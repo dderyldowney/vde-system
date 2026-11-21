@@ -38,7 +38,7 @@ The rows in the tables below are exercised by these results: the four pillars by
 | :--- | :--- | :--- |
 | **UAP Enforcement** | ✅ PASS | `bin/vde-enforce-uap.zsh` strictly active. |
 | **Spine Check** | ✅ PASS | `bin/vde-spine-check.zsh` silent pre-flight. |
-| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (1.5.7) |
+| **Sovereign Bridges** | ✅ PASS | Docker Socket & SSH Forwarding verified (measured on the 1.5.6 baseline) |
 
 ---
 **Measured**: 2026-09-30

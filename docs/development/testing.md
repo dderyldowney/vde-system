@@ -13,7 +13,7 @@ The System Spine tetrad is the foundational audit gate. If any pillar fails, the
 | III    | **Docker** | `docker run --rm` diagnostic probe (The World-Forge) |
 | IV     | **SSH**    | `ssh-add -l` identity check (The Bridge) |
 
-## 2. BDD PERFORMANCE METRICS (1.5.7)
+## 2. BDD PERFORMANCE METRICS (measured on the 1.5.6 baseline)
 Measured on **2026-09-30** at commit `6308fe33`: full run of `behave tests/features/` on Linux with Docker 29.8.2 (6 min 17 s, the Python `jsonschema` module available to subprocesses). The suite is **not** at 100%.
 
 | Metric | Count | Status |
