@@ -1,6 +1,8 @@
 # VDE Memory: Standing Watch
 # @shared-law (Forge Component)
 
+> **Handing over to another agent? Start with `.gemini/STATE/handoff.md`:** the rules, the current state, the sequence and the traps, written for any AI agent. Verify its facts with the commands it gives.
+
 ## SOVEREIGN BASELINE: 1.5.7
 - VDE 1.5.7 is the unique, global Sovereign Baseline (cut 2026-11-21 at the User's direction; Signet #672).
 - All prior versions (1.5.6 and earlier) are of historical archival value only.
