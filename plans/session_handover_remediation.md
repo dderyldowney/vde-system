@@ -18,7 +18,10 @@ This file is one half of a pair with [.gemini/STATE/session_handover.md](../.gem
 - **plans/session_handover_remediation.md**: Restored from git history (was missing pre-migration).
 
 ## Sovereign Baseline: 1.5.7 (full-suite figures below measured 2026-09-30 at commit `6308fe33`, the 1.5.6 baseline)
-- Version: 1.5.7 (The Sovereign Baseline); Proof of Life re-certified 2026-11-21, 6 of 6 scenarios, 73 of 73 steps; released as tag 1.5.7 on `main` (daffb810; code baseline `c4560371`)
+- Version: 1.5.7 (The Sovereign Baseline); Proof of Life re-certified 2026-11-21, 6 of 6 scenarios, 73 of 73 steps; released as tag 1.5.7 on `main` (daffb810; code baseline `c4560371`); `stable` follows `main` after a release and may run ahead of it between releases
 - Heartbeat: Proof of Life 6 of 6 scenarios passed. Full BDD suite: 107 of 116 scenarios passed, 9 failed (details in `docs/development/testing.md`).
 - Enforcer: `bin/vde-enforce-uap.zsh` success, exit 0.
 - Documentation: not re-verified for 1.5.7. Known gap: the 1.5.5 entries in `docs/changelogs/current.md` are dead links.
+
+## 1.5.8 Programme (approved by the User, 2026-11-21): the docs release
+After `vde upgrade` (#679) is merged and `develop` is rolled into `stable` (no release): rewrite the docs for students and VDE developers in a plain 1970s helper-manual voice, remove all mythos outside agent-facing files, verify every printed command, explain inside vs outside the container and how to change it, link the docs to the code they describe, and audit the doc tree for simplicity. The full scope is in `.gemini/STATE/session_handover.md`.
