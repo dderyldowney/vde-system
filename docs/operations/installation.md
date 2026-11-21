@@ -111,6 +111,10 @@ vde set-projects-dir <new-path>
 
 This safely moves your existing per-alias folders to the new base (skipping any name collisions, never overwriting or deleting), updates the `.env` record, and regenerates the Spoke configs. Your Spokes pick up the new location on their next start — no rebuild required.
 
+### Updating an Existing Install
+
+`vde upgrade` brings an install up to date with the branch it is on (most installs follow `stable`) and then tells you which images to rebuild. `vde upgrade --dry-run` previews the update first. See [`docs/reference/commands.md`](../reference/commands.md) and [`bin/vde-upgrade.zsh`](../../bin/vde-upgrade.zsh).
+
 ## 4. Contributor Setup (The Forge)
 
 Only needed for developing VDE itself (running the Proof of Life / `behave`), not for using it.
