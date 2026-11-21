@@ -72,6 +72,7 @@ These scripts provide specialized maintenance, automation, and development suppo
 | `generate-all-configs` | Smelt all Spoke compose and SSH configurations. Invoked by `vde-set-projects-dir` after the base changes. |
 | `cleanup-ports` | Purge stale or orphaned entries from the port registry. |
 | `vde-prune.zsh` | Repository housekeeping maintenance: default/dry-run planning; interactive `--apply` or scripted `--apply --yes`; student `logs/`/`backup/` excluded; historical `docs/releases` retain prune behavior; current baseline protected. Supported timeframes `7d`, `3d`, `24h`, `12h`. Docker disk cleanup is handled by `vde clean`. |
+| `vde-upgrade.zsh` | Brings the install up to date with the branch it is on: fetches that branch from `origin` and fast-forwards to it; `--dry-run` previews; refuses (changing nothing) on a non-git install, a detached HEAD, no `origin` or a branch `origin` lacks, diverged history, or local edits to files the update also changes; reads the Dockerfiles in the new version and advises `vde rebuild base <spoke> ...` when the base image's inputs changed, `vde rebuild <spoke> ...` when only Spoke inputs did, and nothing otherwise. |
 | `validate-schemas.zsh` | Verify Beskar Registry integrity against JSON schemas. |
 | `vde-tactical-sweep.zsh` | Perform a project-wide cleanup of containers and locks. |
 | `vde-poll` | Continuous health monitoring of the Spoke ecosystem. |
