@@ -123,6 +123,44 @@ vde_spd_is_running() {
     [[ -n "$(vde_spd_blockers "${1}" "${names}")" ]]
 }
 
+# Per-Spoke locks. `vde start` claims ${VDE_ROOT_DIR}/.locks/vms/<alias>.lock before it
+# brings a Spoke up (lib/vde-actions), so holding the same locks for the whole re-point
+# means a Spoke of an affected folder cannot be started mid-move, and two re-points
+# cannot overlap (Signet #669).
+typeset -ga VDE_SPD_HELD_LOCKS=()
+
+# vde_spd_lock_owners <alias...> - Claim the lock of every Spoke that mounts one of
+# these folders (see vde_spd_workspace_owners), in sorted order. Returns 1, after
+# saying which Spoke is busy, when a lock cannot be claimed.
+vde_spd_lock_owners() {
+    emulate -L zsh
+    local alias_name base lock
+    local -a bases=()
+    for alias_name in "$@"; do
+        bases+=( ${${(f)"$(vde_spd_workspace_owners "${alias_name}")"}#vde-} )
+    done
+    for base in ${(ou)bases}; do
+        lock="${VDE_ROOT_DIR}/.locks/vms/${base}.lock"
+        if claim_lock "${lock}"; then
+            VDE_SPD_HELD_LOCKS+=("${lock}")
+        else
+            print -u2 -r -- "Cannot lock the Spoke '${base}': a start, stop or another re-point is in progress. Nothing was moved; try again in a moment."
+            return 1
+        fi
+    done
+    return 0
+}
+
+# vde_spd_unlock_all - Release every lock this run took (runs on every exit path).
+vde_spd_unlock_all() {
+    local lock
+    for lock in "${VDE_SPD_HELD_LOCKS[@]}"; do
+        release_lock "${lock}"
+    done
+    VDE_SPD_HELD_LOCKS=()
+}
+trap 'vde_spd_unlock_all' EXIT
+
 # Set from just before a cross-filesystem copy is published until its old source is
 # gone, so an interrupt in that window can name the folder to delete.
 typeset VDE_SPD_PUBLISH_SRC="" VDE_SPD_PUBLISH_DEST=""
@@ -335,6 +373,9 @@ fi
 # the guard must fail closed.
 if (( ${#move_candidates} > 0 )); then
     typeset running_names
+    # Lock first, THEN look: a start that slipped in before the lock shows up in the
+    # snapshot below; a start after it waits for the lock until this run exits.
+    vde_spd_lock_owners "${move_candidates[@]}" || exit ${VDE_ERR_LOCK}
     if ! running_names="$(vde_spd_running_spokes)"; then
         vde_error_simple "Cannot tell which Spokes are running (Docker is missing, not running, not permitted, or did not answer in time). Refusing to move workspaces a running Spoke may have mounted. Nothing was moved."
         exit ${VDE_ERR_GENERAL}

@@ -98,8 +98,10 @@ vde set-projects-dir
   Moving `python` is also blocked by a running `vde-jupyterlab` (its notebooks live in
   `python/jupyterlabs`). A Spoke that starts while a cross-filesystem copy is running is
   detected once the copy finishes: the copy is discarded and the source kept.
-  Known limits: a Spoke that starts in the instant between that check and the deletion
-  of the old folder is not detected, and nothing stops a host editor writing to the
+  While it runs it holds the per-Spoke locks that `vde start` takes (`.locks/vms/`), so
+  a start of an affected Spoke waits and then fails instead of mounting a folder that is
+  being moved, and two re-points cannot overlap; a busy lock refuses the re-point
+  (exit 9) before anything moves. Known limit: nothing stops a host editor writing to a
   folder while it is copied; close such tools first.
 - A move across filesystems copies to `<alias>.vde-moving`, renames it to `<alias>`
   only after the copy succeeded, then deletes the source. A failed copy leaves the

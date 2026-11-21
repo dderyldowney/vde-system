@@ -630,6 +630,71 @@ test_env_rewrite_is_atomic_and_follows_symlink() {
     assert_eq    "no temp file left in the forge" "0" "$(ls -A "${forge}" | grep -c '\.env\.vde-tmp')"
 }
 
+# =============================================================================
+# Per-Spoke locks: `vde start` claims .locks/vms/<alias>.lock before it brings a Spoke
+# up, so holding the same locks for the whole re-point closes the start-during-move
+# and re-point-vs-re-point races.
+# =============================================================================
+_lockfile() { print -r -- "${1}/.locks/vms/${2}.lock"; }
+
+test_held_spoke_lock_blocks_the_repoint() {
+    test_start "7: a Spoke operation in progress (its lock held) refuses the re-point, nothing moved"
+    local old="${SANDBOX_ROOT}/l1-old" new="${SANDBOX_ROOT}/l1-new"
+    _mk_alias "${old}" python; _mk_alias "${old}" rust
+    local forge; forge="$(_make_forge "${old}")"
+    local lk; lk="$(_lockfile "${forge}" python)"
+    mkdir -p "${lk}"; print -r -- "$$:$$:$(date +%s)" > "${lk}/pid"     # a live owner: this test shell
+    _run_spd "${forge}" "${new}"
+    assert_eq    "refuses with VDE_ERR_LOCK" "${VDE_ERR_LOCK}" "${SPD_RC}"
+    assert_has   "says which Spoke is busy" "python" "${SPD_OUT}"
+    assert_true  "python untouched" "[[ -f '${old}/python/hello.txt' ]]"
+    assert_true  "rust (unlocked) also untouched" "[[ -f '${old}/rust/hello.txt' ]]"
+    assert_false "new base never created" "[[ -e '${new}' ]]"
+    assert_eq    ".env unchanged" "${old}" "$(_env_val "${forge}")"
+    assert_true  "the foreign lock was left alone" "[[ -d '${lk}' ]]"
+}
+
+test_locks_are_held_during_the_move_and_released_after() {
+    test_start "7: the locks of the moving Spokes (and nested ones) are held while folders move, gone afterwards"
+    local old="${SANDBOX_ROOT}/l2-old" new="${SANDBOX_ROOT}/l2-new"
+    _mk_alias "${old}" python; _mk_alias "${old}" rust
+    local forge; forge="$(_make_forge "${old}")"
+    _stub "${forge}" mv <<EOF
+for n in python jupyterlab rust; do [[ -d "${forge}/.locks/vms/\${n}.lock" ]] && : >> "${forge}/held-during-mv"; print \$n >> "${forge}/held-names" 2>/dev/null; done
+exec ${REAL_MV} "\$@"
+EOF
+    _run_spd "${forge}" "${new}"
+    assert_eq    "re-point succeeds" "${VDE_SUCCESS}" "${SPD_RC}"
+    assert_true  "a lock existed while a folder was being moved" "[[ -e '${forge}/held-during-mv' ]]"
+    local n
+    for n in python jupyterlab rust; do
+        assert_false "lock for ${n} released after success" "[[ -e '$(_lockfile "${forge}" ${n})' ]]"
+    done
+}
+
+test_every_spoke_mounting_the_folder_is_locked() {
+    test_start "7: moving python locks vde-jupyterlab too (its notebooks live in python/jupyterlabs)"
+    local old="${SANDBOX_ROOT}/l3-old" new="${SANDBOX_ROOT}/l3-new"
+    _mk_alias "${old}" python
+    local forge; forge="$(_make_forge "${old}")"
+    local lk; lk="$(_lockfile "${forge}" jupyterlab)"
+    mkdir -p "${lk}"; print -r -- "$$:$$:$(date +%s)" > "${lk}/pid"
+    _run_spd "${forge}" "${new}"
+    assert_eq    "a busy jupyterlab lock refuses moving python" "${VDE_ERR_LOCK}" "${SPD_RC}"
+    assert_true  "python untouched" "[[ -f '${old}/python/hello.txt' ]]"
+}
+
+test_locks_released_after_a_refusal() {
+    test_start "7: the locks this run took are released even when it refuses (running Spoke)"
+    local old="${SANDBOX_ROOT}/l4-old" new="${SANDBOX_ROOT}/l4-new"
+    _mk_alias "${old}" python
+    local forge; forge="$(_make_forge "${old}")"
+    _stub_docker_running "${forge}" vde-python
+    _run_spd "${forge}" "${new}"
+    assert_eq    "refused (running Spoke)" "${VDE_ERR_GENERAL}" "${SPD_RC}"
+    assert_false "python lock released" "[[ -e '$(_lockfile "${forge}" python)' ]]"
+}
+
 test_env_update_failure_is_reported_and_leaves_env_intact() {
     test_start "8: if the .env rewrite fails after the moves, say so, exit non-zero, and keep .env untouched"
     local old="${SANDBOX_ROOT}/z1-old" new="${SANDBOX_ROOT}/z1-new"
@@ -649,6 +714,10 @@ EOF
 
 test_running_spoke_of_moved_alias_blocks
 test_running_spoke_of_unmoved_alias_does_not_block
+test_held_spoke_lock_blocks_the_repoint
+test_locks_are_held_during_the_move_and_released_after
+test_every_spoke_mounting_the_folder_is_locked
+test_locks_released_after_a_refusal
 test_env_update_failure_is_reported_and_leaves_env_intact
 test_noop_base_still_warns_about_stale_export
 test_running_jupyterlab_blocks_moving_python
