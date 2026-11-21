@@ -6,18 +6,18 @@ Written 2026-11-21 at the end of a long working session, for ANY AI agent (not o
 ## 1. Start here
 
 1. Read, in order: `CLAUDE.md`, `.gemini/instructions.md`, `AGENTS.md`, `.gemini/STATE/MEMORY.md`, `.gemini/STATE/session_handover.md`, then this file.
-2. Run the startup ritual: `bin/vde-enforce-uap.zsh`, `bin/vde-spine-check.zsh`, and the Proof of Life (`python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature`; it takes about 15 minutes, and the pre-push gate runs it too, so do not run it twice for one push).
-3. The Contract in `.gemini/instructions.md` binds any agent that works here.
-4. Check the world before trusting this file:
+2. The Contract in `.gemini/instructions.md` binds any agent that works here.
+3. Check the world before trusting this file or running any lifecycle test:
    - `git fetch origin && git log --oneline -8 origin/develop`
-   - `git ls-remote origin develop stable main` and `git rev-parse 1.5.7^{commit}`
+   - `git ls-remote origin develop stable main` and `git rev-parse '1.5.7^{commit}'`
    - `gh pr list --state open` and `gh issue list --state open`
-   - `ps -eo args | grep -E "behave|pre-push|vde-rebuild"` (stop strays by exact PID, never with a pattern kill)
+   - `ps -eo pid,args | grep -E '[b]ehave|[p]re-push|[v]de-rebuild'` (stop strays by exact PID, never with a pattern kill; do not start Proof of Life while another run is active)
    - `docker ps -a` (a `vde-python` container and old `vde-*-probe-1` containers are normal residue of an interrupted Proof of Life)
+4. **Main agent only** (sub-agents inherit certification and MUST skip this step, per `AGENTS.md`): once the process check above shows no active run, run the startup ritual in order: `bin/vde-enforce-uap.zsh`, `bin/vde-spine-check.zsh`, and the Proof of Life (`python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature`, ~15 minutes). Note that a direct `behave` run does **not** write the pre-push stamp (`lib/vde-pol-stamp`), so a later push will rerun the gate unless you rely on the pre-push gate itself or invoke Proof of Life through `vde_pol_run_and_stamp` from `lib/vde-pol-stamp` on a clean tree.
 
 ## 2. How work is done here (the Strike protocol)
 
-Every unit of work: open an Issue (the Signet) BEFORE any code; branch from `develop`; work on the branch only; open a PR into `develop` (the Chronicle); **stop and get the User's written approval before any merge** (Rule R); merge only after checks and review feedback are clean. Never commit implementation to `develop`.
+Every unit of work: open an Issue (the Signet) BEFORE any code; branch from `develop`; work on the branch only; open a PR into `develop` (the Chronicle) — **except branch promotions** (`develop` -> `stable`, `stable` -> `main`), which target the branch being promoted **into** (`stable` or `main`); **stop and get the User's written approval before any merge** (Rule R); merge only after checks and review feedback are clean. Never commit implementation to `develop`.
 
 - Approvals are specific. A written approval covers the named step only. Outward steps (a release, a tag, `main`, editing a published GitHub Release body) always need their own written approval.
 - Do not open new Issues for side findings without the User's approval; keep a parked list instead.
@@ -31,16 +31,15 @@ Every unit of work: open an Issue (the Signet) BEFORE any code; branch from `dev
 ## 3. Branches, releases and tags
 
 - `develop` is where work lands. `stable` is what students clone: release plus updates. `main` is certified releases only.
-- Flow: `develop` -> `stable` (merge commit, never squash or rebase) -> `main` (merge commit) -> `gh release create <tag> --target main`.
+- Flow: `develop` -> `stable` (promotion PR targeting `stable`; merge commit, never squash or rebase) -> `main` (promotion PR targeting `main`; merge commit) -> `gh release create <tag> --target main`.
 - **A published tag is never moved.** Documentation fixes made after a release go to `develop` and wait for the next roll; `main` is not re-rolled for them.
-- `.github/workflows/update-stable-alias.yml` force-pushes `stable` to `main` on every push to `main`. So after a release `stable` equals `main`; a roll without a release leaves `stable` ahead of `main` until the next release. (Known weakness, parked: overlapping pushes to `main` could move `stable` backward.)
+- `.github/workflows/update-stable-alias.yml` updates `stable` to `main` on pushes to `main`. So after a release `stable` equals `main`; a roll without a release leaves `stable` ahead of `main` until the next release. (A parked workflow hardening item is queued for 1.5.8; details stay out of public state files until shipped.)
 - The Release body is built from the approved format in section 6.
 
 ## 4. What happened (as of the end of this session)
 
 - **1.5.7 is released** (tag `1.5.7` on `main`, GitHub Release live), the baseline of record.
-- Merged since: `vde upgrade` (#679, Signet #676), the 1.5.7 release record (#678), the state files (#681), the `vde upgrade` hardening (#684, Signet #683), and a roll of `develop` into `stable` without a release (#682).
-- In flight when this was written: PR #686 (these state files, Signet #685). If it is merged, a small second roll into `stable` carries it; verify with `gh pr list` and `git log`.
+- Merged since: `vde upgrade` (#679, Signet #676), the 1.5.7 release record (#678), the state files (#681, #686), the `vde upgrade` review fixes (#684, Signet #683), and two `develop` -> `stable` rolls without a release (#682, #687). Verify current state with `gh pr list` and `git log`.
 - `vde upgrade [--dry-run]`: finds the install from where the script lives, fetches the branch you are on, fast-forwards, refuses (changing nothing) on unsafe states, and says which image to rebuild (the base image first when something baked into `vde-base` changed). Exit statuses: 0 done, 2 bad option, 3 cannot be updated, 9 a rebuild or start is running, 13 your copy and origin disagree. Documented in `docs/reference/commands.md` and `docs/reference/scripts.md`; tests in `tests/unit/vde-upgrade.test.zsh`.
 
 ## 5. What comes next, in order
@@ -69,6 +68,6 @@ Marketing-style hero and headline; "What's new" as short benefit blocks in secon
 
 ## 8. Parked, not yet Issues
 
-Needs the User's approval to file. The `update-stable-alias.yml` workflow can move `stable` backward on overlapping pushes. A retry after an interrupted `vde upgrade` cannot reprint the rebuild guidance. `bin/add-vm-type` passes `${QUIET}` as `skip_probe`. `bin/cleanup-ports` runs under `set -e` with `((removed++))`. Several older findings in the maintainer's backlog; the security-related ones belong to 1.5.8.
+Needs the User's approval to file. Security-related parked items (queued for 1.5.8 alongside `#668`) are kept out of public state files until fixed; refer to them by issue number once filed. Non-security parked items include minor CLI and script follow-ups (`vde upgrade` retry rebuild guidance, `bin/add-vm-type` quiet-flag forwarding, `bin/cleanup-ports` counter arithmetic under `set -e`, and other non-security backlog items deferred past 1.5.8/1.5.9).
 
 **This is the Way.**

@@ -8,8 +8,8 @@
 - All prior versions (1.5.6 and earlier) are of historical archival value only.
 - Heartbeat Certified: 2026-11-21 (6/6 scenarios, 73/73 steps)
 - **Latest Release**: Tag 1.5.7 on main (SHA daffb810, the stable-into-main merge; contains code baseline c4560371 from docs/releases/1.5.7.md), published 2026-11-21
-- **develop HEAD**: debc2e81 at the 1.5.7 roll (PR #673); later doc-only PRs advance it
-- **stable HEAD**: read it with `git ls-remote origin stable`. It equalled `main` after the 1.5.7 release because `.github/workflows/update-stable-alias.yml` force-pushes `stable` to `main` on every push to `main` (it moved stable from 66a04308 to daffb810, 13 s after PR #675). `stable` is for release plus updates, so a develop -> stable roll without a release is normal and leaves it ahead of `main` until the next release.
+- **develop HEAD**: read the tip with `git log` (advances past the 1.5.7 roll as code and doc PRs merge)
+- **stable HEAD**: read it with `git ls-remote origin stable`. It equalled `main` after the 1.5.7 release because `.github/workflows/update-stable-alias.yml` updates `stable` to `main` on pushes to `main` (it moved stable from 66a04308 to daffb810, 13 s after PR #675). `stable` is for release plus updates, so a develop -> stable roll without a release is normal and leaves it ahead of `main` until the next release.
 
 ## 2026-05-06
 ## Security Audit: Postgres Dev Secret Build Arg Exposure
@@ -81,7 +81,7 @@ bin/vde path-of-the-foundling
 Per VDE Protocol: No environment-specific logic shall be implemented without empirical testing on target environment. WSL2 fixes blocked pending volunteer beta testers.
 
 ## NEXT STRIKES QUEUE
-Done as of 2026-11-21: 1.5.7 released; `vde upgrade` (#679), the 1.5.7 record (#678), the state files (#681), the `vde upgrade` review fixes (#684, Signet #683) and the develop -> stable roll (#682, merge commit, no release). VERIFY with `gh pr list --state merged --limit 10` before relying on this line.
+Done as of 2026-11-21: 1.5.7 released; `vde upgrade` (#679), the 1.5.7 record (#678), the state files (#681, #686), the `vde upgrade` review fixes (#684, Signet #683) and two develop -> stable rolls without a release (#682, #687). VERIFY with `gh pr list --state merged --limit 10` before relying on this line.
 In the User's order:
 1. **1.5.8, the SECURITY release** (#668 plus the security-related items parked earlier, and ONLY security-related work): its own Signet, PR and release chain, with the User's approval at each outward step. Security comes BEFORE docs, even if session time is mixed.
 2. **1.5.9, the docs release** (programme below): starts only after 1.5.8 ships; Signet first, each part its own Strike.
