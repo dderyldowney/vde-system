@@ -8,7 +8,7 @@
 - All prior versions (1.5.6 and earlier) are of historical archival value only.
 - Heartbeat Certified: 2026-11-21 (6/6 scenarios, 73/73 steps)
 - **Latest Release**: Tag 1.5.7 on main (SHA daffb810, the stable-into-main merge; contains code baseline c4560371 from docs/releases/1.5.7.md), published 2026-11-21
-- **develop HEAD**: read the tip with `git log` (advances past the 1.5.7 roll as code and doc PRs merge)
+- **develop HEAD**: read the tip with `git log -1 origin/develop` (advances past the 1.5.7 roll as code and doc PRs merge)
 - **stable HEAD**: read it with `git ls-remote origin stable`. It equalled `main` after the 1.5.7 release because `.github/workflows/update-stable-alias.yml` updates `stable` to `main` on pushes to `main` (it moved stable from 66a04308 to daffb810, 13 s after PR #675). `stable` is for release plus updates, so a develop -> stable roll without a release is normal and leaves it ahead of `main` until the next release.
 
 ## 2026-05-06

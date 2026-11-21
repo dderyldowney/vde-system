@@ -8,7 +8,7 @@ This file is one half of a pair with [plans/session_handover_remediation.md](../
 
 ## SOVEREIGN STATE
 - **Baseline**: 1.5.7 (Sovereign Baseline) — RELEASED 2026-11-21, tag 1.5.7 on `main` (daffb810; code baseline `c4560371`): https://github.com/dderyldowney/vde-system/releases/tag/1.5.7
-- **develop**: read the tip with `git log` (advances past the 1.5.7 roll as code and doc PRs merge)
+- **develop**: read the tip with `git log -1 origin/develop` (advances past the 1.5.7 roll as code and doc PRs merge)
 - **main**: `daffb810` (production — 1.5.7, Merge PR #675 stable → main)
 - **stable**: read the tip with `git ls-remote origin stable`; after the 1.5.7 release it equalled `main` (PR #674 rolled develop into it at 66a04308; the Update Stable Alias workflow then reset it to `main` on the #675 push). `stable` is for release plus updates; it may sit ahead of `main` between releases.
 - **Status**: 100% GREEN

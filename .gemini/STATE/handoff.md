@@ -17,7 +17,7 @@ Written 2026-11-21 at the end of a long working session, for ANY AI agent (not o
 
 ## 2. How work is done here (the Strike protocol)
 
-Every unit of work: open an Issue (the Signet) BEFORE any code; branch from `develop`; work on the branch only; open a PR into `develop` (the Chronicle) — **except branch promotions** (`develop` -> `stable`, `stable` -> `main`), which target the branch being promoted **into** (`stable` or `main`); **stop and get the User's written approval before any merge** (Rule R); merge only after checks and review feedback are clean. Never commit implementation to `develop`.
+Every unit of work: open an Issue (the Signet) BEFORE any code; branch from `develop`; work on the branch only; open a PR into `develop` (the Chronicle); **stop and get the User's written approval before any merge** (Rule R); merge only after checks and review feedback are clean. Never commit implementation to `develop`. **Branch promotions are exempt from the branch-from-`develop` / PR-into-`develop` rule**: `develop` -> `stable` promotes from `develop` into `stable`, and `stable` -> `main` promotes from `stable` into `main` (never from `develop`).
 
 - Approvals are specific. A written approval covers the named step only. Outward steps (a release, a tag, `main`, editing a published GitHub Release body) always need their own written approval.
 - Do not open new Issues for side findings without the User's approval; keep a parked list instead.
