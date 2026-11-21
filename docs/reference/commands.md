@@ -88,7 +88,28 @@ vde set-projects-dir
   Any name collision is **SKIPPED** — an existing target is never overwritten or
   deleted.
 - Updates the `.env` key `VDE_PROJECTS_DIR` and regenerates Spoke compose configs.
+- **Refuses** (exit 1, nothing created or moved, `.env` unchanged) while a Spoke of
+  an alias that would be moved is running; stop it (`vde stop <name>`) and re-run.
+  A running Spoke of an alias that is skipped (collision) or unregistered does not block.
+  It also refuses (exit 1) when Docker is installed but cannot be queried, and (exit 4)
+  when `.env` is not writable, both before anything moves. A Spoke that starts while a
+  cross-filesystem copy is running is detected once the copy finishes: the copy is
+  discarded and the source kept.
+- A move across filesystems copies to `<alias>.vde-moving`, renames it to `<alias>`
+  only after the copy succeeded, then deletes the source. A failed copy leaves the
+  source whole and removes its own temp; a leftover temp from an earlier interrupted
+  run is discarded and retried; a temp that is a symbolic link is refused. A move
+  within one filesystem is a plain rename.
+- On INT/TERM it prints how to finish. Re-running the same command completes an
+  interrupted move (moved aliases are absent at the old base; `.env` is written after
+  the moves). Do not start Spokes in between: they would mount the old base. One
+  exception: an interrupt while the old copy of a cross-filesystem move is being
+  deleted leaves that old folder behind. The message names it; delete it by hand
+  (a re-run skips it as already existing).
 - No image rebuild is required; Spokes pick up the new base on their next start.
+- Warns (stderr) when an exported `VDE_PROJECTS_DIR` differs from the `.env` value,
+  because the exported value outranks `.env`; `vde start` warns the same way.
+  Run `unset VDE_PROJECTS_DIR` to use `.env`. Precedence itself is unchanged.
 - Reports exactly what was moved and what was skipped.
 
 ### Spoke Creation

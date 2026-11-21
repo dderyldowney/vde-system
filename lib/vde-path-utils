@@ -275,15 +275,42 @@ vde_projects_dir_raw() {
         return 0
     fi
 
+    vde_projects_dir_from_env_file
+    return 0
+}
+
+# vde_projects_dir_from_env_file - The VDE_PROJECTS_DIR value persisted in
+# ${VDE_ROOT_DIR}/.env EXACTLY as stored (not validated or expanded); empty when
+# the file or the key is absent. Ignores the process environment.
+vde_projects_dir_from_env_file() {
     local env_file="${VDE_ROOT_DIR}/.env"
-    if [[ -f "${env_file}" ]]; then
-        local line val
-        # Plain grep per the Scavenger's Ban (no jq); last assignment wins.
-        line=$(grep -E '^VDE_PROJECTS_DIR=' "${env_file}" 2>/dev/null | tail -1)
-        val="${line#VDE_PROJECTS_DIR=}"
-        val="${val%$'\r'}"   # tolerate CRLF-edited .env
-        [[ -n "${val}" ]] && print -r -- "${val}"
-    fi
+    [[ -f "${env_file}" ]] || return 0
+    local line val
+    # Plain grep per the Scavenger's Ban (no jq); last assignment wins.
+    line=$(grep -E '^VDE_PROJECTS_DIR=' "${env_file}" 2>/dev/null | tail -1)
+    val="${line#VDE_PROJECTS_DIR=}"
+    val="${val%$'\r'}"   # tolerate CRLF-edited .env
+    [[ -n "${val}" ]] && print -r -- "${val}"
+    return 0
+}
+
+# vde_warn_stale_projects_env - Warn (stderr) when an EXPORTED VDE_PROJECTS_DIR
+# differs from the value persisted in .env. The exported value outranks .env
+# (documented; precedence is NOT changed), so after `vde set-projects-dir` a stale
+# `export` in a shell profile makes Spokes mount the OLD base (Signet #669, #545
+# item 10). Both sides are compared in resolved (absolute) form. Silent when the
+# export is unset, .env has no key, or the two agree. Always returns 0.
+vde_warn_stale_projects_env() {
+    emulate -L zsh
+    local exported="${VDE_PROJECTS_DIR-}" persisted
+    [[ -n "${exported}" ]] || return 0
+    persisted="$(vde_projects_dir_from_env_file)"
+    [[ -n "${persisted}" ]] || return 0
+    local a="${exported}" b="${persisted}"
+    vde_resolve_projects_base "${exported}" "${VDE_ROOT_DIR}" && a="${VDE_PB_RESULT}"
+    vde_resolve_projects_base "${persisted}" "${VDE_ROOT_DIR}" && b="${VDE_PB_RESULT}"
+    [[ "${a}" == "${b}" ]] && return 0
+    print -u2 -r -- "[WARN] VDE_PROJECTS_DIR is exported in your shell as '${exported}' but .env says '${persisted}'. The exported value wins, so Spokes will mount '${a}'. To use the .env value, run: unset VDE_PROJECTS_DIR (and remove any export of it from your shell profile)."
     return 0
 }
 

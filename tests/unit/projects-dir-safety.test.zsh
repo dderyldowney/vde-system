@@ -172,13 +172,19 @@ _make_spd_forge() {  # $1=dotenv_base ; echoes forge root
     cp "${SPD_SRC}" "${forge}/bin/vde-set-projects-dir"
     cp -R "${REPO_ROOT}/lib"  "${forge}/lib"          # copied, never symlinked
     cp -R "${REPO_ROOT}/data" "${forge}/data"         # so is_known_vm sees the registry
+    # No Spoke ever runs in a sandbox. set-projects-dir now refuses while a Spoke of a
+    # moved alias runs (Signet #669), so a stub docker keeps these runs off the real
+    # daemon, which may have a live vde-rust.
+    mkdir -p "${forge}/stubs"
+    printf '#!/usr/bin/env zsh\nexit 0\n' > "${forge}/stubs/docker"
+    chmod +x "${forge}/stubs/docker"
     print -r -- "VDE_PROJECTS_DIR=${1}" > "${forge}/.env"
     print -r -- "${forge}"
 }
 # Run the forge's script with the ambient override stripped. Sets SPD_OUT/SPD_RC.
 _run_spd() {  # $1=forge ; rest=args
     local forge="$1"; shift
-    SPD_OUT="$(env -u VDE_PROJECTS_DIR VDE_NO_CACHE=1 "${forge}/bin/vde-set-projects-dir" "$@" 2>&1)"
+    SPD_OUT="$(env -u VDE_PROJECTS_DIR VDE_NO_CACHE=1 PATH="${forge}/stubs:${PATH}" "${forge}/bin/vde-set-projects-dir" "$@" 2>&1)"
     SPD_RC=$?
 }
 

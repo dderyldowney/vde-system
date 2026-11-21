@@ -193,6 +193,9 @@ case ${ACTION} in
         vde_action_cache
         ;;
     start)
+        # An exported VDE_PROJECTS_DIR outranks .env at `compose up`; warn when it
+        # differs so a stale export cannot silently mount the old base (Signet #669).
+        vde_warn_stale_projects_env
         vde_action_start
         ;;
 

@@ -45,16 +45,18 @@ Feature: Configurable Projects Directory (Signet #543)
     Then the marker should appear on the host at base "roundtrip" alias "rust"
 
   # B4: re-point moves alias folders old->new and never overwrites collisions.
+  # It uses "lua" (not "rust"): the scenario above leaves the rust Spoke running, and
+  # set-projects-dir refuses to move a folder a running Spoke has mounted (Signet #669).
   Scenario: Re-pointing moves alias folders and skips name collisions
     Given a clean temporary projects base "old"
     And a clean temporary projects base "new"
-    And the projects base "old" has an alias folder "rust" with a marker file
+    And the projects base "old" has an alias folder "lua" with a marker file
     And the projects base "old" has an alias folder "go" with a marker file
     And the projects base "new" already has an alias folder "go" containing the sentinel "KEEP_ME"
     And VDE_PROJECTS_DIR is exported to base "old"
     When I run "vde set-projects-dir" targeting base "new"
     Then the projects command should succeed
-    And the alias folder "rust" and its marker should have moved from base "old" to base "new"
+    And the alias folder "lua" and its marker should have moved from base "old" to base "new"
     And the colliding alias "go" should remain in base "old"
     And the sentinel file in base "new" alias "go" should still read "KEEP_ME"
     And the repo .env should contain the VDE_PROJECTS_DIR key pointing at base "new"
