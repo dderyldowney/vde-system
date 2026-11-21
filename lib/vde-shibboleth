@@ -1,0 +1,727 @@
+#!/usr/bin/env zsh
+# @forge (Governance Sentinel)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
+# VDE Shibboleth Sweep (Mandate C, Signet #626)
+# Source this library with: source ./lib/vde-shibboleth
+#
+# Mandate C requires every zsh file, of any length, to carry the Zsh expansion-flag
+# shibboleth on one of its first VDE_SHIBBOLETH_WINDOW lines, anchored at column 1.
+# A file is a zsh file when its name ends in .zsh or its first line is a zsh shebang.
+# This library is the ONE implementation of that sweep. It walks the git-tracked
+# files, reports in-scope zsh files that lack the shibboleth (MISSING), and
+# reports baseline grandfather entries that are no longer needed (STALE).
+#
+# The baseline (VDE_SHIBBOLETH_BASELINE_REL) is SHRINK-ONLY: entries may be removed,
+# never added. Regenerate it with vde_shib_baseline_print ROOT, which lists the
+# current violators. Growth is blocked by the pre-commit hook (staged diff) and is
+# audited against a base ref by vde_shib_baseline_growth ROOT BASE_REF.
+#
+# Read-only except vde_shib_ensure_base_ref, the one function that may fetch the base ref
+# (a remote-tracking ref only, never the index, worktree or history of a shallow clone).
+# Dependencies: git, mktemp, rm and the zsh builtins.
+
+if typeset -f vde_shib_sweep >/dev/null 2>&1; then
+    return 0 2>/dev/null || exit 0
+fi
+
+typeset -g VDE_SHIBBOLETH_LITERAL='typeset _ZSH_PURE=${(%):-%x}'
+typeset -g VDE_SHIBBOLETH_WINDOW=20
+typeset -g VDE_SHIBBOLETH_BASELINE_REL='docs/governance/shibboleth-baseline.txt'
+# Out of scope: bin/archive/ (retired code) and the Forge development artifacts plans/ and conductor/.
+# docs/, tests/docker/ and .github/ are swept: they hold no zsh file today, and one added later must be
+# covered, not silently exempt (Clan Leader decision, 2026-11-18).
+typeset -ga VDE_SHIBBOLETH_EXCLUDED_PREFIXES=(bin/archive/ plans/ conductor/)
+
+# Scratch globals used to return values without command substitution.
+typeset -ga _vde_shib_tracked_list=()
+typeset -ga _vde_shib_entries=()
+typeset -g _vde_shib_trimmed=''
+
+# _vde_shib_trim STRING -> sets _vde_shib_trimmed without leading or trailing blanks
+_vde_shib_trim() {
+    setopt localoptions extendedglob
+    local s="$1"
+    s="${s##[[:space:]]#}"
+    s="${s%%[[:space:]]#}"
+    _vde_shib_trimmed="${s}"
+}
+
+# _vde_shib_parse_baseline < TEXT -> fills _vde_shib_entries from baseline text on stdin:
+# trimmed entries in file order, with blank and # comment lines skipped. Never fails.
+_vde_shib_parse_baseline() {
+    local line
+    _vde_shib_entries=()
+    while IFS= read -r line || [[ -n "${line}" ]]; do
+        _vde_shib_trim "${line}"
+        line="${_vde_shib_trimmed}"
+        [[ -n "${line}" ]] || continue
+        [[ "${line}" == '#'* ]] && continue
+        _vde_shib_entries+=("${line}")
+    done
+    return 0
+}
+
+# _vde_shib_tracked ROOT -> fills _vde_shib_tracked_list from git ls-files -z. The names are
+# split on NUL, the one byte a path cannot contain, so they survive intact whatever else they hold.
+# rc 2 when ROOT is not a git repository or ls-files fails (a corrupt index must never look like
+# an empty, clean tree).
+_vde_shib_tracked() {
+    if ! git -C "$1" rev-parse --git-dir >/dev/null 2>&1; then
+        _vde_shib_tracked_list=()
+        return 2
+    fi
+    _vde_shib_git_list "$1" ls-files -z
+}
+
+# _vde_shib_git_list ROOT GIT_ARGS... -> fills _vde_shib_tracked_list with the names printed by
+# `git -C ROOT GIT_ARGS`, which MUST end in -z. The output is split on NUL (${(@0)...}), the one byte
+# a path cannot contain: an in-band delimiter such as the unit separator (0x1F) CAN occur in a tracked
+# path, and a name split into pieces that exist nowhere would escape the sweep. core.quotepath=off: otherwise
+# git prints non-ASCII names as quoted octal escapes, no such file exists on disk, and the sweep would
+# silently skip it. rc 2 when git fails (a failing listing must never look like an empty, clean one).
+# The ONE place that turns a git name listing into a list: the tracked files, the files changed since
+# HEAD and the staged files all go through it.
+_vde_shib_git_list() {
+    setopt localoptions pipefail
+    local root="$1" out
+    shift
+    _vde_shib_tracked_list=()
+    out="$(git -C "${root}" -c core.quotepath=off "$@")" || return 2
+    _vde_shib_tracked_list=("${(@0)out}")
+    return 0
+}
+
+# vde_shib_excluded REL -> rc 0 when REL starts with an excluded prefix, else rc 1
+vde_shib_excluded() {
+    local rel="$1" p
+    for p in "${VDE_SHIBBOLETH_EXCLUDED_PREFIXES[@]}"; do
+        if [[ "${rel}" == "${p}"* ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# vde_shib_is_zsh FILE -> rc 0 when line 1 is a zsh shebang; rc 1 for missing,
+# unreadable or empty files. The 2-byte magic is checked first, so a file that is not
+# a shebang is never read as a line (a newline-free binary would be read whole).
+vde_shib_is_zsh() {
+    local file="$1" first='' magic=''
+    local -i fd=-1
+    [[ -f "${file}" && -r "${file}" ]] || return 1
+    # zsh read -k needs a terminal, so the 2-byte magic comes from zsh/system sysread.
+    zmodload zsh/system 2>/dev/null || return 1
+    sysopen -r -u fd -- "${file}" 2>/dev/null || return 1
+    sysread -s 2 -i "${fd}" magic 2>/dev/null
+    exec {fd}<&-
+    [[ "${magic}" == '#!' ]] || return 1
+    IFS= read -r first < "${file}" 2>/dev/null
+    [[ -n "${first}" ]] || return 1
+    # Match the INTERPRETER, not the word zsh anywhere on the line: `#!/bin/bash # zsh is not
+    # used here` is a bash script (Signet #645). Accepts `#!/bin/zsh`, `#!/usr/bin/env zsh`,
+    # `#!/usr/bin/env -S zsh -f` (also `-u VAR`, `-C dir` and a quoted `-S 'zsh -f'`), `#! /opt/homebrew/bin/zsh -f` and versioned names such as
+    # `zsh-5.9`, `zsh5` or `zsh-static`; rejects `zshfoo` and every other interpreter.
+    local re='^#![[:space:]]*(([^[:space:]]*/)?env[[:space:]]+((-[uC][[:space:]]+[^[:space:]]+|-[^[:space:]]+|[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*)[[:space:]]+)*)?'"[\"']?"'([^[:space:]]*/)?zsh([-.0-9][^[:space:]]*)?([[:space:]]|$)'
+    [[ "${first}" =~ ${re} ]]
+}
+
+# _vde_shib_is_zsh_file FILE -> rc 0 when FILE is a non-empty zsh file: its name ends in
+# .zsh, or its first line is a zsh shebang. rc 1 for anything else.
+_vde_shib_is_zsh_file() {
+    local file="$1"
+    [[ -f "${file}" && -r "${file}" && -s "${file}" ]] || return 1
+    [[ "${file}" == *.zsh ]] && return 0
+    vde_shib_is_zsh "${file}"
+}
+
+# vde_shib_has_literal FILE -> rc 0 when one of the first VDE_SHIBBOLETH_WINDOW
+# lines IS the literal: column 1, whole line, apart from trailing whitespace (a
+# trailing CR counts as whitespace). Comments, indented lines and any trailing
+# command or comment do not count.
+vde_shib_has_literal() {
+    setopt localoptions extendedglob
+    local file="$1" line=''
+    local -i i=0
+    [[ -f "${file}" && -r "${file}" ]] || return 1
+    # A final line without a trailing newline makes read return 1 with the text still in
+    # line, so the || test keeps it. The reset stops a stale line from a previous pass.
+    while (( i < VDE_SHIBBOLETH_WINDOW )) && { line=''; IFS= read -r line || [[ -n "${line}" ]]; }; do
+        (( ++i ))
+        line="${line%%[[:space:]]#}"
+        if [[ "${line}" == "${VDE_SHIBBOLETH_LITERAL}" ]]; then
+            return 0
+        fi
+    done < "${file}"
+    return 1
+}
+
+# _vde_shib_net_fetch ROOT FETCH_ARGS... -> `git fetch -q FETCH_ARGS` made non-interactive and bounded, with
+# git's own exit status, silent. The ONE place the library touches the network. GIT_TERMINAL_PROMPT=0 does
+# not stop ssh from prompting on the terminal (host key, passphrase) and ssh has no time limit, so unless the
+# user set an ssh command (theirs wins: GIT_SSH_COMMAND, GIT_SSH or core.sshCommand) ssh is made
+# non-interactive with connect and keep-alive limits; the http low-speed options abort a stalled transfer
+# (Signet #646). git prefers GIT_SSH_COMMAND over GIT_SSH, so setting ours would shadow a user's wrapper.
+_vde_shib_net_fetch() {
+    local root="$1"
+    shift
+    local -a envv=(GIT_TERMINAL_PROMPT=0) opts=(-c http.lowSpeedLimit=1000 -c http.lowSpeedTime=30)
+    if [[ -z "${GIT_SSH_COMMAND:-}" && -z "${GIT_SSH:-}" && -z "$(git -C "${root}" config --get core.sshCommand 2>/dev/null)" ]]; then
+        envv+=("GIT_SSH_COMMAND=ssh -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=3")
+    fi
+    env "${envv[@]}" git -C "${root}" "${opts[@]}" fetch -q "$@" 2>/dev/null
+}
+
+# _vde_shib_fetch_base ROOT REF -> one best-effort fetch of REF (origin/<branch>) into refs/remotes/REF.
+# A shallow clone is fetched with --depth=1 so it stays shallow; a FULL clone is fetched without --depth,
+# because a depth fetch would truncate its history. Failure is silent: the caller judges whether REF
+# resolves afterwards. The leading + lets a refresh move the ref even when the branch was rewritten.
+_vde_shib_fetch_base() {
+    local root="$1" ref="$2" br shallow=''
+    local -a depth=()
+    br="${ref#origin/}"
+    shallow="$(git -C "${root}" rev-parse --is-shallow-repository 2>/dev/null)"
+    [[ "${shallow}" == true ]] && depth=(--depth=1)
+    _vde_shib_net_fetch "${root}" "${depth[@]}" origin "+${br}:refs/remotes/${ref}" || true
+    return 0
+}
+
+# _vde_shib_deepen ROOT REF -> rc 0 once HEAD and REF share a merge-base. A shallow clone (what CI checks
+# out) has none, and judging a branch against the base TIP then mistakes an entry the base removed after
+# the branch was cut for growth. Deepen both histories in steps (at most 8 x 250 commits) until a merge-base
+# appears. rc 1 when the clone is not shallow, REF is not an origin/* ref, or no merge-base could be found
+# (offline, or the history is longer than the cap): the caller then keeps the strict tip comparison, which
+# can only block too much, never too little (Signet #651).
+_vde_shib_deepen() {
+    local root="$1" ref="$2" br head
+    local -i i
+    [[ "${ref}" == origin/* ]] || return 1
+    [[ "$(git -C "${root}" rev-parse --is-shallow-repository 2>/dev/null)" == true ]] || return 1
+    br="${ref#origin/}"
+    head="$(git -C "${root}" rev-parse HEAD 2>/dev/null)" || return 1
+    for (( i = 1; i <= 8; i++ )); do
+        # Two fetches, not one: given a sha AND a branch in one command, git 2.56 deepens only one of the two
+        # tips per round, so the other stayed shallow and no merge-base ever appeared (CI, git 2.56.1).
+        _vde_shib_net_fetch "${root}" --deepen=250 origin "+${br}:refs/remotes/${ref}" || return 1
+        _vde_shib_net_fetch "${root}" --deepen=250 origin "${head}" || return 1
+        [[ -n "$(git -C "${root}" merge-base HEAD "${ref}" 2>/dev/null)" ]] && return 0
+    done
+    return 1
+}
+
+# vde_shib_ensure_base_ref ROOT REF
+# Makes REF (e.g. origin/develop) resolvable to a commit, with at most one best-effort fetch of
+# origin. rc 0 when REF resolves (already, or after the fetch), 3 when it still does not.
+# A REF that already resolves may be STALE (develop moved on since the last fetch), and a stale base
+# hides growth the real base would report. Refreshing costs a network round trip, so only the push
+# gate pays it: set VDE_SHIB_REFRESH_BASE=1 (githooks/proof-of-life-hook.zsh does) and an already
+# resolvable origin/* REF is fetched again; an unreachable remote keeps the cached ref (Signet #646).
+vde_shib_ensure_base_ref() {
+    local root="$1" ref="$2"
+    if git -C "${root}" rev-parse --verify -q "${ref}^{commit}" >/dev/null 2>&1; then
+        if [[ "${VDE_SHIB_REFRESH_BASE:-}" == 1 && "${ref}" == origin/* ]]; then
+            _vde_shib_fetch_base "${root}" "${ref}"
+        fi
+        return 0
+    fi
+    [[ "${ref}" == origin/* ]] || return 3
+    _vde_shib_fetch_base "${root}" "${ref}"
+    if git -C "${root}" rev-parse --verify -q "${ref}^{commit}" >/dev/null 2>&1; then
+        return 0
+    fi
+    return 3
+}
+
+# vde_shib_sweep ROOT [BASELINE_REL]
+# Prints MISSING lines (sorted), then UNREADABLE lines (sorted), then STALE lines (baseline
+# order). An unreadable tracked *.zsh file (not excluded) is reported as UNREADABLE, never
+# skipped. An unreadable file WITHOUT the .zsh suffix cannot be classified (its shebang
+# cannot be read) and is not reported. rc 0 when nothing is printed, 1 when something is,
+# 2 when git cannot enumerate.
+vde_shib_sweep() {
+    local root="$1" baseline_rel="${2:-${VDE_SHIBBOLETH_BASELINE_REL}}"
+    local base_file="${root}/${baseline_rel}"
+    local rel line reason f
+    local -a baseline_order=() missing=() unreadable=() stale=()
+    local -A baseline=() tracked_set=()
+
+    if ! _vde_shib_tracked "${root}"; then
+        print -r -- "ERROR cannot enumerate tracked files in ${root}"
+        return 2
+    fi
+    for rel in "${_vde_shib_tracked_list[@]}"; do
+        tracked_set[${rel}]=1
+    done
+
+    if [[ -f "${base_file}" ]]; then
+        _vde_shib_parse_baseline < "${base_file}"
+        baseline_order=("${_vde_shib_entries[@]}")
+        for line in "${baseline_order[@]}"; do
+            baseline[${line}]=1
+        done
+    fi
+
+    for rel in "${_vde_shib_tracked_list[@]}"; do
+        [[ -n "${rel}" ]] || continue
+        vde_shib_excluded "${rel}" && continue
+        f="${root}/${rel}"
+        if [[ "${rel}" == *.zsh && -f "${f}" && ! -r "${f}" ]]; then
+            unreadable+=("${rel}")
+            continue
+        fi
+        _vde_shib_is_zsh_file "${f}" || continue
+        vde_shib_has_literal "${f}" && continue
+        [[ -n "${baseline[${rel}]:-}" ]] && continue
+        missing+=("${rel}")
+    done
+
+    for rel in "${baseline_order[@]}"; do
+        f="${root}/${rel}"
+        if [[ ! -f "${f}" ]]; then
+            reason="file not found"
+        elif [[ ! -r "${f}" && -n "${tracked_set[${rel}]:-}" ]] && ! vde_shib_excluded "${rel}"; then
+            # A TRACKED file that exists but cannot be read. A .zsh file was already reported once as
+            # UNREADABLE above; any other name cannot be classified at all (its shebang cannot be read).
+            # Neither is "stale", and telling the developer to delete the entry would send them the wrong
+            # way (Signet #645). An untracked or excluded entry falls through to its real reason.
+            continue
+        elif [[ ! -r "${f}" ]]; then
+            # Unreadable AND not a tracked in-scope file: it cannot be classified, so say so instead of
+            # the misleading "not a zsh file" (the entry is still stale: nothing tracked backs it).
+            reason="unreadable and not a tracked in-scope file"
+        elif ! _vde_shib_is_zsh_file "${f}"; then
+            reason="not a zsh file"
+        elif vde_shib_excluded "${rel}"; then
+            reason="excluded path"
+        elif vde_shib_has_literal "${f}"; then
+            reason="the file now carries the shibboleth"
+        else
+            continue
+        fi
+        stale+=("STALE ${rel} :: ${reason}")
+    done
+
+    if (( ${#missing[@]} > 0 )); then
+        for rel in "${(@o)missing}"; do
+            print -r -- "MISSING ${rel}"
+        done
+    fi
+    if (( ${#unreadable[@]} > 0 )); then
+        for rel in "${(@o)unreadable}"; do
+            print -r -- "UNREADABLE ${rel}"
+        done
+    fi
+    if (( ${#stale[@]} > 0 )); then
+        for line in "${stale[@]}"; do
+            print -r -- "${line}"
+        done
+    fi
+
+    if (( ${#missing[@]} + ${#unreadable[@]} + ${#stale[@]} > 0 )); then
+        return 1
+    fi
+    return 0
+}
+
+# _vde_shib_blob_violates ROOT REVPATH TMPDIR -> rc 0 when the git blob at REVPATH (for example
+# HEAD:lib/x.zsh, :lib/x.zsh for the index, or <merge-base>:lib/x.zsh) is a non-empty zsh file
+# WITHOUT the literal. rc 1 when it is not zsh, carries the literal, or the path is not in that tree.
+# rc 2 when the path IS in that tree but its blob cannot be read: a damaged object store must never
+# look clean. The blob is written under TMPDIR with its own base name, so the *.zsh test still applies.
+# The one place that judges a committed or staged blob (Signet #645).
+_vde_shib_blob_violates() {
+    local root="$1" revpath="$2" tmp="$3" f fmode rc=1
+    f="${tmp}/${revpath:t}"
+    if [[ "${revpath}" == :* ]]; then
+        fmode="$(git -C "${root}" --literal-pathspecs ls-files -s -- "${revpath#:}" 2>/dev/null)"
+    else
+        fmode="$(git -C "${root}" ls-tree "${revpath%%:*}" -- "${revpath#*:}" 2>/dev/null)"
+    fi
+    # A symlink's blob is its link TEXT and a gitlink (submodule) is a commit id: neither is file
+    # content. A symlink's target is judged as its own path.
+    [[ "${fmode}" == 120000* || "${fmode}" == 160000* ]] && return 1
+    if ! git -C "${root}" show "${revpath}" > "${f}" 2>/dev/null; then
+        rm -f -- "${f}"
+        # Absent from the tree is fine (rc 1); present but unreadable is an error (rc 2).
+        git -C "${root}" rev-parse -q --verify "${revpath}" >/dev/null 2>&1 && return 2
+        return 1
+    fi
+    if _vde_shib_is_zsh_file "${f}" && ! vde_shib_has_literal "${f}"; then
+        rc=0
+    fi
+    rm -f -- "${f}"
+    return ${rc}
+}
+
+# vde_shib_sweep_snapshot ROOT SOURCE [BASELINE_REL]
+# Judges the bytes GIT holds, not the working copy (Signet #645). SOURCE is `head` (the last
+# commit: what a push carries) or `index` (the staged content: what a commit will record).
+# Only files whose content differs from HEAD can have a different verdict from the working-tree
+# sweep, so only those are read: `git diff --name-only HEAD` for head, the staged names for index.
+# For head, a file that an UNCOMMITTED baseline entry names is read too: that entry would otherwise
+# grandfather a committed violator the diff never mentions.
+# Prints, sorted, `COMMITTED <rel>` (head) or `STAGED <rel>` (index) for every in-scope zsh blob
+# that lacks the literal and is not grandfathered in the baseline of the SAME snapshot. rc 0 when
+# nothing is printed, 1 when something is. rc 2 (with an `ERROR ...` line, after any findings) on an
+# unknown SOURCE, when git cannot list the files, or when a blob that exists cannot be read: the
+# check fails closed. An unborn HEAD has nothing committed, so head is rc 0 with no output. The index
+# mode is wired into githooks/pre-commit by Signet #647; until that lands only the tests call it.
+vde_shib_sweep_snapshot() {
+    setopt localoptions pipefail
+    local root="$1" mode="$2" baseline_rel="${3:-${VDE_SHIBBOLETH_BASELINE_REL}}"
+    local rev token what rel tmp line
+    local -i brc
+    local -a names=() found=() unreadable=()
+    local -A baseline=() judged=()
+
+    case "${mode}" in
+        head)  rev='HEAD:'; token=COMMITTED; what=committed ;;
+        index) rev=':';     token=STAGED;    what=staged ;;
+        *)
+            print -r -- "ERROR unknown snapshot source '${mode}' (use head or index)"
+            return 2
+            ;;
+    esac
+
+    if [[ "${mode}" == head ]]; then
+        git -C "${root}" rev-parse --verify -q 'HEAD^{commit}' >/dev/null 2>&1 || return 0
+        _vde_shib_git_list "${root}" diff --no-renames --name-only -z HEAD -- \
+            || { print -r -- "ERROR cannot list the files changed since HEAD in ${root}"; return 2; }
+    else
+        _vde_shib_git_list "${root}" diff --cached --no-renames --name-only -z --diff-filter=ACMRT \
+            || { print -r -- "ERROR cannot list the staged files in ${root}"; return 2; }
+    fi
+    names=("${_vde_shib_tracked_list[@]}")
+
+    # The baseline of the same snapshot decides who is grandfathered.
+    if git -C "${root}" cat-file -e "${rev}${baseline_rel}" 2>/dev/null; then
+        _vde_shib_parse_baseline < <(git -C "${root}" show "${rev}${baseline_rel}" 2>/dev/null)
+        for line in "${_vde_shib_entries[@]}"; do
+            baseline[${line}]=1
+        done
+    elif git -C "${root}" rev-parse -q --verify "${rev}${baseline_rel}" >/dev/null 2>&1; then
+        print -r -- "ERROR cannot read the ${what} ${baseline_rel} in ${root}"
+        return 2
+    fi
+
+    # An uncommitted baseline entry must not hide a committed violator: its file did not change, so the
+    # diff above does not list it, yet the entry changes the verdict. Judge every file the working-tree
+    # baseline names beyond HEAD's baseline (head only; the pre-commit guard owns staged additions).
+    if [[ "${mode}" == head && -f "${root}/${baseline_rel}" ]]; then
+        _vde_shib_parse_baseline < "${root}/${baseline_rel}"
+        for line in "${_vde_shib_entries[@]}"; do
+            [[ -n "${baseline[${line}]:-}" ]] || names+=("${line}")
+        done
+    fi
+
+    # Removing an entry takes the file's grandfathering away, so a commit that only deletes an entry
+    # must still judge that file's staged bytes (index only: for head the working-tree sweep already
+    # sees the entry, and an uncommitted re-add is handled above).
+    if [[ "${mode}" == index ]] && git -C "${root}" cat-file -e "HEAD:${baseline_rel}" 2>/dev/null; then
+        _vde_shib_parse_baseline < <(git -C "${root}" show "HEAD:${baseline_rel}" 2>/dev/null)
+        for line in "${_vde_shib_entries[@]}"; do
+            [[ -n "${baseline[${line}]:-}" ]] || names+=("${line}")
+        done
+    fi
+
+    tmp="$(mktemp -d 2>/dev/null)" || { print -r -- "ERROR cannot create a temporary directory for the snapshot sweep"; return 2; }
+    for rel in "${names[@]}"; do
+        [[ -n "${rel}" ]] || continue
+        [[ -n "${judged[${rel}]:-}" ]] && continue
+        judged[${rel}]=1
+        vde_shib_excluded "${rel}" && continue
+        [[ -n "${baseline[${rel}]:-}" ]] && continue
+        # `|| brc=$?`: the helper returns 1 for every clean blob, and a bare call would end the whole
+        # sweep there under set -e (githooks/pre-commit runs with it).
+        brc=0
+        _vde_shib_blob_violates "${root}" "${rev}${rel}" "${tmp}" || brc=$?
+        case ${brc} in
+            0) found+=("${rel}") ;;
+            2) unreadable+=("${rel}") ;;
+        esac
+    done
+    rm -rf -- "${tmp:?}"
+
+    if (( ${#found[@]} > 0 )); then
+        for rel in "${(@o)found}"; do
+            print -r -- "${token} ${rel}"
+        done
+    fi
+    if (( ${#unreadable[@]} > 0 )); then
+        for rel in "${(@o)unreadable}"; do
+            print -r -- "ERROR cannot read the ${what} content of ${rel}"
+        done
+        return 2
+    fi
+    if (( ${#found[@]} > 0 )); then
+        return 1
+    fi
+    return 0
+}
+
+# vde_shib_baseline_print ROOT
+# Prints, sorted, every in-scope tracked zsh file lacking the shibboleth. Ignores
+# any baseline. rc 0, or 2 when git cannot enumerate.
+vde_shib_baseline_print() {
+    local root="$1" rel f
+    local -a out=()
+
+    if ! _vde_shib_tracked "${root}"; then
+        print -r -- "ERROR cannot enumerate tracked files in ${root}"
+        return 2
+    fi
+
+    for rel in "${_vde_shib_tracked_list[@]}"; do
+        [[ -n "${rel}" ]] || continue
+        vde_shib_excluded "${rel}" && continue
+        f="${root}/${rel}"
+        _vde_shib_is_zsh_file "${f}" || continue
+        vde_shib_has_literal "${f}" && continue
+        out+=("${rel}")
+    done
+
+    if (( ${#out[@]} > 0 )); then
+        print -rl -- "${(@o)out}"
+    fi
+    return 0
+}
+
+# vde_shib_staged_baseline_additions ROOT [BASELINE_REL]
+# Prints the non-blank, non-comment lines ADDED to the staged baseline file.
+# Also refuses a staged DELETION of the baseline (empty it instead).
+# rc 1 when anything is printed or the baseline is staged for deletion, 0 when
+# nothing is, 2 when git fails.
+vde_shib_staged_baseline_additions() {
+    local root="$1" baseline_rel="${2:-${VDE_SHIBBOLETH_BASELINE_REL}}"
+    local diff_out name_status line body staged_text
+    local -i found=0 in_hunk=0
+
+    # The baseline is shrink-only, but it must be created once. When HEAD holds no copy of it, the
+    # commit that first adds it has nothing to shrink from, yet it may still list only files that
+    # ALREADY violate at HEAD: a file new in this commit would otherwise be grandfathered by the very
+    # change that creates the baseline (Signet #647; the push-time twin is #646). A brand-new repository
+    # (no HEAD) has no violator yet, so its first commit cannot create the baseline either: one rule, no
+    # special case, and the baseline is created in the next commit. Later commits are compared against
+    # HEAD and may only remove lines.
+    if ! git -C "${root}" cat-file -e "HEAD:${baseline_rel}" 2>/dev/null; then
+        if ! staged_text="$(git -C "${root}" show ":${baseline_rel}" 2>/dev/null)"; then
+            print -r -- "ERROR cannot read the staged ${baseline_rel} in ${root}"
+            return 2
+        fi
+        _vde_shib_parse_baseline <<< "${staged_text}"
+        _vde_shib_creation_growth "${root}" HEAD HEAD
+        return $?
+    fi
+
+    # A staged deletion of the baseline is the delete-then-recreate bypass: refuse it.
+    if ! name_status="$(git -C "${root}" diff --cached --name-status -- "${baseline_rel}" 2>/dev/null)"; then
+        print -r -- "ERROR cannot read staged status for ${baseline_rel} in ${root}"
+        return 2
+    fi
+    while IFS= read -r line; do
+        if [[ "${line%%[[:space:]]*}" == D ]]; then
+            print -r -- "baseline file deleted: empty it instead of deleting ${baseline_rel}"
+            return 1
+        fi
+    done <<< "${name_status}"
+
+    # Colour settings are overridden so the added-line prefix is always a bare +.
+    if ! diff_out="$(git -C "${root}" -c color.ui=never -c color.diff=never diff --cached --no-color --no-ext-diff -U0 -- "${baseline_rel}" 2>/dev/null)"; then
+        print -r -- "ERROR cannot read staged diff for ${baseline_rel} in ${root}"
+        return 2
+    fi
+
+    # Only hunk bodies hold entries. The header lines before the first @@ (`--- a/...`, `+++ b/...`) are
+    # skipped by POSITION, never by prefix: an entry such as `++evil.zsh` is itself the line `+++evil.zsh`
+    # and a prefix test would drop it (security review, Signet #647).
+    while IFS= read -r line; do
+        if [[ "${line}" == '@@'* ]]; then
+            in_hunk=1
+            continue
+        fi
+        (( in_hunk )) || continue
+        [[ "${line}" == '+'* ]] || continue
+        body="${line#+}"
+        _vde_shib_trim "${body}"
+        body="${_vde_shib_trimmed}"
+        [[ -n "${body}" ]] || continue
+        [[ "${body}" == '#'* ]] && continue
+        print -r -- "${body}"
+        found=1
+    done <<< "${diff_out}"
+
+    if (( found == 1 )); then
+        return 1
+    fi
+    return 0
+}
+
+# _vde_shib_creation_growth ROOT REV WHERE -> for the entries already parsed into _vde_shib_entries
+# (the caller ran _vde_shib_parse_baseline), prints every entry that is NOT already a violator at REV
+# (a file that is new, or already carries the shibboleth). rc 0 when none, 1 when any, 2 on an error.
+# The ONE rule for a baseline created from nothing: it may only grandfather files that already violate
+# at the base, so the change that creates the baseline cannot launder a fresh violator. Used by the
+# push-time growth check (REV = the merge-base, Signet #646) and the commit-time guard (REV = HEAD,
+# Signet #647). WHERE only names the base in error text.
+_vde_shib_creation_growth() {
+    local root="$1" rev="$2" where="$3" tmp entry
+    local -i brc=0 grew=0
+    local -A seen=()
+    tmp="$(mktemp -d 2>/dev/null)" || { print -r -- "ERROR cannot create a temporary directory for the baseline check"; return 2; }
+    for entry in "${_vde_shib_entries[@]}"; do
+        [[ -n "${seen[${entry}]:-}" ]] && continue
+        seen[${entry}]=1
+        brc=0
+        _vde_shib_blob_violates "${root}" "${rev}:${entry}" "${tmp}" || brc=$?
+        case ${brc} in
+            0) ;;
+            2)
+                print -r -- "ERROR cannot read ${entry} at ${where} in ${root}"
+                rm -rf -- "${tmp:?}"
+                return 2
+                ;;
+            *)
+                print -r -- "${entry}"
+                grew=1
+                ;;
+        esac
+    done
+    rm -rf -- "${tmp:?}"
+    if (( grew == 1 )); then
+        return 1
+    fi
+    return 0
+}
+
+# vde_shib_staged_baseline_removals ROOT [BASELINE_REL]
+# Prints the non-blank, non-comment lines REMOVED from the staged baseline (the allowed direction),
+# so the pre-commit hook can show them next to a rejected addition. The ONE parser for the removed
+# lines, next to vde_shib_staged_baseline_additions, which owns the added ones (Signet #647).
+# rc 0 (also when HEAD holds no baseline: nothing can be removed), 2 when git fails.
+vde_shib_staged_baseline_removals() {
+    local root="$1" baseline_rel="${2:-${VDE_SHIBBOLETH_BASELINE_REL}}"
+    local diff_out line body
+    local -i in_hunk=0
+
+    git -C "${root}" cat-file -e "HEAD:${baseline_rel}" 2>/dev/null || return 0
+    if ! diff_out="$(git -C "${root}" -c color.ui=never -c color.diff=never diff --cached --no-color --no-ext-diff -U0 -- "${baseline_rel}" 2>/dev/null)"; then
+        print -r -- "ERROR cannot read staged diff for ${baseline_rel} in ${root}"
+        return 2
+    fi
+    while IFS= read -r line; do
+        if [[ "${line}" == '@@'* ]]; then
+            in_hunk=1
+            continue
+        fi
+        (( in_hunk )) || continue
+        [[ "${line}" == '-'* ]] || continue
+        body="${line#-}"
+        _vde_shib_trim "${body}"
+        body="${_vde_shib_trimmed}"
+        [[ -n "${body}" ]] || continue
+        [[ "${body}" == '#'* ]] && continue
+        print -r -- "${body}"
+    done <<< "${diff_out}"
+    return 0
+}
+
+# _vde_shib_load_entries ROOT SOURCE BASELINE_REL -> fills _vde_shib_entries from the baseline as the
+# working tree holds it (SOURCE worktree) or as HEAD committed it (SOURCE head). rc 1 when that copy does
+# not exist, rc 2 (with an ERROR line) when it exists but cannot be read: an unreadable baseline must
+# never be taken for an empty one. The one reader both growth views share (Signet #646).
+_vde_shib_load_entries() {
+    local root="$1" source="$2" rel="$3"
+    _vde_shib_entries=()
+    if [[ "${source}" == head ]]; then
+        git -C "${root}" cat-file -e "HEAD:${rel}" 2>/dev/null || return 1
+        _vde_shib_parse_baseline < <(git -C "${root}" show "HEAD:${rel}" 2>/dev/null)
+    else
+        [[ -f "${root}/${rel}" ]] || return 1
+        if [[ ! -r "${root}/${rel}" ]]; then
+            print -r -- "ERROR cannot read ${rel} in ${root}"
+            return 2
+        fi
+        _vde_shib_parse_baseline < "${root}/${rel}"
+    fi
+    return 0
+}
+
+# vde_shib_baseline_growth ROOT BASE_REF [BASELINE_REL] [SOURCE]
+# SOURCE is `worktree` (default: the baseline file as it is on disk) or `head` (as HEAD committed it): an
+# exemption a commit added and an uncommitted edit removed is only visible in the head view.
+# Prints, in working-tree file order, every baseline entry present in the working-tree
+# baseline but absent from the baseline at the MERGE-BASE of HEAD and BASE_REF (the base
+# tip when there is no merge-base). A branch cut before the base shrank its baseline is
+# therefore not blamed for that shrinkage. rc 1 when anything is printed or the baseline
+# was deleted since the merge-base (it exists there but not in the working tree), 0 when
+# nothing is or the merge-base holds no baseline (first creation), 3 (printing nothing)
+# when BASE_REF cannot be resolved, 2 when git cannot read the merge-base baseline.
+vde_shib_baseline_growth() {
+    local root="$1" base_ref="$2" baseline_rel="${3:-${VDE_SHIBBOLETH_BASELINE_REL}}" source="${4:-worktree}"
+    local base_text entry mb=''
+    local -a work_entries=()
+    local -A seen=()
+    local -i grew=0 lrc=0
+
+    if ! git -C "${root}" rev-parse --verify -q "${base_ref}^{commit}" >/dev/null 2>&1; then
+        return 3
+    fi
+
+    # No common ancestor: a shallow clone (CI) is deepened until one exists (Signet #651). If none can be
+    # found (unrelated history, offline, or longer than the cap) the check falls back to the base tip.
+    mb="$(git -C "${root}" merge-base HEAD "${base_ref}" 2>/dev/null)"
+    if [[ -z "${mb}" ]] && _vde_shib_deepen "${root}" "${base_ref}"; then
+        mb="$(git -C "${root}" merge-base HEAD "${base_ref}" 2>/dev/null)"
+    fi
+    [[ -n "${mb}" ]] || mb="${base_ref}"
+
+    if ! git -C "${root}" cat-file -e "${mb}:${baseline_rel}" 2>/dev/null; then
+        # A baseline that IS in the merge-base tree but cannot be read is an error, never "first creation".
+        if git -C "${root}" rev-parse -q --verify "${mb}:${baseline_rel}" >/dev/null 2>&1; then
+            print -r -- "ERROR cannot read ${baseline_rel} at ${base_ref} in ${root}"
+            return 2
+        fi
+        # First creation of the baseline on this branch: there is no earlier baseline to be shrink-only
+        # against, so every entry must be a file that ALREADY violates at the merge-base tree. A file that
+        # is new on this branch, or already carries the literal, would otherwise let the creating change
+        # grandfather a fresh violator (Signet #646).
+        lrc=0
+        _vde_shib_load_entries "${root}" "${source}" "${baseline_rel}" || lrc=$?
+        (( lrc == 1 )) && return 0
+        (( lrc == 2 )) && return 2
+        _vde_shib_creation_growth "${root}" "${mb}" "${base_ref}"
+        return $?
+    fi
+    if ! base_text="$(git -C "${root}" show "${mb}:${baseline_rel}" 2>/dev/null)"; then
+        print -r -- "ERROR cannot read ${baseline_rel} at ${base_ref} in ${root}"
+        return 2
+    fi
+
+    _vde_shib_parse_baseline <<< "${base_text}"
+    for entry in "${_vde_shib_entries[@]}"; do
+        seen[${entry}]=1
+    done
+
+    lrc=0
+    _vde_shib_load_entries "${root}" "${source}" "${baseline_rel}" || lrc=$?
+    if (( lrc == 1 )); then
+        print -r -- "baseline file deleted since ${base_ref}: empty it instead of deleting ${baseline_rel}"
+        return 1
+    fi
+    (( lrc == 2 )) && return 2
+    work_entries=("${_vde_shib_entries[@]}")
+
+    for entry in "${work_entries[@]}"; do
+        if [[ -z "${seen[${entry}]:-}" ]]; then
+            print -r -- "${entry}"
+            seen[${entry}]=1
+            grew=1
+        fi
+    done
+
+    if (( grew == 1 )); then
+        return 1
+    fi
+    return 0
+}

@@ -18,10 +18,13 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
-  verify:
+  paired-update:
+    name: paired-update
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Install dependencies
         shell: bash
         run: sudo apt-get update && sudo apt-get install -y zsh && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
@@ -30,6 +33,10 @@ jobs:
         run: ./bin/vde-enforce-uap.zsh
       - name: Run paired update enforcer
         shell: zsh {0}
+        env:
+          # raw values only: the enforcer decides skip and base itself (Actions string comparison is case-insensitive, zsh's is not)
+          VDE_PAIRED_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          VDE_PAIRED_EVENT_BEFORE: ${{ github.event.before }}
+        # the enforcer MUST stay the LAST command: zsh {0} has no errexit, so a trailing echo would hide its failure
         run: |
           ./bin/paired_update_enforcer
-          echo "Paired update check passed."

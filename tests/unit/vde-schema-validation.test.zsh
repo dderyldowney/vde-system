@@ -18,6 +18,7 @@ source "$PROJECT_ROOT/lib/vde-core"
 typeset VERBOSE=${VERBOSE:-false}
 typeset TESTS_PASSED=0
 typeset TESTS_FAILED=0
+typeset TESTS_SKIPPED=0
 typeset TEST_TMP_DIR=""
 
 # Test helpers
@@ -194,6 +195,268 @@ EOF
 }
 
 # =============================================================================
+# Built-in Validator Tests (no jsonschema required)
+# =============================================================================
+# Without the jsonschema module the built-in validator must be exactly as strict
+# as jsonschema for the keywords the project schemas use, and must refuse (not
+# ignore) keywords it does not implement.
+
+typeset LANG_OK='{"name":"vde-test","display":"Test","ssh_port":2201}'
+typeset SVC_OK='{"name":"vde-svc","display":"Svc","ssh_port":2401}'
+
+# Fixtures: name|expected|language array|service array|extra top-level members
+typeset -a VALIDATOR_FIXTURES=(
+    "valid_minimal|ok|[${LANG_OK}]|[${SVC_OK}]|"
+    "valid_empty_lists|ok|[]|[]|"
+    "valid_integer_valued_float_port|ok|[{\"name\":\"vde-test\",\"display\":\"T\",\"ssh_port\":2201.0}]|[]|"
+    "valid_null_pkgs|ok|[{\"name\":\"vde-test\",\"display\":\"T\",\"ssh_port\":2201,\"pkgs\":null}]|[]|"
+    "bad_name_pattern|bad|[{\"name\":\"invalid-name\",\"display\":\"T\",\"ssh_port\":2201}]|[]|"
+    "missing_required_fields|bad|[{\"name\":\"vde-a\"}]|[]|"
+    "port_out_of_range|bad|[{\"name\":\"vde-a\",\"display\":\"T\",\"ssh_port\":9999}]|[]|"
+    "port_wrong_type_string|bad|[{\"name\":\"vde-a\",\"display\":\"T\",\"ssh_port\":\"2201\"}]|[]|"
+    "port_boolean_not_integer|bad|[{\"name\":\"vde-a\",\"display\":\"T\",\"ssh_port\":true}]|[]|"
+    "language_port_in_service_range|bad|[{\"name\":\"vde-a\",\"display\":\"T\",\"ssh_port\":2401}]|[]|"
+    "service_without_port|bad|[]|[{\"name\":\"vde-svc\",\"display\":\"S\"}]|"
+    "display_empty|bad|[{\"name\":\"vde-a\",\"display\":\"\",\"ssh_port\":2201}]|[]|"
+    "extra_vm_property|bad|[{\"name\":\"vde-a\",\"display\":\"T\",\"ssh_port\":2201,\"bogus\":1}]|[]|"
+    "extra_top_level_property|bad|[]|[]|,\"extra\":1"
+    "pkgs_wrong_type|bad|[{\"name\":\"vde-a\",\"display\":\"T\",\"ssh_port\":2201,\"pkgs\":5}]|[]|"
+    "alias_wrong_item_type|bad|[{\"name\":\"vde-a\",\"display\":\"T\",\"ssh_port\":2201,\"aliases\":[1]}]|[]|"
+)
+
+_write_fixture() {
+    local file="$1" language="$2" service="$3" extra="$4"
+    print -r -- "{\"version\":\"1.0\"${extra},\"vms\":{\"language\":${language},\"service\":${service}}}" > "$file"
+}
+
+_validate_with() {
+    local mode="$1" json_file="$2" schema_file="$3"
+    ( export VDE_SCHEMA_VALIDATOR="$mode"; vde_validate_json_schema "$json_file" "$schema_file" >/dev/null 2>&1 )
+}
+
+test_builtin_validator_matches_expected_verdicts() {
+    local schema_file="$TEST_TMP_DIR/vm-types.schema.json"
+    local entry name expected language service extra file rc want
+    for entry in "${VALIDATOR_FIXTURES[@]}"; do
+        local -a parts=("${(@s:|:)entry}")
+        name="${parts[1]}"; expected="${parts[2]}"; language="${parts[3]}"; service="${parts[4]}"; extra="${parts[5]}"
+        file="$TEST_TMP_DIR/fixture-${name}.json"
+        _write_fixture "$file" "$language" "$service" "$extra"
+        _validate_with builtin "$file" "$schema_file"; rc=$?
+        if [[ "$expected" == ok ]]; then want="$VDE_SUCCESS"; else want="$VDE_ERR_INVALID_DATA"; fi
+        test_assert "[[ $rc -eq $want ]]" "built-in validator: ${name} -> ${expected} (rc=${rc})"
+    done
+}
+
+test_builtin_validator_accepts_real_vm_types() {
+    _validate_with builtin "$TEST_TMP_DIR/vm-types.json" "$TEST_TMP_DIR/vm-types.schema.json"
+    test_assert "[[ $? -eq $VDE_SUCCESS ]]" "built-in validator accepts the real vm-types.json"
+}
+
+test_builtin_validator_fails_closed_on_unsupported_keyword() {
+    local schema_file="$TEST_TMP_DIR/allof.schema.json"
+    local output rc
+    python3 - "$TEST_TMP_DIR/vm-types.schema.json" "$schema_file" <<'PY'
+import json, sys
+schema = json.load(open(sys.argv[1]))
+schema["allOf"] = []
+json.dump(schema, open(sys.argv[2], "w"))
+PY
+    output=$( ( export VDE_SCHEMA_VALIDATOR=builtin; vde_validate_json_schema "$TEST_TMP_DIR/vm-types.json" "$schema_file" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_ERR_INVALID_DATA ]]" "built-in validator rejects a schema using an unsupported keyword (allOf)"
+    [[ $output == *unsupported* ]]
+    test_assert "[[ $? -eq 0 ]]" "unsupported-keyword failure says so explicitly"
+}
+
+# A $ref may point into a subtree no walk of properties/items/definitions
+# reaches; an unsupported keyword there must still fail closed.
+test_builtin_validator_fails_closed_on_keyword_behind_ref() {
+    local schema_file="$TEST_TMP_DIR/ref-bypass.schema.json"
+    local json_file="$TEST_TMP_DIR/ref-bypass.json"
+    local output rc
+    # "default" is an annotation key, so nothing walks it, but a $ref can point into it.
+    print -r -- '{"type":"object","properties":{"port":{"$ref":"#/default/port"}},"default":{"port":{"type":"integer","enum":[2201]}}}' > "$schema_file"
+    print -r -- '{"port": 9999}' > "$json_file"
+    output=$( ( export VDE_SCHEMA_VALIDATOR=builtin; vde_validate_json_schema "$json_file" "$schema_file" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_ERR_INVALID_DATA ]]" "built-in validator rejects an unsupported keyword reached only through a \$ref"
+    [[ $output == *unsupported* ]]
+    test_assert "[[ $? -eq 0 ]]" "the \$ref-reached keyword failure says unsupported"
+}
+
+# jsonschema picks its semantics from "$schema"; the built-in implements one
+# fixed draft, so any other declared draft must be refused, not approximated.
+test_builtin_validator_fails_closed_on_other_draft() {
+    local schema_file="$TEST_TMP_DIR/draft07.schema.json"
+    local json_file="$TEST_TMP_DIR/draft07.json"
+    local output rc
+    print -r -- '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}' > "$schema_file"
+    print -r -- '{}' > "$json_file"
+    output=$( ( export VDE_SCHEMA_VALIDATOR=builtin; vde_validate_json_schema "$json_file" "$schema_file" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_ERR_INVALID_DATA ]]" "built-in validator rejects a schema declaring a draft it does not implement"
+    [[ $output == *unsupported* ]]
+    test_assert "[[ $? -eq 0 ]]" "the draft refusal says unsupported"
+}
+
+# "$schema" URLs are often written with a trailing "#"; that is the same draft.
+test_builtin_validator_accepts_schema_url_with_trailing_hash() {
+    local schema_file="$TEST_TMP_DIR/hash.schema.json"
+    local json_file="$TEST_TMP_DIR/hash.json"
+    print -r -- '{"$schema":"https://json-schema.org/draft/2020-12/schema#","type":"object"}' > "$schema_file"
+    print -r -- '{}' > "$json_file"
+    _validate_with builtin "$json_file" "$schema_file"
+    test_assert "[[ $? -eq $VDE_SUCCESS ]]" "built-in validator accepts a 2020-12 \$schema URL with a trailing #"
+}
+
+# A nested "$id" changes the base URI for "$ref" resolution, which the built-in
+# does not model, so it must be refused rather than ignored.
+test_builtin_validator_fails_closed_on_nested_id() {
+    local schema_file="$TEST_TMP_DIR/nested-id.schema.json"
+    local json_file="$TEST_TMP_DIR/nested-id.json"
+    local output rc
+    print -r -- '{"type":"object","properties":{"a":{"$id":"https://example.test/a","type":"integer"}}}' > "$schema_file"
+    print -r -- '{"a": 1}' > "$json_file"
+    output=$( ( export VDE_SCHEMA_VALIDATOR=builtin; vde_validate_json_schema "$json_file" "$schema_file" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_ERR_INVALID_DATA ]]" "built-in validator rejects a nested \$id"
+    [[ $output == *unsupported* ]]
+    test_assert "[[ $? -eq 0 ]]" "the nested \$id refusal says unsupported"
+}
+
+# JSON-pointer fragments in a "$ref" are percent-decoded ("%25" is "%").
+test_builtin_validator_resolves_percent_encoded_ref() {
+    local schema_file="$TEST_TMP_DIR/pct.schema.json"
+    local good="$TEST_TMP_DIR/pct-good.json" bad="$TEST_TMP_DIR/pct-bad.json"
+    print -r -- '{"type":"object","properties":{"a":{"$ref":"#/definitions/a%25b"}},"definitions":{"a%b":{"type":"integer"}}}' > "$schema_file"
+    print -r -- '{"a": 1}' > "$good"
+    print -r -- '{"a": "x"}' > "$bad"
+    _validate_with builtin "$good" "$schema_file"
+    test_assert "[[ $? -eq $VDE_SUCCESS ]]" "a percent-encoded \$ref resolves and accepts valid data"
+    _validate_with builtin "$bad" "$schema_file"
+    test_assert "[[ $? -eq $VDE_ERR_INVALID_DATA ]]" "a percent-encoded \$ref resolves and rejects invalid data"
+}
+
+# A recursive schema ("$ref": "#") with a root "$id" is valid: the root is not a
+# nested $id.
+test_builtin_validator_accepts_recursive_ref_with_root_id() {
+    local schema_file="$TEST_TMP_DIR/recursive.schema.json"
+    local good="$TEST_TMP_DIR/recursive-good.json" bad="$TEST_TMP_DIR/recursive-bad.json"
+    print -r -- '{"$id":"https://example.test/tree","type":"object","properties":{"child":{"$ref":"#"},"n":{"type":"integer"}}}' > "$schema_file"
+    print -r -- '{"n":1,"child":{"n":2,"child":{}}}' > "$good"
+    print -r -- '{"n":1,"child":{"n":"x"}}' > "$bad"
+    _validate_with builtin "$good" "$schema_file"
+    test_assert "[[ $? -eq $VDE_SUCCESS ]]" "a recursive \$ref to the root with a root \$id accepts valid data"
+    _validate_with builtin "$bad" "$schema_file"
+    test_assert "[[ $? -eq $VDE_ERR_INVALID_DATA ]]" "a recursive \$ref to the root rejects invalid nested data"
+}
+
+# Constructs the built-in validator does not implement are refused explicitly
+# (never ignored): boolean "items", "$ref" with sibling keywords, and a
+# "required" list with duplicate names (which jsonschema's metaschema rejects).
+_assert_builtin_refuses() {
+    local label="$1" schema_json="$2" data_json="$3"
+    local schema_file="$TEST_TMP_DIR/refuse-${label}.schema.json"
+    local json_file="$TEST_TMP_DIR/refuse-${label}.json"
+    local output rc
+    print -r -- "$schema_json" > "$schema_file"
+    print -r -- "$data_json" > "$json_file"
+    output=$( ( export VDE_SCHEMA_VALIDATOR=builtin; vde_validate_json_schema "$json_file" "$schema_file" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_ERR_INVALID_DATA ]]" "built-in validator refuses ${label}"
+    [[ $output == *unsupported* ]]
+    test_assert "[[ $? -eq 0 ]]" "the ${label} refusal says unsupported"
+}
+
+test_builtin_validator_refuses_unimplemented_constructs() {
+    _assert_builtin_refuses boolean-items '{"type":"array","items":true}' '[1]'
+    _assert_builtin_refuses ref-with-sibling '{"type":"object","properties":{"a":{"$ref":"#/definitions/s","minLength":1}},"definitions":{"s":{"type":"string"}}}' '{"a":"x"}'
+    _assert_builtin_refuses duplicate-required '{"type":"object","required":["a","a"]}' '{"a":1}'
+}
+
+# A jsonschema module older than 4.0 has no Draft202012Validator, so its default
+# draft is version-dependent. auto must then use the built-in validator (and say
+# so), and an explicit jsonschema mode must refuse with a clear message.
+test_old_jsonschema_module_is_not_used_unpinned() {
+    local stub="$TEST_TMP_DIR/old-jsonschema"
+    local output rc
+    mkdir -p "$stub/jsonschema"
+    print -r -- 'def validate(instance, schema): raise SystemExit("unpinned jsonschema.validate must not be called")' > "$stub/jsonschema/__init__.py"
+    output=$( ( export PYTHONPATH="$stub" VDE_SCHEMA_VALIDATOR=auto; vde_validate_json_schema "$TEST_TMP_DIR/vm-types.json" "$TEST_TMP_DIR/vm-types.schema.json" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_SUCCESS ]]" "auto mode still validates when the jsonschema module is too old"
+    [[ $output == *"(builtin)"* ]]
+    test_assert "[[ $? -eq 0 ]]" "auto mode names the built-in validator when jsonschema is too old"
+    output=$( ( export PYTHONPATH="$stub" VDE_SCHEMA_VALIDATOR=jsonschema; vde_validate_json_schema "$TEST_TMP_DIR/vm-types.json" "$TEST_TMP_DIR/vm-types.schema.json" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_ERR_INVALID_DATA ]]" "explicit jsonschema mode refuses a module that is too old"
+    [[ $output == *Draft202012Validator* ]]
+    test_assert "[[ $? -eq 0 ]]" "the too-old message names Draft202012Validator"
+}
+
+test_missing_validator_helper_is_reported() {
+    local output rc
+    output=$( ( _VDE_CORE_LIB_DIR="$TEST_TMP_DIR/no-such-dir"; vde_validate_json_schema "$TEST_TMP_DIR/vm-types.json" "$TEST_TMP_DIR/vm-types.schema.json" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_ERR_NOT_FOUND ]]" "a missing validator helper returns NOT_FOUND, not INVALID_DATA"
+    [[ $output == *vde-json-validate.py* ]]
+    test_assert "[[ $? -eq 0 ]]" "the missing-helper message names the helper file"
+}
+
+test_deeply_nested_json_gives_message_not_traceback() {
+    local json_file="$TEST_TMP_DIR/deep.json"
+    local output rc
+    python3 -c "import sys; sys.stdout.write('[' * 60000 + ']' * 60000)" > "$json_file"
+    output=$( ( export VDE_SCHEMA_VALIDATOR=builtin; vde_validate_json_schema "$json_file" "$TEST_TMP_DIR/vm-types.schema.json" ) 2>&1 )
+    rc=$?
+    test_assert "[[ $rc -eq $VDE_ERR_INVALID_DATA ]]" "deeply nested JSON is rejected"
+    [[ $output != *Traceback* ]]
+    test_assert "[[ $? -eq 0 ]]" "deeply nested JSON gives a one-line message, not a traceback"
+}
+
+test_builtin_validator_handles_quote_in_schema_path() {
+    local dir="$TEST_TMP_DIR/o'brien"
+    mkdir -p "$dir"
+    cp "$TEST_TMP_DIR/vm-types.schema.json" "$dir/vm-types.schema.json"
+    _validate_with builtin "$TEST_TMP_DIR/vm-types.json" "$dir/vm-types.schema.json"
+    test_assert "[[ $? -eq $VDE_SUCCESS ]]" "a quote in the schema path does not break validation"
+}
+
+test_builtin_validator_handles_quote_in_json_path() {
+    local file="$TEST_TMP_DIR/it's-valid.json"
+    cp "$TEST_TMP_DIR/vm-types.json" "$file"
+    _validate_with builtin "$file" "$TEST_TMP_DIR/vm-types.schema.json"
+    test_assert "[[ $? -eq $VDE_SUCCESS ]]" "a quote in the JSON file name does not break validation"
+}
+
+test_validator_name_is_reported() {
+    local output
+    output=$( ( export VDE_SCHEMA_VALIDATOR=builtin; vde_validate_json_schema "$TEST_TMP_DIR/vm-types.json" "$TEST_TMP_DIR/vm-types.schema.json" ) 2>&1 )
+    [[ $output == *"(builtin)"* ]]
+    test_assert "[[ $? -eq 0 ]]" "success message names the validator used (builtin)"
+}
+
+test_builtin_matches_jsonschema_on_all_fixtures() {
+    if ! python3 -c "import jsonschema" 2>/dev/null; then
+        echo "  SKIP: jsonschema not installed; built-in vs jsonschema comparison not run"
+        ((TESTS_SKIPPED++))
+        return 0
+    fi
+    local schema_file="$TEST_TMP_DIR/vm-types.schema.json"
+    local entry name language service extra file rc_builtin rc_js
+    for entry in "${VALIDATOR_FIXTURES[@]}"; do
+        local -a parts=("${(@s:|:)entry}")
+        name="${parts[1]}"; language="${parts[3]}"; service="${parts[4]}"; extra="${parts[5]}"
+        file="$TEST_TMP_DIR/diff-${name}.json"
+        _write_fixture "$file" "$language" "$service" "$extra"
+        _validate_with builtin "$file" "$schema_file"; rc_builtin=$?
+        _validate_with jsonschema "$file" "$schema_file"; rc_js=$?
+        test_assert "[[ $rc_builtin -eq $rc_js ]]" "built-in and jsonschema agree on ${name} (${rc_builtin} vs ${rc_js})"
+    done
+}
+
+# =============================================================================
 # Schema Discovery Tests
 # =============================================================================
 
@@ -270,6 +533,26 @@ run_test_suite() {
     run_test test_validate_json_schema_service_vm_without_port
 
     echo ""
+    echo "Built-in Validator Tests:"
+    run_test test_builtin_validator_matches_expected_verdicts
+    run_test test_builtin_validator_accepts_real_vm_types
+    run_test test_builtin_validator_fails_closed_on_unsupported_keyword
+    run_test test_builtin_validator_fails_closed_on_keyword_behind_ref
+    run_test test_builtin_validator_fails_closed_on_other_draft
+    run_test test_builtin_validator_accepts_schema_url_with_trailing_hash
+    run_test test_builtin_validator_fails_closed_on_nested_id
+    run_test test_builtin_validator_resolves_percent_encoded_ref
+    run_test test_builtin_validator_accepts_recursive_ref_with_root_id
+    run_test test_builtin_validator_refuses_unimplemented_constructs
+    run_test test_old_jsonschema_module_is_not_used_unpinned
+    run_test test_missing_validator_helper_is_reported
+    run_test test_deeply_nested_json_gives_message_not_traceback
+    run_test test_builtin_validator_handles_quote_in_schema_path
+    run_test test_builtin_validator_handles_quote_in_json_path
+    run_test test_validator_name_is_reported
+    run_test test_builtin_matches_jsonschema_on_all_fixtures
+
+    echo ""
     echo "Schema Discovery Tests:"
     run_test test_get_schema_for_json_found
     run_test test_get_schema_for_json_not_found
@@ -290,6 +573,7 @@ run_test_suite() {
     echo "========================================"
     echo "Passed: $TESTS_PASSED"
     echo "Failed: $TESTS_FAILED"
+    echo "Skipped: $TESTS_SKIPPED"
 
     if [[ $TESTS_FAILED -eq 0 ]]; then
         echo ""

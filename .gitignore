@@ -20,6 +20,10 @@ data/mongodb/*
 public-ssh-keys/*
 coverage/*
 .cache.test-backup/
+.cache/
+.kilo/
+.venv/
+.direnv/
 
 # Backup files
 *.bak
@@ -59,6 +63,9 @@ output/
 tests/test-logs/
 *.log
 *.txt
+!requirements-dev.txt
+!docs/governance/shibboleth-baseline.txt
+!tests/ci-unit-exclusions.txt
 !scripts/setup/*.zsh
 !plans/scripts/**/*.log
 !plans/scripts/**/*.txt
@@ -88,7 +95,10 @@ test_run_report.txt
 
 # Session and agent files
 SESSION_STATE.md
-.agents/
+# Antigravity session files stay local; its native skills (symlinks to .gemini/SKILLS and
+# .gemini/COMMANDS, Signet #634) are committed so a fresh clone has them.
+.agents/*
+!.agents/skills/
 .gemini/settings.json
 .gemini/settings.local.json
 .worktrees/
@@ -110,7 +120,11 @@ plans/scripts/git-test/
 tests/.test-tmp/
 .tmp.drivedownload/
 .tmp.driveupload/
-.claude/
+# Claude Code's personal settings, backups and hooks stay local; its native skills
+# (symlinks to .gemini/SKILLS and .gemini/COMMANDS, Signet #642) are committed so a
+# fresh clone has them. Same pattern as .agents/ above.
+.claude/*
+!.claude/skills/
 plans/matrix-audit-report.md
 plans/scripts/fifo_test.log
 /pretty.output

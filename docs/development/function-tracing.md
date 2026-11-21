@@ -218,6 +218,13 @@ Output:
 [debug] cmd=docker compose -f ... --env-file ./.env
 ```
 
+### Router action handlers
+
+The command bodies for `start`, `stop`, `restart`, `remove`, `exec`, `enter`, `port` and `help` live in
+`lib/vde-actions` as `vde_action_*` functions. `vde_trace_install` skips wrapping them, so they are transparent:
+a trace shows the calls they make at the depth those calls had when the bodies were inline `case` arms, and no
+`vde_action_*` frame. See [router-handlers](router-handlers.md#7-function-trace-and-the-handlers).
+
 ### Filtering
 
 Two filtering lists control output noise:

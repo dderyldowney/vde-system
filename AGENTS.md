@@ -2,9 +2,21 @@
 <!-- @shared-law (Forge Component) -->
 # VDE Universal Agent Protocol (UAP)
 
-This document defines the **MANDATORY** development lifecycle and behavioral constraints for **ALL** AI agents (Gemini CLI and any sub-agents) interacting with the VDE workspace.
+This document defines the **MANDATORY** development lifecycle and behavioral constraints for **ALL** AI agents (Claude Code, Antigravity and any sub-agents) interacting with the VDE workspace.
 
 **There are NO EXCEPTIONS to these rules. Rationalizing bypasses is a critical failure.**
+
+---
+
+## READING LOCATIONS (where every agent looks)
+
+- **Project state (read at session start):** `.gemini/STATE/MEMORY.md` (standing watch, baseline, recent Strikes) and `.gemini/STATE/session_handover.md` (current session goals and constraints).
+- **Project rules:** `.gemini/RULES/` (one file per rule family), `STYLE_GUIDE.md` (repository root) and `.gemini/instructions.md`.
+- **Procedures (the `/vde-*` commands and role skills named in these rules):** `.gemini/COMMANDS/` and `.gemini/SKILLS/`. Antigravity discovers them natively through `.agents/skills` and Claude Code through `.claude/skills` (both folders hold only symlinks to these files); for every other agent they are not auto-discovered: read the named file and follow it.
+- **Plans and remediation:** `plans/` (Forge development artifacts; the active remediation plan is `plans/session_handover_remediation.md`). Retired plans are archived under `.gemini/PLANS/archive/`.
+- **Certified status record:** `PROJECT_STATUS.md` (repository root; part of the version-sync and Gospel mechanism).
+- **Tool-mandated entry points (stay at the repository root):** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (a symlink to `.gemini/instructions.md`) and `kilo.json`, plus the two native-skill discovery folders `.agents/skills` (Antigravity) and `.claude/skills` (Claude Code), which hold only symlinks to `.gemini/SKILLS` and `.gemini/COMMANDS`.
+- Nothing AI-specific is added to the repository root: new agent-facing material goes under `.gemini/`.
 
 ---
 
@@ -16,8 +28,8 @@ The main agent MUST complete these 10 steps sequentially before doing *anything 
 *Note: Sub-agents inherit this context and MUST skip these steps to begin their assigned task immediately.*
 
 1.  **Read @.gemini/instructions.md**: Read and apply the file following all instructions.
-2.  **Read @MEMORY.md**: Understand the current project mission, recent achievements, and immediate focus.
-3.  **Read @session_handover.md**: Identify the specific goals and constraints of the current session.
+2.  **Read @.gemini/STATE/MEMORY.md**: Understand the current project mission, recent achievements, and immediate focus.
+3.  **Read @.gemini/STATE/session_handover.md**: Identify the specific goals and constraints of the current session.
 4.  **Read @plans/session_handover_remediation.md**: Identify strategic debt and pending fixes.
 5.  **Read @docs/governance/vde-spec.md**: Refresh knowledge of authoritative technical requirements and implementation priority.
 6.  **Read @PROJECT_STATUS.md**: Understand the current reliability, pass rates, and identified gaps.
@@ -37,7 +49,7 @@ The main agent MUST complete these 10 steps sequentially before doing *anything 
 
 Violating any of these mandates is a failure of the agent's primary directive.
 
-1.  **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden. The agent MUST NOT use `bash` to execute commands.
+1.  **ZSH ONLY (ABSOLUTE)**: All shell scripts MUST use `#!/usr/bin/env zsh`. Bash is strictly forbidden. The agent MUST NOT use `bash` to execute commands. Every zsh file, of any length, MUST include the Zsh expansion-flag shibboleth `typeset _ZSH_PURE=${(%):-%x}` as its own line, beginning in column 1, within the first 20 lines (after the shebang/header comment). `bin/vde-enforce-uap.zsh` sweeps every git-tracked zsh file through `lib/vde-shibboleth` and fails the audit (`UAP-ERROR`) on any file lacking it, except files grandfathered in the shrink-only baseline `docs/governance/shibboleth-baseline.txt` (entries may be removed, never added; the pre-commit hook sweeps the STAGED zsh files and rejects additions). The audit judges the COMMITTED bytes as well as the working copy (a fix that exists only in the working copy does not count until it is committed). The shrink-only check compares against `origin/develop` (override with `VDE_SHIB_BASE_REF`); the pre-push gate refreshes an `origin/*` base ref first (a local ref named by the override is yours to keep current), and a clone without it (a fork cloned from `main`, or offline with no cached ref) must fetch it or set the variable, or the audit fails closed. In a shallow checkout (what CI uses) there is no merge-base, so the check first deepens the clone until it finds one; if it cannot (offline, or a very old branch) it falls back to comparing against the base tip, which can block a branch whose baseline still lists an entry the base removed after the branch was cut until `develop` is merged forward, but never lets growth through. Not covered: `bin/archive/` (retired code) and the Forge development artifacts `plans/` and `conductor/`; every other tracked zsh file, including any under `docs/`, `tests/docker/` or `.github/`, is swept. The older warning "lacks ZSH parameter flags" still fires on a file with no `${(` expansion, and a warning fails the audit.
 2.  **THE ANVIL IS DEFAULT**: All active work MUST occur on the `develop` branch (The Anvil). `main` (Production) is reserved for STABLE RELEASES ONLY. Direct work on `main` is strictly prohibited.
 3.  **Main Agent is Orchestrator ONLY**: The Main Agent MUST NOT write implementation code if it spans >1 file. The Main Agent's job is planning, orchestrating, and verifying. *Exception: If sub-agents are technically unavailable, the Main Agent may perform direct implementation provided every action is strictly supervised by the Enforcer.*
 4.  **Enforcer Supervision (Rule A)**: Every single action (shell commands, dispatches, verification steps, and cleanup) MUST be run under the supervision of the Enforcer (`bin/vde-enforce-uap.zsh`).
@@ -131,7 +143,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 - **The Evidence Mandate**: The Chronicle (PR) body MUST include literal terminal output proof of successful test runs and lifecycle certification. Paraphrasing results is forbidden.
 - **Submit the Beskar**: The Chronicle (PR) MUST include: 1) High-level mission summary, 2) Complete list of modified files, 3) Rationale for refactoring, 4) Mandatory Red/Green evidence, and 5) The Unbreakable Link to the Signet. Execute `gh pr create` using the mandated template.
 - **Mandate**: Certification of the **Proof of Life** Heartbeat is mandatory before committing or pushing.
-- **Hygiene**: Update `MEMORY.md` and session handovers.
+- **Hygiene**: Update `.gemini/STATE/MEMORY.md` and session handovers.
 - **Cleanup Mandate (MANDATORY)**: Upon the successful conclusion of a Strike (PR merged and closed), the Alor MUST automatically purge the feature branch (**BOTH local and remote**) and return themselves to the Anvil (`develop`) before standing watch. Failure to clean both is a hygiene violation.
 - **Permanence**: The Production (`main`), `stable`, and Anvil (`develop`) branches are the foundational pillars of the Record; they are never removed.
 
@@ -139,7 +151,7 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ## 4. Swarm Orchestration Rules
 
-- **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `MEMORY.md`, and spawns swarms. **Does NOT write multi-file code UNLESS sub-agents are technically unavailable, in which case it may perform direct implementation provided every action is strictly supervised by the Enforcer.**
+- **Main Agent**: Acts as the orchestrator. Synthesizes results, maintains `.gemini/STATE/MEMORY.md`, and spawns swarms. **Does NOT write multi-file code UNLESS sub-agents are technically unavailable, in which case it may perform direct implementation provided every action is strictly supervised by the Enforcer.**
 - **Sub-Agents**: Specialized experts. They inherit context from the Main Agent and perform isolated, single-file tasks.
 - **Controlled Commits**: Sub-agents MUST NEVER make commits of their own accord. They operate strictly under the Orchestrator's intent. The Orchestrator may serialize commits using sub-agents, but the responsibility for the Record's integrity belongs to the Alor.
 - **Inheritance Mandate**: Sub-agents (Verd'ika) MUST inherit all context from the Alor (Main Agent). This includes the certification of the **Proof of Life** Heartbeat; sub-agents are strictly forbidden from executing this ritual themselves. Re-reading or freshly pulling files that are already present in the Main Agent's context (specifically those loaded via the `@` startup checklist) is strictly forbidden. This prevents infinite loops and context window crashes.
@@ -150,11 +162,17 @@ All work must proceed through these phases in order. Skipping phases or "optimiz
 
 ## 5. Agent-Platform Mapping
 
-| Capability | Gemini CLI |
-|------------|------------|
-| Plan Mode | `enter_plan_mode` |
-| Sub-Agents | `generalist`, `codebase_investigator` |
-| Compliance | `/vde-enforce` |
-| Review | `/vde-review` |
+| Capability | Claude Code | Antigravity (`agy`) |
+|------------|-------------|---------------------|
+| Plan Mode | `EnterPlanMode` | `agy --mode plan` |
+| Sub-Agents | the `Agent` tool (for example the `worker` type); the role skills are also native skills (`.claude/skills`), but they are single-agent procedures, not sub-agents | the role skills `scout`, `security-auditor`, `reviewer` and `coder` are native skills (`.agents/skills`); `agy agents` lists configured agents (this repository defines none) |
+| Compliance | `/vde-enforce` (native skill) or `zsh bin/vde-enforce-uap.zsh` (procedure: `.gemini/COMMANDS/vde-enforce.md`) | `/vde-enforce` (native skill) or `zsh bin/vde-enforce-uap.zsh` |
+| Review | the `/code-review` skill, or `/vde-review` (native skill; procedure: `.gemini/COMMANDS/vde-review.md`) | `/vde-review` (native skill) |
 
-**The Agent Directory is the single source of truth. Rules apply regardless of which CLI is used.**
+**Kilo** loads this rules file through `kilo.json` (which lists `.gemini/instructions.md`), so every rule here applies to it. No Kilo-specific plan, sub-agent, compliance or review mechanism is documented because none has been verified: Kilo is not installed in this environment. Follow the named procedure files like any other agent.
+
+**Where a platform has no sub-agent facility** (including Antigravity: its skills are single-agent procedures, not parallel sub-agents), do the role steps yourself, one after another, by reading and following the named file in `.gemini/SKILLS/` (for example `scout`, `security-auditor`, `reviewer`, `coder`). The Phase gates still apply and no step is skipped.
+
+**The `/vde-*` names used in these rules (`/vde-enforce`, `/vde-review`, `/vde-commit`, `/vde-plan` and the like) are procedures written in `.gemini/COMMANDS/`, and the role skills (`supervisor`, `reviewer` and the like) are written in `.gemini/SKILLS/`. Antigravity discovers them natively: each one is also a skill under `.agents/skills` (a symlink to the file), so the `/vde-*` names are real slash commands there. Claude Code discovers them natively too, through the same symlinks under `.claude/skills`. For every other agent they are not auto-discovered: read the named file and follow it. Verified 2026-11-18 with `agy` (the skills are listed and their descriptions are read through the links) and with Claude Code (each file is still read at its original path, and all 19 names are listed in the `skills` and `slash_commands` of the session `init` event; reproduce with `claude -p ok --tools "" --output-format stream-json --verbose`).**
+
+**The Agent Directory is the single source of truth. Rules apply regardless of which agent platform is used.**

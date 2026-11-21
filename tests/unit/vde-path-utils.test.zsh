@@ -91,6 +91,92 @@ test_vde_get_project_name() {
         return
 }
 
+# -----------------------------------------------------------------------------
+# vde_projects_dir (Configurable Projects Base, Signet #543)
+# -----------------------------------------------------------------------------
+
+# Default: VDE_PROJECTS_DIR unset => ${VDE_ROOT_DIR}/projects
+test_vde_projects_dir_default() {
+    test_start "vde_projects_dir (default when unset)"
+
+    # Preserve any ambient value so the harness is left untouched.
+    local _had_val=0 _saved_val
+    if [[ -n "${VDE_PROJECTS_DIR+x}" ]]; then
+        _had_val=1
+        _saved_val="${VDE_PROJECTS_DIR}"
+    fi
+    unset VDE_PROJECTS_DIR
+
+    local result expected
+    result=$(vde_projects_dir)
+    expected="${VDE_ROOT_DIR}/projects"
+
+    if [[ "${result}" == "${expected}" ]]; then
+        test_pass "vde_projects_dir (default when unset)"
+    else
+        test_fail "vde_projects_dir (default when unset)" "expected '${expected}', got '${result}'"
+    fi
+
+    (( _had_val )) && export VDE_PROJECTS_DIR="${_saved_val}"
+}
+
+# Override: exported VDE_PROJECTS_DIR=/some/abs => /some/abs (verbatim)
+test_vde_projects_dir_exported_override() {
+    test_start "vde_projects_dir (exported absolute override)"
+
+    local _had_val=0 _saved_val
+    if [[ -n "${VDE_PROJECTS_DIR+x}" ]]; then
+        _had_val=1
+        _saved_val="${VDE_PROJECTS_DIR}"
+    fi
+
+    export VDE_PROJECTS_DIR="/some/abs"
+    local result
+    result=$(vde_projects_dir)
+
+    if [[ "${result}" == "/some/abs" ]]; then
+        test_pass "vde_projects_dir (exported absolute override)"
+    else
+        test_fail "vde_projects_dir (exported absolute override)" "expected '/some/abs', got '${result}'"
+    fi
+
+    if (( _had_val )); then
+        export VDE_PROJECTS_DIR="${_saved_val}"
+    else
+        unset VDE_PROJECTS_DIR
+    fi
+}
+
+# Reads the variable whether exported or a plain (non-exported) shell var.
+# zsh is dynamically scoped, so a `local` (non-exported) VDE_PROJECTS_DIR here
+# is visible to vde_projects_dir; this proves it consults the shell var, not
+# only the environment.
+test_vde_projects_dir_nonexported_var() {
+    test_start "vde_projects_dir (non-exported shell var)"
+
+    local _had_val=0 _saved_val
+    if [[ -n "${VDE_PROJECTS_DIR+x}" ]]; then
+        _had_val=1
+        _saved_val="${VDE_PROJECTS_DIR}"
+    fi
+    unset VDE_PROJECTS_DIR
+
+    # Non-exported, function-local assignment (dynamically scoped in zsh).
+    local VDE_PROJECTS_DIR="/plain/shell/var"
+    local result
+    result=$(vde_projects_dir)
+
+    if [[ "${result}" == "/plain/shell/var" ]]; then
+        test_pass "vde_projects_dir (non-exported shell var)"
+    else
+        test_fail "vde_projects_dir (non-exported shell var)" "expected '/plain/shell/var', got '${result}'"
+    fi
+
+    if (( _had_val )); then
+        export VDE_PROJECTS_DIR="${_saved_val}"
+    fi
+}
+
 # =============================================================================
 # Run All Tests
 # =============================================================================
@@ -103,6 +189,9 @@ test_vde_path_to_home_rel
 test_vde_path_from_home_rel
 test_vde_path_normalize
 test_vde_get_project_name
+test_vde_projects_dir_default
+test_vde_projects_dir_exported_override
+test_vde_projects_dir_nonexported_var
 
 echo ""
 echo "=============================================="

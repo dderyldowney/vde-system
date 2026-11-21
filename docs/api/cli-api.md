@@ -1,7 +1,7 @@
 # VDE API Reference
 <!-- @shared-law (Sovereign Law) -->
 
-**Version:** 1.5.6 (The Sovereign Baseline)
+**Version:** 1.5.7 (The Sovereign Baseline)
 **Status:** AUTHORITATIVE
 
 This document provides the complete API reference for the Virtual Development Environment (VDE) system.
@@ -33,6 +33,7 @@ VDE Root Directory
 │   ├── vde-path-utils      # Cross-platform path handling
 │   ├── vde-progress        # Progress indicators
 │   ├── vde-parser          # Natural language command parsing
+│   ├── vde-actions         # Action handlers for bin/vde (start, stop, restart, remove, exec, enter, port, help)
 │   ├── vde-templates       # Template rendering
 │   ├── vde-health          # Container health checks
 │   ├── vde-metrics         # Performance metrics
@@ -74,17 +75,33 @@ The main entry point for all VDE operations. Supervised by `vde-enforce-uap.zsh`
 vde <command> [options] [args]
 ```
 
+Flags go after the command (`vde start -q python`). `-f/--force` and `-q/--quiet` are consumed by the router.
+
+**Exit status:**
+
+| Situation | Exit |
+|-----------|------|
+| Command succeeded; `vde help` | 0 |
+| `vde` with no command (prints usage) | 2 |
+| Unknown command (message on stderr) | 2 |
+| Missing/invalid arguments to `dns-check` (prints usage) | 2 |
+| `stop`/`restart`/`remove`: every target handled, or already stopped/absent | 0 |
+| `stop`/`restart`/`remove`: any unknown alias, or a failed `docker stop`/`rm -f` | 1 |
+
+Details: [Router and action handlers](../development/router-handlers.md).
+
 #### Lifecycle Commands
 
 | Command | Aliases | Description |
 |---------|---------|-------------|
-| `init` | — | Initialize infrastructure, SSH keys, networks, build vde-base |
+| `init` | — | Initialize infrastructure, SSH keys, networks, build vde-base. Accepts `--projects-dir <path>` (or `--projects-dir=<path>`) to set the Projects base non-interactively |
+| `set-projects-dir [<path>]` | — | Re-point the Projects base: move per-alias subfolders, update `.env`, regenerate compose configs (prompts if path omitted) |
 | `create <vm>` | `rebuild` | Create a new VM Spoke from the Beskar Registry |
 | `start <vm>` | — | Ignite a VM Spoke |
 | `stop <vm>` | — | Quench (stop) a running VM |
 | `restart <vm>` | — | Restart one or more active Spokes |
 | `remove <vm>` | `delete`, `rm` | Dissolve a VM instance and its locks |
-| `nuke` | — | **The Great Quench**: Remove all VDE artifacts |
+| `nuke` | — | **The Great Quench**: Remove VDE's own state; **preserves** `projects/` and `data/` (offers to move them first) |
 
 #### Execution & Connectivity
 
@@ -134,7 +151,7 @@ vde <command> [options] [args]
 | Command | Aliases | Description |
 |---------|---------|-------------|
 | `cluster <cmd>` | — | Orchestrate multi-VM tech stacks (save, list, start, stop, remove) |
-| `dns-check <src> <tgt>` | — | **The Handshake Ritual**: Verify cross-Spoke DNS resolution |
+| `dns-check <src> <tgt> [port]` | — | **The Handshake Ritual**: Verify cross-Spoke DNS resolution (port defaults to 22) |
 
 #### SSH Management
 
@@ -157,6 +174,42 @@ bash <(curl -sL https://raw.githubusercontent.com/dderyldowney/vde-system/stable
 ```
 
 Checks the 4 pillars, clones VDE, and launches `path-of-the-foundling`. Works in any shell (bash or zsh).
+
+### Projects Base Configuration
+
+The **Projects base** is the host-side directory that holds each Spoke's workspace.
+Every Spoke alias is given its own subfolder `<base>/<alias>`, which is mounted
+inside the container at `/home/devuser/workspace`.
+
+#### `vde set-projects-dir [<new-path>]`
+
+Re-points the Projects base to a new location. If `<new-path>` is omitted, the
+command prompts for it.
+
+**Behavior:**
+- Resolves the new base: expands `~` and environment variables, absolutizes the
+  path, creates it if needed, and requires it to be writable.
+- **Moves** each existing per-alias subfolder from the old base to the new one.
+  Any name collision is **SKIPPED** — an existing target is never overwritten or
+  deleted.
+- Updates the `.env` key `VDE_PROJECTS_DIR`.
+- Regenerates Spoke compose configurations (via `bin/generate-all-configs`).
+- Reports what was moved and what was skipped.
+
+No image rebuild is required; Spokes use the new base on their next start.
+
+#### `vde init --projects-dir <path>`
+
+Sets the Projects base during initialization without prompting. Both
+`--projects-dir <path>` and `--projects-dir=<path>` forms are accepted.
+
+**Precedence** (highest wins):
+
+1. `--projects-dir <path>` flag
+2. Exported `VDE_PROJECTS_DIR` environment variable
+3. Existing `VDE_PROJECTS_DIR` in `.env`
+4. Interactive prompt
+5. Default `${VDE_ROOT_DIR}/projects`
 
 ---
 
@@ -217,6 +270,16 @@ Standardized constants for VDE operations.
 
 ---
 
+### vde-path-utils
+
+**Core Functions:**
+
+| Function | Description |
+|----------|-------------|
+| `vde_projects_dir` | Prints the effective absolute Projects base — `${VDE_PROJECTS_DIR:-${VDE_ROOT_DIR}/projects}` |
+
+---
+
 ### vde-log
 
 **Logging Functions:**
@@ -257,6 +320,7 @@ vde_log_rotate                        # Rotate current log file
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `VDE_ROOT_DIR` | Repository root authority | (Auto-detected) |
+| `VDE_PROJECTS_DIR` | Absolute path of the Projects base; each Spoke alias is mounted from `<base>/<alias>`. May be any directory the student controls, inside or outside the repo. Set via `vde init --projects-dir`, `vde set-projects-dir`, or directly in `.env` | `${VDE_ROOT_DIR}/projects` |
 | `VDE_DOCKER_NETWORK` | Isolated bridge name | `vde-net` |
 | `VDE_SSH_DIR` | Isolated key vault | `~/.ssh/vde` |
 | `VDE_DOCKER_STATE_DIR` | Docker state directory | `${VDE_ROOT_DIR}/.docker-state` |

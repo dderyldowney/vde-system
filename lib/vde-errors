@@ -173,7 +173,7 @@ vde_error_insufficient_disk() {
     vde_error_show \
         "Insufficient disk space" \
         "System disk usage is at ${usage}%" \
-        "1. Clean up Docker images: docker image prune -a
+        "1. Free Docker's build cache (usually the biggest, and safe: it deletes no images): vde clean
 2. Remove unused volumes: docker volume prune
 3. Clean up VDE logs: vde nuke --logs-only
 4. Free up space on your host machine" \

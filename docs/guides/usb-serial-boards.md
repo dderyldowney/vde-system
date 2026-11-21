@@ -1,0 +1,287 @@
+# USB Serial Boards
+<!-- @armor (Engine Core) -->
+
+Using physical development boards from inside a Spoke in the **Sovereign Baseline**.
+
+[← Back to README](../../README.md)
+
+## What this gives you
+
+Plug a development board into the Hub and use it from inside your Spoke. Boards
+appear as `/dev/ttyUSB<n>` (usb-serial bridges: CP210x, CH340, FTDI) or
+`/dev/ttyACM<n>` (cdc-acm: ATmega16U2, native-USB parts).
+
+Four Spokes are enabled, chosen because they are centre-mass in embedded work:
+
+| Spoke    | Typical use |
+|----------|-------------|
+| `python` | `pyserial`, `esptool`, MicroPython workflows |
+| `rust`   | `serialport` crate, `probe-rs`, Embassy |
+| `c`      | `avrdude`, `screen`, raw termios |
+| `cpp`    | PlatformIO-style workflows, Arduino cores |
+
+Guarantees:
+
+- A Spoke ignites and stays healthy with **no board attached**.
+- Boards may be plugged and unplugged **while the Spoke runs**.
+- A replug works **without restarting the Spoke**.
+- An absent board fails **immediately** with a clear error, never a hang.
+
+## Using it
+
+Nothing to enable. Start the Spoke and the nodes are there:
+
+```zsh
+vde start python
+vde enter python
+```
+
+Inside the Spoke:
+
+```zsh
+ls -l /dev/ttyUSB* /dev/ttyACM*
+```
+
+You will see eight `ttyUSB` and four `ttyACM` nodes, group `devuser`, mode
+`660`. They exist whether or not a board is attached — that is deliberate, and
+it is what makes hotplug work.
+
+The counts allow four boards attached at once on each bus type, plus spares.
+The spares are not padding: if a board is replugged while a program still holds
+its port open, the kernel brings it back on the next free minor, and an
+unprivileged user cannot create that node themselves. Without a spare, the
+board would be unreachable until the Spoke restarted.
+
+Python example:
+
+```python
+import serial
+with serial.Serial("/dev/ttyUSB0", 115200, timeout=1) as port:
+    print(port.readline())
+```
+
+## Telling identical boards apart
+
+If you have two or more boards of the same model, `ttyUSB0` and `ttyUSB1` are
+assigned by **enumeration order**, not by which socket you used. Plug them in
+in a different order, or reboot, and they can swap.
+
+`/dev/serial/by-id/` does not save you either. Most USB-serial bridges report a
+fixed serial baked into the chip rather than a per-unit one — a CP2102 commonly
+reports `0001` on every board — so identical boards produce **colliding**
+by-id entries. And `/dev/serial/by-id/` does not exist inside a Spoke at all,
+because containers have no udev.
+
+Use the **physical port** instead. Each Spoke maintains:
+
+```
+/dev/vde/by-port/<port-path>  ->  /dev/ttyUSB<n>
+```
+
+where `<port-path>` looks like `1-3.3` — bus 1, hub port 3, downstream port 3.
+That is a property of the socket the cable is in, so it does not move when
+enumeration order changes.
+
+List it with the canonical command:
+
+```zsh
+vde usb-map python
+```
+
+```
+━━━ vde-python ━━━
+node=/dev/ttyUSB1  port=1-3.3  name=/dev/vde/by-port/1-3.3  vid:pid=10c4:ea60  serial=0001
+```
+
+Open the stable name rather than the raw node, and your code keeps working
+when the number moves:
+
+```python
+import serial
+with serial.Serial("/dev/vde/by-port/1-3.3", 115200, timeout=1) as port:
+    print(port.readline())
+```
+
+Label the sockets physically once and the mapping stays meaningful: the board
+in a given socket always answers to the same name, so "the ESP32 wired to the
+STM32" becomes an address you can hard-code.
+
+### Refresh after plugging in
+
+**A container receives no udev events**, so the map is accurate as of the last
+time it was built — at Spoke ignition, or the last `vde usb-map`. After
+plugging a board into a running Spoke:
+
+```zsh
+vde usb-map python
+```
+
+The device nodes themselves need no refresh; only the names do. There is no
+background watcher by design.
+
+## Which node is my board?
+
+Run this on the **Hub**, not in the Spoke:
+
+```zsh
+ls -l /dev/serial/by-id/
+```
+
+The symlink target tells you the node. The Spoke sees the same node name.
+`/dev/serial/by-id/` itself does **not** exist inside a Spoke, because
+containers have no udev.
+
+If you have several identical boards, tell them apart by plug order or by
+reading the chip's identity (for example `esptool` for an ESP32).
+
+## When something goes wrong
+
+### "No such device or address" (ENXIO)
+
+The node exists but no board is behind it. Expected when nothing is plugged in.
+Plug the board in and try again — no restart needed.
+
+### "No such device" (ENODEV)
+
+The board was unplugged while your program held the port open. The old port is
+stale. Close the program and reopen.
+
+### The board moved to a different node after a replug
+
+This is normal and is why spare nodes exist. If a program still holds
+`/dev/ttyUSB0` open when you unplug and replug, the kernel brings the board back
+on the **next free minor** — `/dev/ttyUSB1`. Check
+`ls -l /dev/serial/by-id/` on the Hub to see where it landed.
+
+You cannot create the new node yourself inside the Spoke: an unprivileged user
+gets `EACCES` from `mknod`. That is exactly why the Spoke pre-creates spares.
+
+### "Operation not permitted" (EPERM)
+
+The node exists but the Spoke was not granted that device class. Either the
+Spoke is not one of the four enabled ones, or the container predates the
+overlay. Recreate it:
+
+```zsh
+vde stop python && vde start python
+```
+
+### The first upload after plugging in fails
+
+`ModemManager` on the Hub probes new serial devices and may hold the port for a
+few seconds. Wait a moment and retry.
+
+To stop it permanently for your boards, create a udev rule on the **Hub** using
+your board's real vendor and product IDs:
+
+```zsh
+# Find the IDs:
+lsusb
+
+# /etc/udev/rules.d/99-vde-usb.rules  (example: CP210x and CH340)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", ENV{ID_MM_DEVICE_IGNORE}="1"
+```
+
+Match `SUBSYSTEM=="tty"`, not `"usb"`. `ModemManager` reads
+`ID_MM_DEVICE_IGNORE` from the **tty** device, and udev properties do not
+propagate from a parent to its children, so a `SUBSYSTEM=="usb"` rule sets the
+property on the wrong device and has no effect at all. `ATTRS{}` (plural) walks
+up to the USB parent, so the vendor/product match still works from the tty.
+
+Then reload:
+
+```zsh
+sudo udevadm control --reload
+sudo udevadm trigger --subsystem-match=tty --action=change
+```
+
+Confirm it took:
+
+```zsh
+udevadm info -q property -n /dev/ttyUSB0 | grep ID_MM_DEVICE_IGNORE   # want: 1
+```
+
+`ID_MM_CANDIDATE=1` remains set alongside it; that is `ModemManager`'s own
+earlier tag and is harmless. `ID_MM_DEVICE_IGNORE` is the one it obeys.
+
+This tells `ModemManager` to leave those devices alone without disabling it
+system-wide.
+
+A ready-made rules file covering this, Hub autosuspend and automatic port-name
+refresh lives in `configs/udev/`; see its README to install.
+
+### The node vanishes right after plugging in
+
+On stock Ubuntu, `brltty` claims CH340, CP210x and FTDI devices. If you have it
+installed and do not use a braille display:
+
+```zsh
+sudo apt remove brltty
+```
+
+## How it works
+
+Each enabled Spoke has an overlay at
+`configs/docker/languages/<name>/docker-compose.usb.yml`, generated by
+`bin/generate-all-configs`. Its presence is the opt-in signal — there is no
+registry field. The overlay grants two device cgroup rules and declares which
+nodes to create:
+
+```yaml
+services:
+  vde-python:
+    environment:
+      - VDE_USB_TTY_NODES=ttyUSB:188:8 ttyACM:166:4
+    device_cgroup_rules:
+      - "c 188:0 rmw"     # ... through c 188:7, one per declared node
+      - "c 166:0 rmw"     # ... through c 166:3
+```
+
+The rules enumerate **exact minors** rather than using a wildcard major. A
+wildcard would grant all 256 minors of that device class while only the
+declared nodes exist. Enumerating keeps the grant to precisely the slots in
+use, so a board landing outside the declared range is refused by the kernel.
+The rule list and `VDE_USB_TTY_NODES` are generated from the same spec and a
+test asserts they never drift apart.
+
+`scripts/vde-entrypoint.zsh` reads `VDE_USB_TTY_NODES` and creates the nodes at
+every ignition, owned by group `devuser`, mode `660`. A container's `/dev` is a
+fresh tmpfs each start, so this runs every time.
+
+Why not `devices:`? A `devices:` mapping is resolved when the container is
+created. A Spoke given one for a node that does not exist **fails to start**,
+which breaks the "healthy with no board" guarantee. Pre-created nodes plus a
+cgroup rule avoid that entirely, and need no host-side watcher.
+
+## Security
+
+The grant is **per slot**, not per board. Within the declared minor range, any
+usb-serial or cdc-acm device that lands on those slots is openable by the
+Spoke, and `devuser` holds NOPASSWD sudo inside it. On a shared Hub, another
+user's board occupying one of those minors would be reachable.
+
+Outside the declared range, nothing is. A Spoke holding only these rules cannot
+reach USB bus devices on major 189 — the kernel refuses the open with `EPERM`
+even for root inside the container, and even when the node is fabricated with
+`mknod`. **The device cgroup rule is the real boundary**: not file permissions,
+not the mount, not the absence of a node. That is why the rules enumerate
+minors instead of wildcarding a major.
+
+This is accepted for a personal development Hub. On a shared machine, consider
+whether all four enabled Spokes need it.
+
+USB debug probes (ST-LINK, J-Link, CMSIS-DAP) are **not** covered here. They
+sit on major 189 and are tracked as separate work.
+
+They can be scoped tightly when that work lands. A usbdev node's minor is
+`(bus - 1) * 128 + devnum - 1`, so each USB bus owns a fixed block of 128
+minors. Enumerating only the bus carrying the external ports grants the probe
+while leaving every other bus refused — including, on an Apple laptop, the bus
+holding the internal keyboard, trackpad, camera and Touch Bar. That refusal is
+enforced by the kernel and survives `mknod` and root inside the container.
+
+## Related
+
+- [Getting Started](getting-started.md)
+- [Advanced Usage](advanced-usage.md)

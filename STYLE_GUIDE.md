@@ -101,7 +101,7 @@ done
 
 ### Conditionals
 - **Use `[[`** for string comparisons (not `[` or `((`)
-- **Use `-a`** for and, `-o`** for or
+- **Use `&&` and `||`** to combine conditions. Inside `[[ ]]`, `-a` and `-o` are not valid (zsh reports `unknown condition`); they only work inside the older `[ ]`
 
 ```zsh
 if [[ "$vm_type" == "lang" ]] && [[ -n "$vm_name" ]]; then
@@ -192,20 +192,23 @@ run_command() {
 
 # Array operations
 "${ARRAY[@]}"           # All elements
-"${ARRAY[1]}"           # Second element (0-indexed)
+"${ARRAY[1]}"           # First element (zsh arrays are 1-indexed)
 "${#ARRAY[@]}"          # Array length
 ```
 
 #### Glob Qualifiers
 ```zsh
-# Null glob (no error if no matches)
-setopt local_options null_glob
+# (N) qualifier: no error if there are no matches
 for file in *.sh(N); do
     echo "Found: $file"
 done
+```
 
-# Case-insensitive glob
-for file in *(#*.txt); do
+#### Glob Flags
+```zsh
+# Case-insensitive glob: (#i) is a glob flag, not a qualifier, and requires extended_glob
+setopt local_options extended_glob
+for file in (#i)*.txt; do
     echo "Found: $file"
 done
 ```

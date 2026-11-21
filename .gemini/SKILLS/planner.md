@@ -1,3 +1,8 @@
+---
+# @forge (Governance Sentinel)
+name: planner
+description: "Designs step-by-step implementation plans under the Universal Agent Protocol with TDD and DRY, citing the spec, listing failing tests and swarm config; use before any code, then wait for user approval."
+---
 # Planner Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 

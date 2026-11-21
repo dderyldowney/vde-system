@@ -15,7 +15,11 @@ typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 set -e
 
-VDE_ROOT_DIR="${0:h:h}"
+# Pure Relative Pathing (Mandate, vde-spec.md): the root comes from this script's own
+# location, absolute with symlinks kept (a bare ${0:h:h} is "." when the script is
+# started by bare name from bin/, and the guarded sources below would silently skip
+# every library). Signet #661.
+VDE_ROOT_DIR="${0:a:h:h}"
 export VDE_ROOT_DIR
 
 # Source core libraries

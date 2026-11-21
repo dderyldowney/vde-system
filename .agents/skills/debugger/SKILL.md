@@ -1,0 +1,1 @@
+../../../.gemini/SKILLS/debugger.md

@@ -1,13 +1,13 @@
 # Predefined VM Types
 <!-- @shared-law (Sovereign Law) -->
 
-All available programming languages and services in the **Sovereign Baseline (1.5.5)**.
+All available programming languages and services in the **Sovereign Baseline (1.5.7)**.
 
 [← Back to README](../../README.md)
 
 ---
 
-## Language VMs (24 total, SSH ports 2200–2223)
+## Language VMs (26 total, SSH ports 2200–2299)
 
 | Name | Aliases | Display Name | SSH Port |
 |------|---------|--------------|----------|
@@ -18,6 +18,7 @@ All available programming languages and services in the **Sovereign Baseline (1.
 | vde-csharp | csharp, dotnet | C# | 2204 |
 | vde-displaytest | displaytest | Go Language | 2205 |
 | vde-elixir | elixir, ex, iex | Elixir | 2206 |
+| vde-embed | embed, embedded | Embedded | 2224 |
 | vde-flutter | flutter, dart | Flutter | 2207 |
 | vde-go | go, golang | Go | 2208 |
 | vde-haskell | haskell, hs | Haskell | 2209 |
@@ -35,15 +36,15 @@ All available programming languages and services in the **Sovereign Baseline (1.
 | vde-swift | swift | Swift | 2221 |
 | vde-testport1 | testport1 | Test Port 1 | 2222 |
 | vde-testport2 | testport2 | Test Port 2 | 2223 |
+| vde-jupyterlab | jupyterlab, notebook | JupyterLab (hybrid: also serves Jupyter Lab on 8888) | 2225 |
 
 ---
 
-## Service VMs (8 total, SSH ports 2400–2407)
+## Service VMs (7 total, SSH ports 2400–2407; 2401 is retired)
 
 | Name | Aliases | Display Name | Service Port | SSH Port |
 |------|---------|--------------|--------------|----------|
 | vde-couchdb | couchdb | CouchDB | 5984 | 2400 |
-| vde-jupyterlab | jupyterlab, notebook | JupyterLab | 8888 | 2401 |
 | vde-mongodb | mongodb, mongo | MongoDB | 27017 | 2402 |
 | vde-mysql | mysql | MySQL | 3306 | 2403 |
 | vde-nginx | nginx | Nginx | 80,443 | 2404 |

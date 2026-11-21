@@ -37,10 +37,14 @@ typeset -a EXTRA_ARGS=()
 typeset VM_ALIAS=""
 
 # SSH Options for high-fidelity technical proof
+# IdentityAgent pins VDE's own agent, so the -A below forwards VDE's agent (which
+# holds only vde_student) and never the caller's SSH_AUTH_SOCK, normally the
+# user's personal agent. The path is quoted: ssh reads the option value itself.
 typeset -a SSH_OPTS=(
     "-o StrictHostKeyChecking=no"
     "-o UserKnownHostsFile=/dev/null"
     "-o IdentitiesOnly=yes"
+    "-o IdentityAgent=\"${VDE_SSH_AGENT_SOCK:-${VDE_SSH_DIR}/agent.sock}\""
     "-o LogLevel=ERROR"
     "-o ConnectTimeout=5"
 )

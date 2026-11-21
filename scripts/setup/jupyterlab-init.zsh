@@ -19,11 +19,11 @@ apt-get install -y ${=vde_jupyter_pkgs}
 # 3. Create a dedicated venv for Jupyter
 typeset dev_home="/home/devuser"
 typeset _venv_path="${dev_home}/.vde-venv"
-sudo -u devuser python3 -m venv "${_venv_path}"
+sudo -H -u devuser python3 -m venv "${_venv_path}"
 
 # 4. Install DS stack (Refined 2026 Alloy)
-sudo -u devuser "${_venv_path}/bin/pip" install --upgrade pip
-sudo -u devuser "${_venv_path}/bin/pip" install \
+sudo -H -u devuser "${_venv_path}/bin/pip" install --upgrade pip
+sudo -H -u devuser "${_venv_path}/bin/pip" install \
     jupyterlab \
     jupyter-server \
     polars \
@@ -42,8 +42,8 @@ sudo -u devuser "${_venv_path}/bin/pip" install \
 
 # 5. CONFIGURE JUPYTER SERVER (Modern Pattern)
 typeset _jupyter_config="${dev_home}/.jupyter/jupyter_server_config.py"
-sudo -u devuser mkdir -p ${dev_home}/.jupyter
-sudo -u devuser zsh -c "cat <<EOF > ${_jupyter_config}
+sudo -H -u devuser mkdir -p ${dev_home}/.jupyter
+sudo -H -u devuser zsh -c "cat <<EOF > ${_jupyter_config}
 c.ServerApp.ip = '0.0.0.0'
 c.ServerApp.port = 8888
 c.ServerApp.open_browser = False
@@ -86,7 +86,7 @@ cat <<EOF > "${_spoke_ignition}"
 
 if ! pgrep -f "jupyter-lab" >/dev/null; then
     echo "[VDE-JUPYTER] Forged in Beskar: Starting JupyterLab..." >> /logs/jupyter.log
-    sudo -u devuser nohup tini -g -- ${_venv_path}/bin/jupyter lab --config=${_jupyter_config} >> /logs/jupyter.log 2>&1 &
+    sudo -H -u devuser nohup tini -g -- ${_venv_path}/bin/jupyter lab --config=${_jupyter_config} >> /logs/jupyter.log 2>&1 &
 fi
 EOF
 chmod +x "${_spoke_ignition}"

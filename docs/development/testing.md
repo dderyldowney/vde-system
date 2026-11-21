@@ -1,4 +1,4 @@
-# VDE Testing Strategy - 1.5.6 (The Sovereign Baseline)
+# VDE Testing Strategy - 1.5.7 (The Sovereign Baseline)
 <!-- @shared-law (Sovereign Law) -->
 
 This document defines the absolute empirical standards for the Virtual Development Environment (VDE). All functional code MUST be verified by this suite.
@@ -13,19 +13,28 @@ The System Spine tetrad is the foundational audit gate. If any pillar fails, the
 | III    | **Docker** | `docker run --rm` diagnostic probe (The World-Forge) |
 | IV     | **SSH**    | `ssh-add -l` identity check (The Bridge) |
 
-## 2. BDD PERFORMANCE METRICS (1.5.6)
-As of **2026-09-29**, the VDE Behavior Driven Development suite is at **100% Fidelity**.
+## 2. BDD PERFORMANCE METRICS (measured on the 1.5.6 baseline)
+Measured on **2026-09-30** at commit `6308fe33`: full run of `behave tests/features/` on Linux with Docker 29.8.2 (6 min 17 s, the Python `jsonschema` module available to subprocesses). The suite is **not** at 100%.
 
 | Metric | Count | Status |
 |--------|-------|--------|
-| **Total Features** | 25 | ✅ GREEN |
-| **Total Scenarios** | 101 | ✅ GREEN |
-| **Total Steps** | 637 | ✅ GREEN |
+| **Total Features** | 28 (26 passed, 2 failed) | ❌ 2 FAILING |
+| **Total Scenarios** | 116 (107 passed, 9 failed) | ❌ 9 FAILING |
+| **Total Steps** | 720 (638 passed, 9 failed, 73 skipped) | ❌ 9 FAILING |
 | **Undefined Steps** | 0 | ✅ NONE |
-| **Pass Rate** | 100% | ✅ ABSOLUTE |
+| **Scenario Pass Rate** | 92.2% (107 of 116) | ❌ BELOW 100% |
+
+The Proof of Life (`proof-of-life-the-contract.feature`) passed 6 of 6 scenarios in this run. The CI-safe Sovereign Tests runner (`./tests/run-sovereign-tests.zsh`) passed 12 of 12 suites with `jsonschema` available and 11 of 12 without it (tracked in #492).
+
+Failing scenarios at this commit, with the cause seen in the run log:
+
+- `student-guidance/next-steps-guidance.feature` (8 scenarios, lines 14-78): the shared step `the Hub is synchronized to version 1.5.3` fails with `Sync error: Hub at 1.5.6, expected 1.5.3`, so none of them reaches the command under test. The version is hard-coded in the feature.
+- `governance/gospel-audit.feature:20` "Detection of Undocumented Scripts": the audit printed `[GOSPEL-SUCCESS]` instead of `[CRITICAL FAILURE] Undocumented scripts detected`. `bin/vde-gospel-audit.zsh` skips its undocumented-script check when `docs/available-scripts.md` is missing, and that file does not exist in the repository.
+
+Running the full suite against a Docker host is not side-effect free. In this measurement it removed the 4 stopped `vde-*` containers that existed beforehand (seen by comparing `docker ps -a` before and after; the responsible scenario was not identified) and re-dated tracked documents through the doc-sync scripts. Run it on a disposable host, or commit first and review `git status` afterwards.
 
 ## 3. CORE INFRASTRUCTURE SUITE
-Located in `tests/features/core-infrastructure/` (19 feature files as of 1.5.5):
+Located in `tests/features/core-infrastructure/` (22 feature files at commit `6308fe33`; the following is a non-exhaustive selection):
 
 - **proof-of-life-the-contract.feature**: Verifies the 8 lifecycle states (create, rebuild, start, enter, stop, remove, add, uninstall).
 - **system-spine.feature**: Hardens the 4 Pillars and deterministic Hub-to-Spoke ignition.
@@ -72,5 +81,26 @@ behave --tags @system-spine
 - **Auto-Cleanup**: The `after_scenario` hook in `environment.py` ensures 100% removal of test containers (labeled `vde.test=true`).
 - **USP Compliance**: Every hydration script in `scripts/setup/` must pass the `usp-validation` suite before it is considered production Beskar.
 
+## 6. ROUTER UNIT TESTS
+
+`bin/vde` and `lib/vde-actions` are covered by Docker-free unit tests (run one with `zsh tests/unit/<name>.test.zsh`):
+
+| File | Covers |
+|------|--------|
+| `vde-actions.test.zsh` | The eight action handlers in a sandbox with a stub `docker`: usage errors, unknown aliases, absent/present containers, failing docker operations, exit statuses, `function-trace` transparency. |
+| `vde-router-exit-status.test.zsh` | Unknown command and bare `vde` exit 2; `vde help` exits 0. |
+| `vde-router-delegate-args.test.zsh` | Typed arguments reach `audit`, `check-tetrad`/`spine-check`, `heal` and `dns-check`. |
+
+How to verify a router change (characterization against a stub `docker`, trace comparison, mutation checks):
+[router-handlers](router-handlers.md#8-verifying-a-change-to-the-router).
+
+## 7. HOW CI FINDS THE UNIT TESTS
+
+CI's "Sovereign Tests" job runs `tests/run-sovereign-tests.zsh`, which DISCOVERS every `tests/unit/*.test.zsh` and runs it: a new suite needs no edit to the runner. The only exclusions are the suites named in `tests/ci-unit-exclusions.txt`, one `<suite> <reason>` per line. A reason is mandatory and an entry naming a suite that does not exist is an error, so the list cannot rot silently; prefer a suite that skips loudly inside itself over an entry there.
+
+- `zsh tests/run-sovereign-tests.zsh --list` prints the plan (`run  <suite>` / `skip <suite> :: <reason>`) and exits before the audit and before running anything.
+- `tests/unit/test-runner-coverage.test.zsh` is the drift guard: every suite on disk is either run or excluded with a reason. The runner refuses to start on an exclusion with no reason (an inline `#` comment is not a reason), one that does not name a `*.test.zsh` suite, one for a suite that does not exist, or a suite listed twice.
+- A suite passes or fails by its exit status alone.
+
 ---
-**Status:** SYSTEM CERTIFIED (1.5.6)
+**Status:** SYSTEM CERTIFIED (1.5.7)

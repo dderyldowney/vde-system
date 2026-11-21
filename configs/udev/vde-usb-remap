@@ -1,0 +1,21 @@
+#!/bin/sh
+# Re-point VDE per-port USB names after a plug event.
+#
+# WHY: a container receives no udev events, so /dev/vde/by-port/<port> is only
+# accurate as of Spoke ignition or the last `vde usb-map`. The node itself needs
+# no refresh -- only the name does (docs/guides/usb-serial-boards.md).
+#
+# EVENT-DRIVEN, not a watcher: udev invokes this on the kernel event, it runs
+# once and exits. No sleep, no poll loop (AGENTS.md:69 NO SLEEP mandate).
+#
+# Invoked from /etc/udev/rules.d/99-vde-usb.rules via systemd-run --no-block so
+# udev is never blocked by Docker.
+set -u
+for c in $(docker ps -q --filter 'label=vde.managed=true' 2>/dev/null); do
+    name=$(docker inspect -f '{{.Name}}' "$c" 2>/dev/null | sed 's|^/||')
+    if docker exec "$c" /usr/local/bin/vde-usb-map.zsh >/dev/null 2>&1; then
+        logger -t vde-usb-remap "remapped ${name:-$c}"
+    else
+        logger -t vde-usb-remap "remap FAILED for ${name:-$c}"
+    fi
+done

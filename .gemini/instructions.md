@@ -1,7 +1,19 @@
-# **The Way of the VDE: 1.5.6 (The Sovereign Baseline)**
+# **The Way of the VDE: 1.5.7 (The Sovereign Baseline)**
 <!-- @forge (Governance Sentinel) -->
 
 MANDATE: In VDE workspace, follow instructions in AGENTS.md.
+
+---
+
+## READING LOCATIONS (where every agent looks)
+
+- **Project state (read at session start):** `.gemini/STATE/MEMORY.md` (standing watch, baseline, recent Strikes) and `.gemini/STATE/session_handover.md` (current session goals and constraints).
+- **Project rules:** `.gemini/RULES/` (one file per rule family), `STYLE_GUIDE.md` (repository root) and `.gemini/instructions.md`.
+- **Procedures (the `/vde-*` commands and role skills named in these rules):** `.gemini/COMMANDS/` and `.gemini/SKILLS/`. Antigravity discovers them natively through `.agents/skills` and Claude Code through `.claude/skills` (both folders hold only symlinks to these files); for every other agent they are not auto-discovered: read the named file and follow it.
+- **Plans and remediation:** `plans/` (Forge development artifacts; the active remediation plan is `plans/session_handover_remediation.md`). Retired plans are archived under `.gemini/PLANS/archive/`.
+- **Certified status record:** `PROJECT_STATUS.md` (repository root; part of the version-sync and Gospel mechanism).
+- **Tool-mandated entry points (stay at the repository root):** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (a symlink to `.gemini/instructions.md`) and `kilo.json`, plus the two native-skill discovery folders `.agents/skills` (Antigravity) and `.claude/skills` (Claude Code), which hold only symlinks to `.gemini/SKILLS` and `.gemini/COMMANDS`.
+- Nothing AI-specific is added to the repository root: new agent-facing material goes under `.gemini/`.
 
 ---
 
@@ -71,7 +83,7 @@ Failure of any ritual constitutes a **Protocol Blockade**.
 
 * **A. The Armorer's Command (The Rule Spine)**: Every action MUST be run under `bin/vde-enforce-uap.zsh`. No action is permitted without this spine.
 * **B. The Beskar Vault**: Treat the structured data files (`data/vm-types.json`, `data/vm-types.conf`) as the ultimate authority.
-* **C. Language of the Tribe (ZSH ONLY)**: **HELMET LEVEL FAILURE**: Use of `sh`, `bash`, `fish`, or any shell OTHER THAN zsh constitutes immediate helmet removal and Protocol Blockade. This is a CREED VIOLATION of the highest order.
+* **C. Language of the Tribe (ZSH ONLY)**: **HELMET LEVEL FAILURE**: Use of `sh`, `bash`, `fish`, or any shell OTHER THAN zsh constitutes immediate helmet removal and Protocol Blockade. This is a CREED VIOLATION of the highest order. **SOLE EXCEPTION**: the third-party vendor installers (Bash/POSIX-sh scripts with no zsh-native or binary alternative) enumerated in `docs/governance/bash-exceptions.md`, each pinned by an allowlist test (`tests/unit/setup-bash-allowlist.test.zsh`). Any other foreign-shell use remains a violation. A reviewer MUST NOT flag an allowlisted entry as a foreign-shell (Mandate C) violation; all other findings (security, correctness) still apply to those call sites, and an entry may only be added when no zsh-native or binary installer exists. **THE SHIBBOLETH**: every zsh file, of any length, MUST contain the Zsh expansion-flag shibboleth `typeset _ZSH_PURE=${(%):-%x}` as its own line, beginning in column 1, within the first 20 lines (after the shebang/header comment). `bin/vde-enforce-uap.zsh` sweeps every git-tracked zsh file through `lib/vde-shibboleth` and fails the audit with a `UAP-ERROR` on any file that lacks it, except files grandfathered in the shrink-only baseline `docs/governance/shibboleth-baseline.txt` (entries may be removed, never added; the pre-commit hook sweeps the STAGED zsh files and rejects additions, and a baseline entry that has since gained the line is reported as stale). The audit judges the COMMITTED bytes as well as the working copy (a fix that exists only in the working copy does not count until it is committed). The shrink-only check compares against `origin/develop` (override with `VDE_SHIB_BASE_REF`); the pre-push gate refreshes an `origin/*` base ref first (a local ref named by the override is yours to keep current), and a clone without it (a fork cloned from `main`, or offline with no cached ref) must fetch it or set the variable, or the audit fails closed. In a shallow checkout (what CI uses) there is no merge-base, so the check first deepens the clone until it finds one; if it cannot (offline, or a very old branch) it falls back to comparing against the base tip, which can block a branch whose baseline still lists an entry the base removed after the branch was cut until `develop` is merged forward, but never lets growth through. Out of scope for this check: `bin/archive/` (retired code) and the Forge development artifacts `plans/` and `conductor/` (not used in armor-only mode); every other tracked zsh file, including any under `docs/`, `tests/docker/` or `.github/`, is swept. The older `UAP-WARN` "lacks ZSH parameter flags" (a file with no `${(` expansion at all) still fires and a warning still fails the audit.
 * **D. The Two-Quote Rule**: If a command requires >2 levels of nesting, you MUST offload it to a script.
 * **E. The Swarm of the Creed**: You are forbidden from editing >1 file in a single turn. You MUST spawn a Swarm for multi-file tasks.
 * **F. Universal Script Parity (USP)**: Every VM entry MUST point to a setup script at `scripts/setup/<alias>-init.zsh`.

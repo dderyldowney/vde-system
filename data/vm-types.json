@@ -1,6 +1,6 @@
 {
   "@armor": "(Beskar Registry DNA)",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "vms": {
     "language": [
         {
@@ -65,6 +65,15 @@
               "custom_cmd": "zsh /vde/scripts/setup/elixir-init.zsh",
               "service_ports": "",
               "ssh_port": 2206
+            },
+        {
+              "name": "vde-embed",
+              "aliases": ["embed","embedded"],
+              "display": "Embedded",
+              "pkgs": "",
+              "custom_cmd": "zsh /vde/scripts/setup/embed-init.zsh",
+              "service_ports": "",
+              "ssh_port": 2224
             },
         {
               "name": "vde-flutter",
@@ -218,6 +227,15 @@
               "custom_cmd": "zsh /vde/scripts/setup/testport2-init.zsh",
               "service_ports": "",
               "ssh_port": 2223
+            },
+        {
+              "name": "vde-jupyterlab",
+              "aliases": ["jupyterlab","notebook"],
+              "display": "JupyterLab",
+              "pkgs": "python3-pip python3-venv tini",
+              "custom_cmd": "zsh /vde/scripts/setup/jupyterlab-init.zsh",
+              "service_ports": "8888",
+              "ssh_port": 2225
             }
     ],
     "service": [
@@ -229,15 +247,6 @@
               "custom_cmd": "zsh /vde/scripts/setup/couchdb-init.zsh",
               "service_ports": "5984",
               "ssh_port": 2400
-            },
-        {
-              "name": "vde-jupyterlab",
-              "aliases": ["jupyterlab","notebook"],
-              "display": "JupyterLab",
-              "pkgs": "python3-pip python3-venv tini",
-              "custom_cmd": "zsh /vde/scripts/setup/jupyterlab-init.zsh",
-              "service_ports": "8888",
-              "ssh_port": 2401
             },
         {
               "name": "vde-mongodb",

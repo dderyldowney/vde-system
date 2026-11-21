@@ -1,5 +1,8 @@
 # Remediation Plan: Session Handover
 
+## Paired Update Policy
+This file is one half of a pair with [.gemini/STATE/session_handover.md](../.gemini/STATE/session_handover.md). A change that touches either file MUST touch the other in the same PR, so accomplishments (there) and outstanding debt (here) cannot drift apart. `bin/paired_update_enforcer` (CI workflow "Paired Update Check") compares the files a PR changed against its base and fails when only one of the two changed.
+
 ## High-Priority Architectural Debt
 - **Documentation Migration Complete**: All 40+ documentation files migrated to industry-standard category structure (guides/, reference/, architecture/, development/, operations/, api/, governance/, changelogs/).
 - **Cross-Reference Audit**: All code paths (bin/, lib/, tests/, .gemini/) updated to reference new documentation locations.
@@ -14,8 +17,8 @@
 ## Open Items
 - **plans/session_handover_remediation.md**: Restored from git history (was missing pre-migration).
 
-## Sovereign Baseline: 1.5.5
-- Version: 1.5.5 (The Sovereign Baseline)
-- Heartbeat: 72/72 BDD steps green (6/6 scenarios)
-- Enforcer: PASS (CLEAN)
-- Documentation: Fully restructured, all cross-references updated
+## Sovereign Baseline: 1.5.7 (full-suite figures below measured 2026-09-30 at commit `6308fe33`, the 1.5.6 baseline)
+- Version: 1.5.7 (The Sovereign Baseline); Proof of Life re-certified 2026-11-21, 6 of 6 scenarios, 73 of 73 steps
+- Heartbeat: Proof of Life 6 of 6 scenarios passed. Full BDD suite: 107 of 116 scenarios passed, 9 failed (details in `docs/development/testing.md`).
+- Enforcer: `bin/vde-enforce-uap.zsh` success, exit 0.
+- Documentation: not re-verified for 1.5.7. Known gap: the 1.5.5 entries in `docs/changelogs/current.md` are dead links.

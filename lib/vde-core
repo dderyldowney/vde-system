@@ -1,5 +1,8 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
 # VDE Core Library - Essential Functions for VDE
 # Source this library with: source ./lib/vde-core
 # Requires: zsh 5.0+
@@ -32,7 +35,7 @@ vde_get_version() {
     local spec_file="${root}/docs/governance/vde-spec.md"
 
     if [[ -f "${spec_file}" ]]; then
-        # Extracts version from "# VDE-SPEC [v]1.5.6 (The Sovereign Baseline)"
+        # Extracts version from "# VDE-SPEC [v]1.5.7 (The Sovereign Baseline)"
         # Supports optional 'v' prefix and SemVer extensions like -spN
         grep -m1 '^# VDE-SPEC ' "${spec_file}" | sed -E 's/^# VDE-SPEC v?([0-9]+\.[0-9]+\.[0-9]+(-sp[0-9]+)?).*/\1/' | tr -d '[:space:]'
     else
@@ -100,6 +103,36 @@ VDE_CORE_VM_TYPES_CONF="${VDE_CORE_VM_TYPES_CONF:-${VDE_CORE_DATA_DIR}/vm-types.
 export VDE_CORE_VM_TYPES_CONF
 VDE_CORE_VM_TYPES_CACHE="${VDE_CORE_VM_TYPES_CACHE:-${VDE_CORE_CACHE_DIR}/vm-core.cache}"
 export VDE_CORE_VM_TYPES_CACHE
+
+# vde_split_rebuild_args - Separate vde-rebuild flags from VM targets (#556)
+# `vde rebuild`/`create` forward these flags to bin/vde-rebuild untouched; they
+# must never reach target resolution (alias/cluster/"all" expansion).
+# `--vm <name>` is a synonym for a positional target, so its value is treated as
+# a target and resolved like any other.
+# Args: <rebuild args...>
+# Sets: VDE_REBUILD_FLAGS (forwarded flags), VDE_REBUILD_REST (everything else)
+# Returns: 0, or 2 (VDE_ERR_INVALID_INPUT) when --vm has no value
+vde_split_rebuild_args() {
+    typeset -ga VDE_REBUILD_FLAGS=()
+    typeset -ga VDE_REBUILD_REST=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --no-cache|--pull|--keep-cache|--regenerate-keys|-h|--help)
+                VDE_REBUILD_FLAGS+=("$1")
+                ;;
+            --vm)
+                [[ $# -ge 2 && "$2" != -* ]] || return 2
+                VDE_REBUILD_REST+=("$2")
+                shift
+                ;;
+            *)
+                VDE_REBUILD_REST+=("$1")
+                ;;
+        esac
+        shift
+    done
+    return 0
+}
 
 # vde_run - The Deterministic Execution Wrapper (Phase 26)
 # Wraps commands, captures exit codes, and triggers the Error Engine.
@@ -246,6 +279,70 @@ vde_purge_ghosts() {
         # Ensure the directory exists but is empty (Rule 12.5 compliance)
         mkdir -p /var/lib/apt/lists/partial
     fi
+}
+
+# VDE_CURL_BOUNDS - bounded-download flags for build-time fetches (Signet #598).
+# A stalled connection must fail the image build, not hang it: cap connect time,
+# cap each attempt's total time and retry transient errors. --max-time applies
+# per attempt, so the worst case is (retries + 1) attempts plus retry delays.
+# Bounds curl only, not a vendor installer's own downloads (see VDE_INSTALLER_TIMEOUT).
+# Pass as "${VDE_CURL_BOUNDS[@]}".
+typeset -ga VDE_CURL_BOUNDS=(--connect-timeout 30 --max-time 600 --retry 3 --retry-delay 2)
+
+# VDE_INSTALLER_TIMEOUT - overall deadline in seconds (coreutils `timeout`) for vendor
+# installers that do their own downloads, which VDE_CURL_BOUNDS cannot reach. Generous
+# so a slow but live install is not killed (Signet #600). The deadline sends SIGTERM,
+# then SIGKILL after 30s (`timeout -k 30`) so an installer that ignores SIGTERM cannot hang the build.
+typeset -g VDE_INSTALLER_TIMEOUT=1800
+
+# vde_install_rustup USER LABEL - install rustup for USER unless rustc exists.
+# Mandate C (ZSH ONLY): fetch rustup's NATIVE installer binary and run it
+# directly instead of piping the vendor shell script to `sh`. Shared by the rust
+# and embed Spokes (Signet #598). Must run as root; LABEL prefixes diagnostics.
+vde_install_rustup() {
+    local user="${1:?vde_install_rustup: user required}" label="${2:-VDE-RUST}"
+    sudo -H -u "${user}" zsh -c '
+        set -e
+        label="$1"; limit="$2"; shift 2
+        if ! command -v rustc >/dev/null; then
+            case "$(uname -m)" in
+                x86_64)        triple="x86_64-unknown-linux-gnu" ;;
+                aarch64|arm64) triple="aarch64-unknown-linux-gnu" ;;
+                armv7l)        triple="armv7-unknown-linux-gnueabihf" ;;
+                i686|i386)     triple="i686-unknown-linux-gnu" ;;
+                *) print -u2 "${label}: unsupported architecture $(uname -m)"; exit 1 ;;
+            esac
+            # rustup-init is a multi-call binary that dispatches on its own file
+            # name: a bare mktemp name (tmp.XXXX) is taken for a proxy called
+            # "tmp". Keep the name and isolate it in a private directory.
+            tmpdir="$(mktemp -d)"
+            trap '"'"'rm -rf "${tmpdir}"'"'"' EXIT
+            installer="${tmpdir}/rustup-init"
+            curl --proto "=https" --tlsv1.2 -sSfL "$@" \
+                "https://static.rust-lang.org/rustup/dist/${triple}/rustup-init" -o "${installer}"
+            [[ -s "${installer}" ]] || { print -u2 "${label}: rustup-init download failed or empty"; exit 1; }
+            curl --proto "=https" --tlsv1.2 -sSfL "$@" \
+                "https://static.rust-lang.org/rustup/dist/${triple}/rustup-init.sha256" -o "${tmpdir}/rustup-init.sha256"
+            [[ -s "${tmpdir}/rustup-init.sha256" ]] || { print -u2 "${label}: rustup-init sha256 download failed or empty"; exit 1; }
+            expected="$(<"${tmpdir}/rustup-init.sha256")"
+            expected="${expected%%[[:space:]]*}"
+            actual="$(sha256sum "${installer}")"
+            actual="${actual%%[[:space:]]*}"
+            [[ "${expected}" == "${actual}" ]] || { print -u2 "${label}: rustup-init sha256 mismatch"; exit 1; }
+            chmod +x "${installer}"
+            timeout -k 30 "${limit}" "${installer}" -y --no-modify-path
+        fi
+    ' _ "${label}" "${VDE_INSTALLER_TIMEOUT}" "${VDE_CURL_BOUNDS[@]}"
+}
+
+# vde_script_documented SCRIPT_NAME DOC_FILE: succeed when DOC_FILE documents the
+# bin/ script, either by literal name or by its `vde <subcommand>` form (e.g. a
+# vde-cluster entry is satisfied by `vde cluster`). Shared by the Gospel audit and
+# the self-healer so both agree on what "documented" means.
+vde_script_documented() {
+    local script_name="$1" doc="$2"
+    local sub_cmd="${${script_name#vde-}%.zsh}"
+    grep -qE "(\`${script_name}\`|\`vde ${sub_cmd}([[:space:]]|\`))" "${doc}"
 }
 
 # vde_query_json - Zero-Host-Dependency JQ Wrapper (The Scavenger's Ban)
@@ -628,24 +725,28 @@ vde_check_schema_integrity() {
     fi
 
     # Check if valid JSON
-    if ! python3 -c "import json; json.load(open('${schema_file}'))" 2>/dev/null; then
+    if ! python3 -c "import json, sys; json.load(open(sys.argv[1]))" "${schema_file}" 2>/dev/null; then
         log_error "Schema file is not valid JSON: ${schema_file}"
         return ${VDE_ERR_INVALID_DATA:-4}
     fi
 
     # Check for required schema fields
     if ! python3 -c "
-import json
-with open('${schema_file}') as f:
+import json, sys
+with open(sys.argv[1]) as f:
     schema = json.load(f)
 assert '\$schema' in schema or 'type' in schema, 'Missing required schema fields'
-" 2>/dev/null; then
+" "${schema_file}" 2>/dev/null; then
         log_error "Schema file missing required fields: ${schema_file}"
         return ${VDE_ERR_INVALID_DATA:-4}
     fi
 
     return ${VDE_SUCCESS:-0}
 }
+
+# Directory of this library (resolved when the file is sourced), used to find
+# lib/vde-json-validate.py.
+typeset -g _VDE_CORE_LIB_DIR="${${(%):-%x}:A:h}"
 
 # vde_validate_json_schema - Validate JSON file against its schema
 # Args: <json_file> <schema_file>
@@ -670,44 +771,24 @@ vde_validate_json_schema() {
         return ${VDE_ERR_INVALID_DATA:-4}
     fi
 
-    # Validate JSON against schema
-    if python3 -c "
-import json, sys
+    # Validate JSON against schema. VDE_SCHEMA_VALIDATOR selects the validator:
+    # auto (default: jsonschema if importable, else the built-in one), builtin,
+    # or jsonschema (required). The built-in validator refuses, rather than
+    # ignores, anything it does not implement, so it is never a weaker silent
+    # fallback. See lib/vde-json-validate.py.
+    local validator_script="${_VDE_CORE_LIB_DIR}/vde-json-validate.py"
+    if [[ ! -f "${validator_script}" ]]; then
+        log_error "Schema validator helper not found: ${validator_script}"
+        return ${VDE_ERR_NOT_FOUND:-3}
+    fi
 
-try:
-    with open('${schema_file}') as f:
-        schema = json.load(f)
-    with open('${json_file}') as f:
-        data = json.load(f)
-    
-    # Try using jsonschema if installed
-    try:
-        import jsonschema
-        jsonschema.validate(instance=data, schema=schema)
-        sys.exit(0)
-    except ImportError:
-        # Fallback to basic structural validation if jsonschema not available
-        if schema.get('type') == 'object':
-            required = schema.get('required', [])
-            for field in required:
-                if field not in data:
-                    print(f'Missing required field: {field}', file=sys.stderr)
-                    sys.exit(1)
-        sys.exit(0)
-    except Exception as e:
-        print(f'Schema validation error: {e}', file=sys.stderr)
-        sys.exit(1)
-except Exception as e:
-    print(f'Validation script error: {e}', file=sys.stderr)
-    sys.exit(1)
-" ; then
-        : # Success
-    else
+    local validator_used
+    if ! validator_used=$(python3 "${validator_script}" "${schema_file}" "${json_file}" "${VDE_SCHEMA_VALIDATOR:-auto}"); then
         log_error "JSON validation failed: ${json_file}"
         return ${VDE_ERR_INVALID_DATA:-4}
     fi
 
-    log_info "Schema validation passed: ${json_file}"
+    log_info "Schema validation passed (${validator_used}): ${json_file}"
     return ${VDE_SUCCESS:-0}
 }
 
