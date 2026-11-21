@@ -515,12 +515,141 @@ test_case26_a_hook_the_update_brings_does_not_run() {
   test_start "26: a post-merge hook delivered by the update (core.hooksPath inside the worktree) is not executed"
   local f; f="$(make_fixture c26)"
   git -C "${f}/install" config core.hooksPath .githooks
-  mkdir -p "${f}/seed/.githooks"; print -r -- '#!/bin/sh
+  mkdir -p "${f}/seed/.githooks"; print -r -- '#!/usr/bin/env zsh
 touch "$(git rev-parse --git-dir)/hook-ran"' > "${f}/seed/.githooks/post-merge"; chmod +x "${f}/seed/.githooks/post-merge"
   git -C "${f}/seed" add -A; git -C "${f}/seed" commit -qm hook; git -C "${f}/seed" push -q origin stable 2>/dev/null
   run_up "${f}"
   [[ "${UP_RC}" == 0 && -x "${f}/install/.githooks/post-merge" && ! -f "${f}/install/.git/hook-ran" ]] \
     && test_pass "case26 upgraded, the hook file arrived, and it did not run" || test_fail "case26 upgraded, the hook file arrived, and it did not run" "rc=${UP_RC} ran=$([[ -f "${f}/install/.git/hook-ran" ]] && echo yes || echo no) out=${UP_OUT}"
+}
+
+test_case27_the_busy_check_reads_the_real_lock_record() {
+  test_start "27: a live lock in the REAL claim_lock format (PID:PGID:TIMESTAMP), in the default or a configured locks directory, blocks the upgrade"
+  local f before
+  f="$(make_fixture c27a)"; publish "${f}" stable file-a "new" "1.5.7"
+  mkdir -p "${f}/install/.locks/vms/vde-base.lock"; print -r -- "$$:$$:$(date +%s)" > "${f}/install/.locks/vms/vde-base.lock/pid"
+  before="$(head_of "${f}")"; run_up "${f}"
+  [[ "${UP_RC}" == 9 && "$(head_of "${f}")" == "${before}" ]] \
+    && test_pass "case27a PID:PGID:TIMESTAMP with a live pid: exit 9, nothing changed" || test_fail "case27a PID:PGID:TIMESTAMP with a live pid: exit 9, nothing changed" "rc=${UP_RC} out=${UP_OUT}"
+  f="$(make_fixture c27b)"; publish "${f}" stable file-a "new" "1.5.7"
+  mkdir -p "${TMP_ROOT}/elsewhere-locks/vms/vde-python.lock"; print -r -- "$$:$$:$(date +%s)" > "${TMP_ROOT}/elsewhere-locks/vms/vde-python.lock/pid"
+  before="$(head_of "${f}")"; VDE_LOCKS_DIR="${TMP_ROOT}/elsewhere-locks" run_up "${f}"
+  [[ "${UP_RC}" == 9 && "$(head_of "${f}")" == "${before}" ]] \
+    && test_pass "case27b a lock under a configured VDE_LOCKS_DIR is honoured" || test_fail "case27b a lock under a configured VDE_LOCKS_DIR is honoured" "rc=${UP_RC} out=${UP_OUT}"
+  f="$(make_fixture c27d)"; publish "${f}" stable file-a "new" "1.5.7"
+  mkdir -p "${f}/install/.locks/vms/vde-python.lock"; print -r -- "$$:$$:$(date +%s)" > "${f}/install/.locks/vms/vde-python.lock/pid"
+  mkdir -p "${TMP_ROOT}/empty-locks"
+  before="$(head_of "${f}")"; VDE_LOCKS_DIR="${TMP_ROOT}/empty-locks" run_up "${f}"
+  [[ "${UP_RC}" == 9 && "$(head_of "${f}")" == "${before}" ]] \
+    && test_pass "case27d a start's lock under <install>/.locks is seen even when VDE_LOCKS_DIR points elsewhere" || test_fail "case27d a start's lock under <install>/.locks is seen even when VDE_LOCKS_DIR points elsewhere" "rc=${UP_RC} out=${UP_OUT}"
+  f="$(make_fixture c27c)"; publish "${f}" stable file-a "new" "1.5.7"
+  mkdir -p "${f}/install/.locks/vms/vde-base.lock"; print -r -- "999999:999999:$(date +%s)" > "${f}/install/.locks/vms/vde-base.lock/pid"
+  run_up "${f}"
+  [[ "${UP_RC}" == 0 ]] \
+    && test_pass "case27c a stale record (dead pid) in the real format does not block" || test_fail "case27c a stale record (dead pid) in the real format does not block" "rc=${UP_RC} out=${UP_OUT}"
+}
+
+test_case28_hidden_local_edits_are_still_edits() {
+  test_start "28: a file marked assume-unchanged or skip-worktree that the update changes is a conflict, not an invisible edit"
+  local f before
+  f="$(make_fixture c28a)"; publish "${f}" stable file-a "new" "1.5.7"
+  git -C "${f}/install" update-index --assume-unchanged file-a; print -r -- "my hidden edit" > "${f}/install/file-a"
+  before="$(head_of "${f}")"; run_up "${f}"
+  [[ "${UP_RC}" == 13 && "${UP_OUT}" == *"changes files you have edited"* && "$(cat "${f}/install/file-a")" == "my hidden edit" && "$(head_of "${f}")" == "${before}" ]] \
+    && test_pass "case28a assume-unchanged: exit 13 from the script's OWN check, the edit kept" || test_fail "case28a assume-unchanged: exit 13 from the script's OWN check, the edit kept" "rc=${UP_RC} out=${UP_OUT}"
+  f="$(make_fixture c28b)"; publish "${f}" stable file-a "new" "1.5.7"
+  git -C "${f}/install" update-index --skip-worktree file-a; print -r -- "my hidden edit" > "${f}/install/file-a"
+  run_up "${f}"
+  [[ "${UP_RC}" == 13 && "${UP_OUT}" == *"changes files you have edited"* && "$(cat "${f}/install/file-a")" == "my hidden edit" ]] \
+    && test_pass "case28b skip-worktree: exit 13 from the script's OWN check, the edit kept" || test_fail "case28b skip-worktree: exit 13 from the script's OWN check, the edit kept" "rc=${UP_RC} out=${UP_OUT}"
+}
+
+test_case28b_hidden_files_that_are_not_edits_do_not_block() {
+  test_start "28x: a sparse-checkout file that is simply absent, a dangling-link edit and an unchanged hidden symlink are judged correctly"
+  local f
+  f="$(make_fixture c28c)"; publish "${f}" stable file-a "new" "1.5.7"
+  git -C "${f}/install" update-index --skip-worktree file-a; rm -f "${f}/install/file-a"
+  run_up "${f}"
+  [[ "${UP_RC}" == 0 && "$(cat "${f}/install/file-a")" == "new" ]] \
+    && test_pass "case28c a skip-worktree file that is absent (sparse checkout) is not an edit: upgrades" || test_fail "case28c a skip-worktree file that is absent (sparse checkout) is not an edit: upgrades" "rc=${UP_RC} out=${UP_OUT}"
+  f="$(make_fixture c28d)"; publish "${f}" stable file-a "new" "1.5.7"
+  git -C "${f}/install" update-index --assume-unchanged file-a; rm -f "${f}/install/file-a"; ln -s "nowhere-at-all" "${f}/install/file-a"
+  run_up "${f}"
+  [[ "${UP_RC}" == 13 && -L "${f}/install/file-a" && "${UP_OUT}" == *"changes files you have edited"* ]] \
+    && test_pass "case28d a hidden tracked file replaced by a DANGLING symlink is seen as an edit and kept" || test_fail "case28d a hidden tracked file replaced by a DANGLING symlink is seen as an edit and kept" "rc=${UP_RC} out=${UP_OUT}"
+  f="$(make_fixture c28e)"
+  git -C "${f}/seed" checkout -q stable; ln -s "target-one" "${f}/seed/lnk"; git -C "${f}/seed" add -A; git -C "${f}/seed" commit -qm link; git -C "${f}/seed" push -q origin stable 2>/dev/null
+  git -C "${f}/install" pull -q --ff-only origin stable 2>/dev/null
+  git -C "${f}/install" update-index --assume-unchanged lnk
+  rm -f "${f}/seed/lnk"; ln -s "target-two" "${f}/seed/lnk"; git -C "${f}/seed" add -A; git -C "${f}/seed" commit -qm link2; git -C "${f}/seed" push -q origin stable 2>/dev/null
+  run_up "${f}"
+  [[ "${UP_RC}" == 0 && "$(readlink "${f}/install/lnk")" == "target-two" ]] \
+    && test_pass "case28e an unchanged hidden symlink does not block an update that changes it" || test_fail "case28e an unchanged hidden symlink does not block an update that changes it" "rc=${UP_RC} out=${UP_OUT}"
+}
+
+test_case32_the_deadline_watchdog_leaves_nothing_holding_the_pipe() {
+  test_start "32: with a long network deadline, the output of a finished upgrade is returned at once (no stray sleep holds the pipe open)"
+  local f t0
+  f="$(make_fixture c32)"; publish "${f}" stable file-a "new" "1.5.7"
+  t0=${SECONDS}; VDE_UPGRADE_NET_TIMEOUT=300 run_up "${f}"
+  [[ "${UP_RC}" == 0 && $(( SECONDS - t0 )) -lt 20 ]] \
+    && test_pass "case32 finished and returned in $(( SECONDS - t0 ))s with a 300 s deadline" || test_fail "case32 finished and returned promptly with a 300 s deadline" "rc=${UP_RC} took=$(( SECONDS - t0 ))s"
+}
+
+test_case31_restore_never_writes_over_what_exists() {
+  test_start "31: putting a set-aside file back refuses a path that exists again (even a symlink) and says so"
+  local d="${TMP_ROOT}/c31" outside="${TMP_ROOT}/c31-outside" out rc
+  mkdir -p "${d}"; git -C "${d}" init -q -b stable; print -r -- "tracked" > "${d}/a"; git -C "${d}" add -A; git -C "${d}" commit -qm c
+  print -r -- "PRECIOUS" > "${outside}"; ln -s "${outside}" "${d}/b"
+  print -r -- "x" > "${d}/c"; git -C "${d}" add c; git -C "${d}" commit -qm c2
+  rm -f "${d}/c"
+  out="$(cd "${d}" && zsh -c 'source <(sed -n "/^upgrade_restore()/,/^}/p" "$1"); upgrade_restore HEAD b c; print -r -- "RC=$?"' _ "${SCRIPT_SRC}" 2>&1)"
+  [[ "$(< "${outside}")" == "PRECIOUS" && "${out}" == *"exists again"* && "${out}" == *"RC=1"* && "$(< "${d}/c")" == "x" ]] \
+    && test_pass "case31 a symlink is not written through, the free path is restored, the return status is non-zero" || test_fail "case31 a symlink is not written through, the free path is restored, the return status is non-zero" "out=${out}"
+}
+
+test_case29_ssh_is_bounded_and_never_prompts() {
+  test_start "29: the default ssh gets a connect timeout and no prompts; a transport you configured is left alone; a hung origin is given up on"
+  local f fakebin="${TMP_ROOT}/fakebin29" log="${TMP_ROOT}/ssh29.log" t0
+  mkdir -p "${fakebin}"
+  print -r -- '#!/usr/bin/env zsh
+print -r -- "$@" >> "'"${log}"'"
+exit 255' > "${fakebin}/ssh"; chmod +x "${fakebin}/ssh"
+  f="$(make_fixture c29a)"; git -C "${f}/install" remote set-url origin "ssh://git@example.invalid/none.git"
+  : > "${log}"; PATH="${fakebin}:${PATH}" run_up "${f}"
+  [[ "${UP_RC}" == 3 && "$(< "${log}")" == *"ConnectTimeout="* && "$(< "${log}")" == *"BatchMode=yes"* ]] \
+    && test_pass "case29a exit 3, and the default ssh was given ConnectTimeout and BatchMode=yes" || test_fail "case29a exit 3, and the default ssh was given ConnectTimeout and BatchMode=yes" "rc=${UP_RC} ssh-args=$(< "${log}") out=${UP_OUT}"
+  f="$(make_fixture c29b)"; git -C "${f}/install" remote set-url origin "ssh://git@example.invalid/none.git"
+  : > "${log}"; GIT_SSH_COMMAND="${fakebin}/ssh -o MyOwnOption=1" run_up "${f}"
+  [[ "$(< "${log}")" == *"MyOwnOption=1"* && "$(< "${log}")" != *"BatchMode=yes"* ]] \
+    && test_pass "case29b a GIT_SSH_COMMAND you set is used as it is, with nothing appended" || test_fail "case29b a GIT_SSH_COMMAND you set is used as it is, with nothing appended" "ssh-args=$(< "${log}")"
+  print -r -- '#!/usr/bin/env zsh
+zmodload zsh/zselect
+zselect -t 3000' > "${fakebin}/ssh"
+  f="$(make_fixture c29c)"; git -C "${f}/install" remote set-url origin "ssh://git@example.invalid/none.git"
+  t0=${SECONDS}; PATH="${fakebin}:${PATH}" VDE_UPGRADE_NET_TIMEOUT=2 run_up "${f}"
+  [[ "${UP_RC}" == 3 && "${UP_OUT}" == *"did not answer"* && $(( SECONDS - t0 )) -lt 20 ]] \
+    && test_pass "case29c an origin that never answers is given up on after the deadline (exit 3)" || test_fail "case29c an origin that never answers is given up on after the deadline (exit 3)" "rc=${UP_RC} took=$(( SECONDS - t0 ))s out=${UP_OUT}"
+}
+
+test_case30_the_router_keeps_the_scripts_own_message_and_status() {
+  test_start "30: bin/vde runs vde-upgrade.zsh directly, so its status and message are not rewritten by the error mapper (3 would read 'Unknown VM')"
+  local block
+  block="$(sed -n '/^    upgrade)/,/^        ;;/p' "${VDE_ROOT_DIR}/bin/vde")"
+  [[ "${block}" == *"vde-upgrade.zsh"* && "${block}" != *"vde_run"* ]] \
+    && test_pass "case30a the upgrade) case calls the script without vde_run" || test_fail "case30a the upgrade) case calls the script without vde_run" "block: ${block}"
+  grep -q 'a rebuild or start is running' "${VDE_ROOT_DIR}/docs/reference/commands.md" \
+    && test_pass "case30b commands.md documents exit status 9" || test_fail "case30b commands.md documents exit status 9" "not documented"
+  grep -q 'git pull --ff-only' "${VDE_ROOT_DIR}/docs/releases/1.5.7.md" \
+    && test_pass "case30c the 1.5.7 record tells existing installs to pull fast-forward only" || test_fail "case30c the 1.5.7 record tells existing installs to pull fast-forward only" "still a plain git pull"
+  # The real router, really run (scratch HOME, from another directory).
+  local out rc
+  out="$(cd "${TMP_ROOT}" && zsh "${VDE_ROOT_DIR}/bin/vde" upgrade --help 2>&1; print -r -- "RC=$?")"; rc="${out##*RC=}"
+  [[ "${rc}" == 0 && "${out}" == *"Usage: vde upgrade"* ]] \
+    && test_pass "case30d bin/vde upgrade --help runs the script and exits 0" || test_fail "case30d bin/vde upgrade --help runs the script and exits 0" "rc=${rc}"
+  out="$(cd "${TMP_ROOT}" && zsh "${VDE_ROOT_DIR}/bin/vde" upgrade --bogus 2>&1; print -r -- "RC=$?")"; rc="${out##*RC=}"
+  [[ "${rc}" == 2 && "${out}" == *"unknown option or argument: --bogus"* && "${out}" != *"Required arguments missing"* ]] \
+    && test_pass "case30e through the router the script's own status (2) and message arrive, without the error mapper's text" || test_fail "case30e through the router the script's own status (2) and message arrive, without the error mapper's text" "rc=${rc} out=${out}"
 }
 
 test_case1_the_script_exists_and_is_executable
@@ -549,6 +678,13 @@ test_case23_dockerfile_forms_are_all_understood
 test_case24_nested_compose_files_count_as_spoke_inputs
 test_case25_same_bytes_is_not_always_the_same_file
 test_case26_a_hook_the_update_brings_does_not_run
+test_case27_the_busy_check_reads_the_real_lock_record
+test_case28_hidden_local_edits_are_still_edits
+test_case29_ssh_is_bounded_and_never_prompts
+test_case30_the_router_keeps_the_scripts_own_message_and_status
+test_case28b_hidden_files_that_are_not_edits_do_not_block
+test_case31_restore_never_writes_over_what_exists
+test_case32_the_deadline_watchdog_leaves_nothing_holding_the_pipe
 
 echo
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"

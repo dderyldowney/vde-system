@@ -99,17 +99,24 @@ upgrade_hits() {
   done
 }
 
-# upgrade_same_as_incoming PATH REV - 0 when the local file PATH is a regular file whose content
-# AND executable bit equal the entry REV holds, so overwriting it loses nothing. A symlink, a
-# different mode or different bytes is a difference.
+# upgrade_same_as_incoming PATH REV - 0 when the local PATH equals the entry REV holds, so
+# overwriting it loses nothing: a regular file with the same bytes (as git would store them, so
+# line-ending filters are applied) and the same executable bit, or a symlink with the same target.
+# The tree entry must be exactly PATH, not a different entry a pathspec happens to match.
 upgrade_same_as_incoming() {
-  local p="$1" rev="$2" line mode rest sha lmode localsha
+  local p="$1" rev="$2" line mode rest sha lmode localsha entrypath
   local -a entries
   entries=( ${(f)"$(git ls-tree "${rev}" -- "${p}" 2>/dev/null)"} )
   line="${entries[1]}"
   [[ -n "${line}" ]] || return 1
   read -r mode _ rest <<< "${line}"
   sha="${rest%%$'\t'*}"
+  entrypath="${rest#*$'\t'}"
+  [[ "${entrypath}" == "${p}" ]] || return 1
+  if [[ "${mode}" == 120000 ]]; then
+    [[ -L "${p}" && "$(readlink -- "${p}")" == "$(git cat-file blob "${sha}" 2>/dev/null)" ]]
+    return $?
+  fi
   [[ "${mode}" == (100644|100755) && ! -L "${p}" && -f "${p}" ]] || return 1
   [[ -x "${p}" ]] && lmode=100755 || lmode=100644
   [[ "${lmode}" == "${mode}" ]] || return 1
@@ -123,14 +130,22 @@ upgrade_same_as_incoming() {
 # unless the update touches the same path. Three kinds of local state stand in the way: edits
 # to tracked files, and untracked or ignored files the update adds.
 upgrade_preflight() {
-  local old="$1" new="$2" p
-  local -a mine stray
+  local old="$1" new="$2" p entry
+  local -a mine stray flagged
   upgrade_array mine git diff -z --no-renames --name-only HEAD
+  # A tracked file marked assume-unchanged (h) or skip-worktree (S, s) is invisible to git diff,
+  # so look at it directly. A file that is simply absent (a sparse checkout) is not an edit.
+  upgrade_array flagged git ls-files -z -v
+  for entry in "${flagged[@]}"; do
+    [[ "${entry[1]}" == (h|s|S) ]] || continue
+    p="${entry[3,-1]}"
+    [[ -e "${p}" || -L "${p}" ]] && ! upgrade_same_as_incoming "${p}" HEAD && mine+=( "${p}" )
+  done
   upgrade_array incoming git diff -z --no-renames --name-only "${old}" "${new}"
   upgrade_array stray git ls-files -z --others
   clash=( ${mine:*incoming} )
   identical=()
-  for p in ${stray:*incoming}; do
+  for p in "${(@)stray:*incoming}"; do
     if upgrade_same_as_incoming "${p}" "${new}"; then
       identical+=( "${p}" )
     else
@@ -140,18 +155,72 @@ upgrade_preflight() {
 }
 
 # upgrade_busy ROOT - prints the name of a running rebuild or start (a live per-Spoke lock) and
-# returns 0; returns 1 when nothing is running.
+# returns 0; returns 1 when nothing is running. claim_lock (lib/vm-lock) writes PID:PGID:TIMESTAMP
+# to a lock's pid file, so only the part before the first colon is the pid. Rebuilds keep their
+# locks under VDE_LOCKS_DIR when it is set, and starts under <install>/.locks, so both are read.
 upgrade_busy() {
-  local lock pid
-  for lock in "${1}"/.locks/vms/*.lock(N/); do
-    [[ -r "${lock}/pid" ]] || continue
-    pid="$(< "${lock}/pid")"
-    if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
-      print -r -- "${lock:t:r}"
-      return 0
-    fi
+  local dir lock rec pid
+  for dir in "${VDE_LOCKS_DIR:-${1}/.locks}" "${1}/.locks"; do
+    for lock in "${dir}"/vms/*.lock(N/); do
+      [[ -r "${lock}/pid" ]] || continue
+      rec="$(< "${lock}/pid")"
+      pid="${rec%%:*}"
+      if [[ "${pid}" == <-> ]] && kill -0 "${pid}" 2>/dev/null; then
+        print -r -- "${lock:t:r}"
+        return 0
+      fi
+    done
   done
   return 1
+}
+
+# upgrade_bounded SECONDS COMMAND... - run COMMAND, kill it after SECONDS, and return 124 when
+# it was killed. Needs nothing but the shell, so a machine without timeout(1) is bounded too.
+# The wait is zselect, a shell builtin (the repo's approved wait primitive, never sleep): there
+# is no child process left behind to keep the caller's pipe open, and the watchdog runs with
+# its output closed as well, so anything reading this script's output (a pipeline, $(...))
+# gets it the moment the work is done.
+upgrade_bounded() {
+  local limit="$1" pid watchdog rc
+  shift
+  "$@" &
+  pid=$!
+  (
+    zmodload zsh/zselect 2>/dev/null
+    zselect -t $(( limit * 100 ))
+    kill "${pid}" 2>/dev/null
+  ) >/dev/null 2>&1 &
+  watchdog=$!
+  wait "${pid}" 2>/dev/null
+  rc=$?
+  kill "${watchdog}" 2>/dev/null
+  wait "${watchdog}" 2>/dev/null
+  (( rc > 128 )) && return 124
+  return ${rc}
+}
+
+# upgrade_restore REV PATH... - put back files that were set aside, with their executable bit.
+# A path that exists again (recreated, or a symlink) is left alone, and any failure is reported
+# and makes the return status non-zero.
+upgrade_restore() {
+  local rev="$1" p bad=0; shift
+  for p in "$@"; do
+    if [[ -e "${p}" || -L "${p}" ]]; then
+      print -u2 -r -- "vde upgrade: ${p} exists again, so it was not restored over."
+      bad=1
+      continue
+    fi
+    if ! git show "${rev}:${p}" > "${p}" 2>/dev/null; then
+      print -u2 -r -- "vde upgrade: could not restore ${p}; recreate it with: git checkout ${rev[1,7]} -- ${p}"
+      bad=1
+      continue
+    fi
+    if [[ "$(git ls-tree "${rev}" -- "${p}" | cut -c1-6)" == 100755 ]] && ! chmod +x "${p}"; then
+      print -u2 -r -- "vde upgrade: could not make ${p} executable again."
+      bad=1
+    fi
+  done
+  return ${bad}
 }
 
 main() {
@@ -188,17 +257,21 @@ main() {
 
   # A stalled network or a credential prompt must not hang the upgrade.
   export GIT_TERMINAL_PROMPT=0 GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=30
-  local -a bound=()
-  command -v timeout >/dev/null 2>&1 && bound=( timeout 120 )
+  # The default ssh gets a connect timeout and no prompts; a transport the caller configured
+  # (GIT_SSH_COMMAND, GIT_SSH or core.sshCommand) is theirs and is left alone.
+  if [[ -z "${GIT_SSH_COMMAND:-}${GIT_SSH:-}" && -z "$(git config --get core.sshCommand 2>/dev/null)" ]]; then
+    export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o ConnectTimeout=30 -o ServerAliveInterval=15 -o ServerAliveCountMax=2"
+  fi
+  local nettime="${VDE_UPGRADE_NET_TIMEOUT:-120}"
 
   local rc
-  "${bound[@]}" git ls-remote --exit-code --heads origin "refs/heads/${branch}" >/dev/null 2>&1
+  upgrade_bounded "${nettime}" git ls-remote --exit-code --heads origin "refs/heads/${branch}" >/dev/null 2>&1
   rc=$?
   if (( rc == 2 )); then
     upgrade_refuse ${UP_NOT_UPDATABLE} "origin has no branch '${branch}', so there is nothing to update this install to. Switch to one it has (most installs follow stable), e.g.: git switch stable"
     return $?
   elif (( rc == 124 )); then
-    upgrade_refuse ${UP_NOT_UPDATABLE} "origin did not answer within 120 seconds. Check your network connection and try again."
+    upgrade_refuse ${UP_NOT_UPDATABLE} "origin did not answer within ${nettime} seconds. Check your network connection and try again."
     return $?
   elif (( rc != 0 )); then
     upgrade_refuse ${UP_NOT_UPDATABLE} "cannot reach origin (git exited ${rc}). Check your network connection and try again."
@@ -208,7 +281,7 @@ main() {
   # Fetch into a private ref so this run uses exactly the commit it fetched, whatever else
   # fetches into this clone meanwhile.
   local ref="refs/vde-upgrade/incoming-$$" old new
-  "${bound[@]}" git fetch --quiet origin "+refs/heads/${branch}:${ref}" 2>/dev/null \
+  upgrade_bounded "${nettime}" git fetch --quiet origin "+refs/heads/${branch}:${ref}" 2>/dev/null \
     || { upgrade_refuse ${UP_NOT_UPDATABLE} "fetching '${branch}' from origin failed or timed out"; return $? }
   new="$(git rev-parse "${ref}^{commit}" 2>/dev/null)"
   git update-ref -d "${ref}" 2>/dev/null
@@ -266,16 +339,30 @@ Nothing was changed. Move them aside and run vde upgrade again."
     return $?
   fi
 
+  # Nobody may have switched branches or moved HEAD since the checks above.
+  if [[ "$(git symbolic-ref --quiet --short HEAD 2>/dev/null)" != "${branch}" || "$(git rev-parse HEAD)" != "${old}" ]]; then
+    upgrade_refuse ${UP_DRIFT} "this checkout changed while the upgrade was being prepared (it is no longer on '${branch}' at ${old[1,7]}). Nothing was changed; run vde upgrade again."
+    return $?
+  fi
+
   # Files already identical to the incoming ones lose nothing, but git will not overwrite an
-  # untracked or ignored file itself. Set them aside; put them back if the merge fails.
+  # untracked or ignored file itself. Set them aside, checking each once more as it goes; put
+  # them back if anything has changed or the merge fails.
   local p
-  for p in ${identical}; do rm -f -- "${p}"; done
+  local -a removed=()
+  for p in ${identical}; do
+    if upgrade_same_as_incoming "${p}" "${new}"; then
+      rm -f -- "${p}"
+      removed+=( "${p}" )
+    else
+      upgrade_restore "${new}" "${removed[@]}"
+      upgrade_refuse ${UP_DRIFT} "${p} changed while the upgrade was being prepared, so it was left alone. Nothing was changed; run vde upgrade again."
+      return $?
+    fi
+  done
   # Hooks off: an update must not be able to run code through a hook it brings.
   if ! git -c core.hooksPath=/dev/null merge --ff-only --quiet "${new}" 2>&1; then
-    for p in ${identical}; do
-      git show "${new}:${p}" > "${p}" 2>/dev/null
-      [[ "$(git ls-tree "${new}" -- "${p}" | cut -c1-6)" == 100755 ]] && chmod +x "${p}"
-    done
+    upgrade_restore "${new}" "${removed[@]}"
     upgrade_refuse ${UP_DRIFT} "git could not fast-forward '${branch}' (see its message above). Nothing was changed."
     return $?
   fi
