@@ -1,7 +1,7 @@
 # Agent Handoff
 <!-- @shared-law (Forge Component) -->
 
-Written 2026-11-21 at the end of a long working session, for ANY AI agent (not only Claude) taking over VDE-SYSTEM. It says what was done, what is going on, what comes next, and the rules and traps that cost time. It is a snapshot: **verify every fact below with the commands given before you act on it.**
+Written 2026-11-21 and refreshed 2026-11-22 (Signet #740) at the end of long working sessions, for ANY AI agent (not only Claude) taking over VDE-SYSTEM. It says what was done, what is going on, what comes next, and the rules and traps that cost time. It is a snapshot: **verify every fact below with the commands given before you act on it.**
 
 ## 1. Start here
 
@@ -27,6 +27,9 @@ Every unit of work: open an Issue (the Signet) BEFORE any code; branch from `dev
 - Do not reply to a review thread with a commit that is not yet on the PR's remote head.
 - After any Proof of Life or image build: `docker builder prune --all -f` (never prune images).
 - Test runs must scrub the real `HOME` (VDE scripts write real `~/.zshrc` and SSH lines). Tests that run the router or the Spine need the REAL home for the SSH identity.
+- Do NOT add a `Co-Authored-By` line (or a "Generated with" line) to commit messages or PR bodies: the tooling adds it automatically. Write a neutral message and `Refs #N` / `Closes #N`.
+- Public text that discloses an unfixed weakness (a bot review, a comment) is handled by the standing order in `.gemini/RULES/security.md` rule 10: save a private copy in the private security directory, then delete it; hide only what cannot be deleted. Scan every bot review, including the review body, before merging; answer each review thread.
+- The private security directory is `~/.vde-security/` (or `VDE_SECURITY_DIR`), created by the Forge at mode 0700 through `lib/vde-security-dir` (called from `bin/vde-enforce-uap.zsh`). Ledger and evidence live there, never in the repository.
 
 ## 3. Branches, releases and tags
 
@@ -41,10 +44,13 @@ Every unit of work: open an Issue (the Signet) BEFORE any code; branch from `dev
 - **1.5.7 is released** (tag `1.5.7` on `main`, GitHub Release live), the baseline of record.
 - Merged since: `vde upgrade` (#679, Signet #676), the 1.5.7 release record (#678), the state files (#681, #686), the `vde upgrade` review fixes (#684, Signet #683), and two `develop` -> `stable` rolls without a release (#682, #687). Verify current state with `gh pr list` and `git log`.
 - `vde upgrade [--dry-run]`: finds the install from where the script lives, fetches the branch you are on, fast-forwards, refuses (changing nothing) on unsafe states, and says which image to rebuild (the base image first when something baked into `vde-base` changed). Exit statuses: 0 done, 2 bad option, 3 cannot be updated, 9 a rebuild or start is running, 13 your copy and origin disagree. Documented in `docs/reference/commands.md` and `docs/reference/scripts.md`; tests in `tests/unit/vde-upgrade.test.zsh`.
+- 2026-11-22: the fail-closed audit and check scripts (#724, Signet #719), the security process (#738, Signet #736) and the private security directory (#739, Signet #737) merged. `develop` moved past them; read the tip with `git log -1 origin/develop`.
 
 ## 5. What comes next, in order
 
-1. **1.5.8 is the SECURITY release.** Strictly security-related work only. It contains #726 (which replaced #668), the neutral issues #707-#718, #722, #723, the sub-issues #727-#735 of #720 and #721, and #725 (done first, so the fixes have tests that can fail). All of it follows the project security process: `docs/governance/security-process.md` and the binding agent rules in `.gemini/RULES/security.md` (Signet #736). What is already merged stays; the 1.5.8 notes name it plainly and headline the security items. Do not describe an unpatched weakness in public text, state files, PR text or the changelog until the fix has shipped; refer to it by issue number. Its own Signet, PR and release chain, with the User's approval at every outward step.
+**#725 is DONE in PR #743** (the Code Coverage job now fails when a test fails; `tests/ci-coverage-exclusions.txt` lists the three tests it does not run: two Docker-only integration tests and the slow git-fixture-isolation suite, which still runs in Sovereign Tests). **NEXT ACTION: the 1.5.8 security items** (#707-#718, #722, #723, #726, #727-#735, #742), in the severity order the User approves; ask the User before starting.
+
+1. **1.5.8 is the SECURITY release.** Strictly security-related work only. It contains #726 (which replaced #668), the neutral issues #707-#718, #722, #723, the sub-issues #727-#735 of #720 and #721, and #725 (DONE in PR #743, so the fixes have tests that can fail). All of it follows the project security process: `docs/governance/security-process.md` and the binding agent rules in `.gemini/RULES/security.md` (Signet #736). What is already merged stays; the 1.5.8 notes name it plainly and headline the security items. Do not describe an unpatched weakness in public text, state files, PR text or the changelog until the fix has shipped; refer to it by issue number. Its own Signet, PR and release chain, with the User's approval at every outward step.
 2. **1.5.9 is the DOCS release**, and security comes first. Scope the User approved: rewrite the docs for students and for VDE developers in a plain, direct, 1970s helper-manual voice (second person, payoff first, short sentences, a verification line in every step, dry wit sparingly); remove ALL mythos from human-facing docs (it stays only in agent-facing files: `CLAUDE.md`, `AGENTS.md`, `.gemini/`); new-student and onboarding docs FIRST, VDE-developer docs SECOND, including a developer doc that explains the agent layer in plain language (why it exists, how and why it is applied, how to maintain it); every command shown must have been run, in the order printed; explain what lives inside and outside the container and how to change the Projects location at install and after (`--projects-dir`, `vde set-projects-dir`); link each doc to the code it describes; take a census of docs versus code before moving or deleting anything (the vendored zsh manual and `bin/archive/` are large); Hub and Spoke and the command `path-of-the-foundling` stay.
    - **The mantra: "Well documented, empirically tested."**
 3. Later: #671 and the other open code Issues (`gh issue list`), and the parked items that are not security-related.
@@ -65,6 +71,12 @@ Marketing-style hero and headline; "What's new" as short benefit blocks in secon
 - Shell commands that match a process pattern (`pkill -f`) can match your own command line. `rm -rf` on temp directories is blocked by a safety check; use `mktemp` inside the scratchpad and leave it. `git push --delete` is blocked; use `gh pr merge --delete-branch`. `gh pr edit` fails on the deprecated Projects field; use `gh api -X PATCH repos/dderyldowney/vde-system/pulls/N -f title=...`. PR titles must not start with an uppercase subject. A running git worktree must not be edited while its pre-push gate runs.
 - If the permission classifier denies a merge or a kill, stop and report; the User will say "retry".
 - Multi-file edits should be one-file-per-agent swarms (Mandate E); when they were scripted instead, say so in the PR.
+- In zsh an unquoted separator such as `=====` starts a command substitution and fails: quote separators like `'-----'`.
+- A background shell command is capped at 10 minutes; a ~15 minute pre-push gate can outlive it. Judge a push by the REMOTE sha (`git ls-remote --heads origin <branch>`), not by a task notification. Do not start a second Proof of Life while one is running (they collide on Docker state and locks): wait for the first, then push.
+- A task notification that says a background command "completed" only means the wrapper shell exited; check the log file or process list for the real result.
+- `gh pr checks --watch` waits for every check, including the final summary job; use it before merging.
+- A sub-agent's output is not a commit: review every diff yourself.
+- Running an integration test by hand (tests/integration/jupyterlab-spoke, tech-stack-empirical) ignites real Spokes and the latter runs `vde stop all -f`: stop any Spoke you started afterwards, or the next Proof of Life fails Rule K (3 Spokes max).
 
 ## 8. Parked, not yet Issues
 

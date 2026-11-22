@@ -136,7 +136,8 @@ jobs:
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 30: every test now runs under kcov too once it passes (Signet #725); the old 15 relied on failures skipping kcov
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
