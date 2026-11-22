@@ -170,7 +170,9 @@ merge_coverage() {
             for d in "${(@)kcov_dirs[2,-1]}"; do
                 merge_names+=("${d:t}")
             done
-            print -P "${YELLOW}⚠ kcov --merge failed for: ${(j:, :)merge_names//\%/%%} (the merged report may be incomplete)${NC}"
+            print -P "${RED}✗ kcov --merge failed for: ${(j:, :)merge_names//\%/%%} (the merged report would be incomplete)${NC}"
+            rm -rf "${merge_tmp}"
+            return 1
         fi
     fi
 
@@ -213,6 +215,7 @@ generate_summary() {
 main() {
     local test_type="${1:-all}"
     local merge_status=0
+    local summary_status=0
     local failed
 
     load_exclusions
@@ -250,7 +253,9 @@ main() {
     esac
 
     merge_coverage || merge_status=$?
-    generate_summary
+    if (( merge_status == 0 )); then
+        generate_summary || summary_status=$?
+    fi
 
     if (( ${#FAILED_TESTS[@]} > 0 )); then
         print -P "${RED}✗ ${#FAILED_TESTS[@]} test(s) failed:${NC}"
@@ -260,7 +265,7 @@ main() {
         exit 1
     fi
 
-    if (( merge_status != 0 )); then
+    if (( merge_status != 0 || summary_status != 0 )); then
         exit 1
     fi
 

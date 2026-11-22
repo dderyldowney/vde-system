@@ -3,7 +3,7 @@
 #
 # The coverage job otherwise runs every tests/unit/*.test.zsh and every tests/integration/*.test.zsh.
 # An exclusion is for a test the hosted runner genuinely cannot run (for example, one that needs a
-# Docker daemon or Spokes the runner does not have). It is not a way to skip a failing test.
+# Docker daemon or Spokes the runner does not have) or one that cannot finish inside the job's time budget under kcov. It is not a way to skip a failing test.
 # Excluded tests must still be run by hand before a release.
 #
 # One entry per line:
@@ -14,3 +14,4 @@
 #
 integration/jupyterlab-spoke.test.zsh  Needs a running Docker daemon: it ignites the vde-jupyterlab Spoke and polls port 8888; the hosted runner has no Docker images or Spokes. Run by hand with Docker available.
 integration/tech-stack-empirical.test.zsh  Needs Docker and is destructive: it begins with `vde stop all -f` (stops every Spoke on the host) and then builds and ignites the python, postgres and redis Spokes. Run by hand only, never on a shared host.
+unit/git-fixture-isolation.test.zsh  Too slow under kcov: it runs the git-fixture suites under eight polluted environments in parallel and took 21 of the job's 30 minutes in CI (about 4 minutes uninstrumented). It still runs in the Sovereign Tests job, and the suites it spawns are measured on their own.

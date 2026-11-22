@@ -80,8 +80,8 @@ test_hydration_script_compliance() {
     
     local errors=0
     grep -q "set -e" "$script" || ((errors++))
-    # apt cleanup is the shared vde_purge_ghosts (lib/vde-core), not a literal apt-get clean (ca58ede6)
-    grep -q "vde_purge_ghosts" "$script" || ((errors++))
+    # apt cleanup is the shared vde_purge_ghosts (lib/vde-core), not a literal apt-get clean (ca58ede6); it must be an executable call, not a comment or string
+    grep -qE '^[[:space:]]*vde_purge_ghosts([[:space:]]|$)' "$script" || ((errors++))
     grep -q "DEBIAN_FRONTEND=noninteractive" "$script" || ((errors++))
     grep -q "Forged in Beskar" "$script" || ((errors++))
     grep -q "tini" "$script" || ((errors++))

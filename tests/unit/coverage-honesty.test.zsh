@@ -12,10 +12,13 @@ typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 # script the way CI does: cd <root> && ./bin/coverage.zsh <mode>, with a stub
 # kcov first on PATH, a scratch HOME, and stdin from /dev/null.
 #
-# The stub kcov logs every call to $STUB_LOG. A --merge call creates its
-# destination with an index.html; any other call takes the first non-option
-# argument as the output directory, writes an index.html there, and runs the
-# rest of its arguments as the command.
+# The stub kcov logs every call to $STUB_LOG. A non-merge call takes the first
+# non-option argument as the output directory, writes an index.html and a
+# data-<dir name> file there, and runs the rest of its arguments as the command.
+# A --merge <dest> <src>... call copies every data-* file from each source into
+# the destination and writes an index.html there. Two switches exercise the
+# failure paths: STUB_MERGE_FAIL=1 makes a merge exit 1 without writing anything,
+# and STUB_NO_INDEX=1 suppresses every index.html.
 #
 # Cases 2-7 pin the behaviour the script must keep: a failing test fails the run,
 # the exported root survives, the merge takes every directory, the exclusions
@@ -67,8 +70,19 @@ cat > "${STUBS}/kcov" <<'EOF'
 #!/usr/bin/env zsh
 print -r -- "$*" >> "${STUB_LOG}"
 if [[ "${1}" == "--merge" ]]; then
+    if [[ "${STUB_MERGE_FAIL:-0}" == 1 ]]; then
+        exit 1
+    fi
     mkdir -p "${2}" || exit 1
-    print -r -- '<html>covered">50.0<</html>' > "${2}/index.html"
+    typeset src f
+    for src in "${@[3,-1]}"; do
+        for f in "${src}"/data-*(N); do
+            cp -- "${f}" "${2}/" || exit 1
+        done
+    done
+    if [[ "${STUB_NO_INDEX:-0}" != 1 ]]; then
+        print -r -- '<html>covered">50.0<</html>' > "${2}/index.html"
+    fi
     exit 0
 fi
 typeset out="" arg
@@ -82,7 +96,10 @@ for arg in "$@"; do
     fi
 done
 mkdir -p "${out}" || exit 1
-print -r -- '<html>covered">50.0<</html>' > "${out}/index.html"
+print -r -- "${out:t}" > "${out}/data-${out:t}"
+if [[ "${STUB_NO_INDEX:-0}" != 1 ]]; then
+    print -r -- '<html>covered">50.0<</html>' > "${out}/index.html"
+fi
 "${cmd[@]}"
 exit $?
 EOF
@@ -191,6 +208,7 @@ check "merge: one --merge call carries both the b and c coverage directories" "[
 check "merge: no merge SOURCE is the merged directory or inside it" "[[ -z \"\${BAD_MERGE}\" ]]" "bad args: ${BAD_MERGE}"
 check "merge: merge output was not copied into itself" "[[ ! -e '${R4}/coverage/merged/merged' ]]" "merged/merged exists"
 check "merge: merged/index.html exists after the run" "[[ -f '${R4}/coverage/merged/index.html' ]]" "merged/index.html missing"
+check "merge: merged/ holds the data of a, b and c" "[[ -f '${R4}/coverage/merged/data-a.test.zsh' && -f '${R4}/coverage/merged/data-b.test.zsh' && -f '${R4}/coverage/merged/data-c.test.zsh' ]]" "merged/ contents: $(ls -A "${R4}/coverage/merged" 2>/dev/null | tr '\n' ' ')"
 
 #-------------------------------------------------------------------------------
 # Case 5: comprehensive mode fails loudly on a missing named file and runs all named files
@@ -241,7 +259,7 @@ check "exclusion naming a missing file: no test ran" "! ran_any '${R6C}'" "marke
 #-------------------------------------------------------------------------------
 # Case 7: static checks against the real repository
 typeset REAL_ENTRIES="" ENTRY_COUNT=0 ENTRY_NAMES="" BLANK_REASONS=0
-typeset WANT_NAMES=$'integration/jupyterlab-spoke.test.zsh\nintegration/tech-stack-empirical.test.zsh'
+typeset WANT_NAMES=$'integration/jupyterlab-spoke.test.zsh\nintegration/tech-stack-empirical.test.zsh\nunit/git-fixture-isolation.test.zsh'
 if [[ -f "${REAL_EXCL}" ]]; then
     REAL_ENTRIES=$(grep -Ev '^[[:space:]]*(#|$)' "${REAL_EXCL}")
 fi
@@ -254,10 +272,31 @@ while IFS= read -r line; do
 done <<< "${REAL_ENTRIES}"
 
 check "static: tests/ci-coverage-exclusions.txt exists" "[[ -f '${REAL_EXCL}' ]]" "missing: ${REAL_EXCL}"
-check "static: exactly two non-comment entries" "[[ \${ENTRY_COUNT} == 2 ]]" "count=${ENTRY_COUNT}"
-check "static: the entries are the jupyterlab and tech-stack integration tests" "[[ \"\${ENTRY_NAMES}\" == \"\${WANT_NAMES}\" ]]" "names=${ENTRY_NAMES}"
+check "static: exactly three non-comment entries" "[[ \${ENTRY_COUNT} == 3 ]]" "count=${ENTRY_COUNT}"
+check "static: the entries are the jupyterlab, tech-stack and git-fixture tests" "[[ \"\${ENTRY_NAMES}\" == \"\${WANT_NAMES}\" ]]" "names=${ENTRY_NAMES}"
 check "static: every entry has a non-empty reason" "[[ \${BLANK_REASONS} == 0 ]]" "entries without a reason: ${BLANK_REASONS}"
-check "static: both named integration files exist" "[[ -f '${REPO}/tests/integration/jupyterlab-spoke.test.zsh' && -f '${REPO}/tests/integration/tech-stack-empirical.test.zsh' ]]" "a named integration file is missing"
+check "static: all three named test files exist" "[[ -f '${REPO}/tests/integration/jupyterlab-spoke.test.zsh' && -f '${REPO}/tests/integration/tech-stack-empirical.test.zsh' && -f '${REPO}/tests/unit/git-fixture-isolation.test.zsh' ]]" "a named test file is missing"
+
+#-------------------------------------------------------------------------------
+# Case 8: a failed merge is reported honestly
+typeset R8
+R8=$(new_root case8)
+make_test "${R8}/tests/unit/a.test.zsh" 0
+make_test "${R8}/tests/unit/b.test.zsh" 0
+make_test "${R8}/tests/unit/c.test.zsh" 0
+run_coverage "${R8}" unit "STUB_MERGE_FAIL=1"
+check "merge failure: exit status is non-zero" "[[ \${COV_RC} != 0 ]]" "rc=${COV_RC} out=${COV_OUT}"
+check "merge failure: the output mentions merge" "[[ \"\${COV_OUT}\" == *merge* ]]" "out=${COV_OUT}"
+
+#-------------------------------------------------------------------------------
+# Case 9: a missing report is reported honestly (the merged report has no index.html)
+typeset R9
+R9=$(new_root case9)
+make_test "${R9}/tests/unit/a.test.zsh" 0
+make_test "${R9}/tests/unit/b.test.zsh" 0
+make_test "${R9}/tests/unit/c.test.zsh" 0
+run_coverage "${R9}" unit "STUB_NO_INDEX=1"
+check "missing report: exit status is non-zero" "[[ \${COV_RC} != 0 ]]" "rc=${COV_RC} out=${COV_OUT}"
 
 #-------------------------------------------------------------------------------
 echo ""
