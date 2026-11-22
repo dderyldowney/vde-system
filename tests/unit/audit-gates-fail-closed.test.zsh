@@ -14,6 +14,7 @@ typeset _ZSH_PURE=${(%):-%x}
 #   Case 10    bin/coverage.zsh            (unknown test type must exit non-zero)
 #   Case 11    bin/vde-security-audit.zsh  (gh present but repository unknown must fail closed)
 #   Case 12    bin/targeted-test.zsh       (a selector matching no test must exit non-zero)
+#   Case 13    bin/vde-security-audit.zsh  (unauthenticated gh is a loud skip, exit 0, leak scan still runs)
 #
 # `gh` is replaced by a stub that behaves like the real one where it matters: it rejects the
 # unsupported `--params` flag exactly as `gh api --params` does ("unknown flag"). No network,
@@ -43,7 +44,7 @@ trap 'rm -rf -- "${TMP_ROOT}"' EXIT
 typeset SCRATCH_HOME="${TMP_ROOT}/home"
 mkdir -p -- "${SCRATCH_HOME}"
 
-# A stand-in for `gh` on PATH. FAKE_GH_MODE: clean | alert | fail.
+# A stand-in for `gh` on PATH. FAKE_GH_MODE: clean | alert | fail | norepo | unauth.
 typeset FAKEBIN="${TMP_ROOT}/fakebin"
 typeset GH_LOG="${TMP_ROOT}/gh.log"
 mkdir -p -- "${FAKEBIN}"
@@ -51,8 +52,9 @@ cat > "${FAKEBIN}/gh" <<'STUB'
 #!/usr/bin/env zsh
 typeset _ZSH_PURE=${(%):-%x}
 print -r -- "$*" >> "${GH_LOG}"
+if [[ "$1" == "auth" ]]; then [[ "${FAKE_GH_MODE:-}" == "unauth" ]] && exit 1; exit 0; fi
 if [[ "$1" == "repo" ]]; then
-  if [[ "${FAKE_GH_MODE:-}" == "norepo" ]]; then print -u2 -r -- "not logged in"; exit 1; fi
+  if [[ "${FAKE_GH_MODE:-}" == "norepo" || "${FAKE_GH_MODE:-}" == "unauth" ]]; then print -u2 -r -- "not logged in"; exit 1; fi
   print -r -- "owner/repo"
   exit 0
 fi
@@ -88,7 +90,7 @@ typeset RC OUT
 run_in() {
   local cwd="$1" mode="$2"; shift 2
   : >| "${GH_LOG}"
-  OUT="$(cd "${cwd}" && env HOME="${SCRATCH_HOME}" PATH="${FAKEBIN}:${PATH}" GH_LOG="${GH_LOG}" FAKE_GH_MODE="${mode}" "$@" 2>&1)"
+  OUT="$(cd "${cwd}" && env -u GH_TOKEN -u GITHUB_TOKEN HOME="${SCRATCH_HOME}" PATH="${FAKEBIN}:${PATH}" GH_LOG="${GH_LOG}" FAKE_GH_MODE="${mode}" "$@" 2>&1)"
   RC=$?
 }
 
@@ -231,13 +233,28 @@ test_case10_coverage_unknown_type_exits_non_zero() {
 }
 
 test_case11_unknown_repository_fails_closed() {
-  test_start "11: gh is installed but the repository cannot be determined, so the audit fails closed"
+  test_start "11: an authenticated gh that cannot determine the repository must fail (CRITICAL, non-zero exit)"
   local root; root="$(make_root c11 vde-security-audit.zsh)"
   run_in "${root}" norepo zsh "${root}/bin/vde-security-audit.zsh"
   if (( RC == 0 )) || [[ "${OUT}" != *CRITICAL* ]]; then
-    test_fail "case 11" "gh is installed but the repository could not be determined must fail, not skip (rc=${RC}); output: ${OUT}"
+    test_fail "case 11" "an authenticated gh that cannot determine the repository must fail, not skip (rc=${RC}); output: ${OUT}"
   else
     test_pass "case 11"
+  fi
+}
+
+test_case13_unauthenticated_gh_skips_with_a_warning() {
+  test_start "13: an unauthenticated gh is a loud skip (warning, exit 0) and the privacy leak scan still passes"
+  local root; root="$(make_root c13 vde-security-audit.zsh)"
+  run_in "${root}" unauth zsh "${root}/bin/vde-security-audit.zsh"
+  if (( RC != 0 )); then
+    test_fail "case 13" "unauthenticated gh must skip with exit 0, exited ${RC}; output: ${OUT}"
+  elif [[ "${OUT}" != *"not authenticated"* ]]; then
+    test_fail "case 13" "unauthenticated gh skipped without the not-authenticated warning; output: ${OUT}"
+  elif [[ "${OUT}" != *"Privacy Leak Audit: PASS"* ]]; then
+    test_fail "case 13" "the privacy leak scan did not report PASS on a clean tree; output: ${OUT}"
+  else
+    test_pass "case 13"
   fi
 }
 
@@ -264,6 +281,7 @@ test_case9_fail_fast_exits_non_zero
 test_case10_coverage_unknown_type_exits_non_zero
 test_case11_unknown_repository_fails_closed
 test_case12_targeted_test_with_no_matching_test_fails
+test_case13_unauthenticated_gh_skips_with_a_warning
 
 print -r -- ""
 print -r -- "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"

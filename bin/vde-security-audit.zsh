@@ -14,10 +14,15 @@ typeset _repo=""
 if command -v gh >/dev/null 2>&1; then
     _repo=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
     if [[ -z "${_repo}" ]]; then
-        echo -e "\033[0;31m[CRITICAL] gh is installed but the repository could not be determined (not logged in, offline or not a GitHub repository) -- the CodeQL audit cannot run, treating as unsafe.\033[0m"
-        exit 1
+        if ! gh auth status >/dev/null 2>&1 && [[ -z "${GH_TOKEN:-}${GITHUB_TOKEN:-}" ]]; then
+            echo "[SECURITY] Warning: gh is not authenticated. Skipping the CodeQL audit here (the CI \"Security & Privacy Audit\" job runs it with a token)."
+        else
+            echo -e "\033[0;31m[CRITICAL] gh is installed but the repository could not be determined (not logged in, offline or not a GitHub repository) -- the CodeQL audit cannot run, treating as unsafe.\033[0m"
+            exit 1
+        fi
     fi
-    # 2. CodeQL Monitoring
+    # 2. CodeQL Monitoring (skipped when gh is unauthenticated, _repo stays empty)
+    if [[ -n "${_repo}" ]]; then
     echo "[SECURITY] Auditing CodeQL Alerts for ${_repo}..."
     typeset _alerts _api_rc _err_file
     _err_file="$(mktemp)"
@@ -36,6 +41,7 @@ if command -v gh >/dev/null 2>&1; then
         exit 1
     fi
     echo "[SECURITY] CodeQL High/Critical Audit: PASS"
+    fi
 else
     echo "[SECURITY] Warning: gh is not installed. Skipping CodeQL audit."
 fi
