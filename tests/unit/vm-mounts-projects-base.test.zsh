@@ -10,15 +10,18 @@
 # (split-brain). With no override the output stays relative and unchanged; with
 # an override the source is "<base>/<name>".
 #
-# Hermetic: the base lives in a mktemp sandbox; the repo .env is never touched
-# (VDE_ROOT_DIR stays the real repo for the registry, VDE_PROJECTS_DIR is set in
-# the environment, which outranks .env).
+# Hermetic: the base lives in a mktemp sandbox; the repo .env is neither read nor touched
+# (its reader is replaced below; VDE_ROOT_DIR stays the real repo for the registry, and
+# VDE_PROJECTS_DIR is set in the environment, which outranks .env).
 
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 fi
 source "${VDE_ROOT_DIR}/lib/vde-constants" &>/dev/null
 source "${VDE_ROOT_DIR}/lib/vm-common"     &>/dev/null
+# The checkout's local .env is not part of these cases: replace its reader so the
+# unset-variable defaults below do not depend on it.
+vde_projects_dir_from_env_file() { return 0; }
 
 typeset TESTS_PASSED=0
 typeset TESTS_FAILED=0
