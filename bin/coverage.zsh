@@ -42,12 +42,12 @@ run_test_with_coverage() {
     test_name="$(basename "${test_file}" .sh)"
     local coverage_out="${COVERAGE_DIR}/${test_name}"
 
-    print -P "${BLUE}Running: ${test_name}${NC}"
+    print -P "${BLUE}Running: ${test_name//\%/%%}${NC}"
 
     # Verify test passes first
     if ! zsh "${test_file}" >/dev/null 2>&1; then
-        print -P "${RED}✗ Test failed: ${test_name}${NC}"
-        return ${VDE_ERR_GENERAL}
+        print -P "${RED}✗ Test failed: ${test_name//\%/%%}${NC}"
+        return 1
     fi
 
     # Use set -o noglob to prevent glob expansion of patterns
@@ -70,14 +70,14 @@ run_directory_with_coverage() {
 
     # Use setopt for null_glob behavior (zsh-specific)
     setopt local_options null_glob
-    for test_file in "${dir}"/*.zsh; do
+    for test_file in "${dir}"/*.zsh(N); do
         if [[ -f "${test_file}" ]] ; then
             run_test_with_coverage "${test_file}"
             ((test_count++))
         fi
     done
 
-    print -P "${GREEN}✓ Ran ${test_count} test(s) from ${dir}${NC}"
+    print -P "${GREEN}✓ Ran ${test_count} test(s) from ${dir//\%/%%}${NC}"
 }
 
 # Merge coverage reports
@@ -88,11 +88,11 @@ merge_coverage() {
     mkdir -p "${COVERAGE_MERGED}"
 
     # Use kcov to merge all coverage directories
-    local kcov_dirs=("${COVERAGE_DIR}"/*/)
+    local kcov_dirs=("${COVERAGE_DIR}"/*/(N))
 
     if [[ ${#kcov_dirs[@]} -eq 0 ]] ; then
         print -P "${RED}✗ No coverage data found to merge${NC}"
-        return ${VDE_ERR_GENERAL}
+        return 1
     fi
 
     # Copy the first coverage as base
@@ -119,8 +119,8 @@ generate_summary() {
     local index_file="${COVERAGE_MERGED}/index.html"
 
     if [[ ! -f "${index_file}" ]] ; then
-        print -P "${RED}✗ Coverage report not found at ${index_file}${NC}"
-        return ${VDE_ERR_GENERAL}
+        print -P "${RED}✗ Coverage report not found at ${index_file//\%/%%}${NC}"
+        return 1
     fi
 
     # Extract coverage percentage from index.html
@@ -132,11 +132,11 @@ generate_summary() {
         print -P "${GREEN}Coverage Report Generated${NC}"
         print -P "${GREEN}================================${NC}"
         print -P "Total Coverage: ${GREEN}${coverage}%${NC}"
-        print -P "Report: ${BLUE}file://${index_file}${NC}"
+        print -P "Report: ${BLUE}file://${index_file//\%/%%}${NC}"
         print -P "${GREEN}================================${NC}\n"
     else
         print -P "${YELLOW}⚠ Could not extract coverage percentage${NC}"
-        print -P "View full report at: file://${index_file}"
+        print -P "View full report at: file://${index_file//\%/%%}"
     fi
 }
 
@@ -169,9 +169,9 @@ main() {
             run_directory_with_coverage "${VDE_ROOT_DIR}/tests/integration"
             ;;
         *)
-            print -P "${RED}Unknown test type: ${test_type}${NC}"
-            print -P "Usage: ${0} [all|unit|integration|comprehensive]"
-            exit ${VDE_ERR_GENERAL}
+            print -P "${RED}Unknown test type: ${test_type//\%/%%}${NC}"
+            print -P "Usage: ${0//\%/%%} [all|unit|integration|comprehensive]"
+            exit 1
             ;;
     esac
 

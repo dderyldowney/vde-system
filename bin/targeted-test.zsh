@@ -9,7 +9,7 @@ set -e
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 VDE_ROOT="$(cd "$(dirname "${0}")/.." && pwd)"
-cd "${VDE_ROOT}" || exit ${VDE_ERR_GENERAL}
+cd "${VDE_ROOT}" || exit 1
 
 # Default settings
 UNIT_TESTS=(
@@ -25,6 +25,7 @@ FAIL_FAST=false
 VERBOSE=false
 
 usage() {
+  local rc="${1:-1}"
   echo "Usage: ${0} [options] [unit_test_pattern]"
   echo "Options:"
   echo "  -u, --unit <file>    Run specific unit test file"
@@ -33,7 +34,7 @@ usage() {
   echo "  -v, --verbose        Show more output"
   echo "  -a, --all-unit      Run all unit tests"
   echo "  -h, --help           Show this help"
-  exit ${VDE_ERR_GENERAL}
+  exit "${rc}"
 }
 
 # Parse arguments
@@ -60,19 +61,24 @@ while [[ ${#} -gt 0 ]] ; do
       shift
       ;;
     -h|--help)
-      usage
+      usage 0
       ;;
     *)
       # Assume it's a unit test pattern if not a flag
       if [[ -f "${1}" ]] ; then
         UNIT_TESTS=("${1}")
       else
-        UNIT_TESTS=($(ls tests/unit/*${1}*.test.zsh 2>/dev/null))
+        UNIT_TESTS=( tests/unit/*"${1}"*.test.zsh(N) )
       fi
       shift
       ;;
   esac
 done
+
+if (( ${#UNIT_TESTS[@]} == 0 && ${#BDD_TAGS[@]} == 0 )); then
+  echo "\033[1;31mNo tests selected: the pattern matched no unit test and no BDD tag was given.\033[0m"
+  exit 1
+fi
 
 # Timing function
 start_time=$(date +%s)
@@ -95,7 +101,7 @@ if [[ ${#UNIT_TESTS[@]} -gt 0 ]] ; then
     
     if [[ ${?} -ne 0 ]] ; then
       echo "\033[1;31mFAILED: ${test_file}\033[0m"
-      [[ "${FAIL_FAST}" == "true" ]] && exit ${VDE_ERR_GENERAL}
+      [[ "${FAIL_FAST}" == "true" ]] && exit 1
     else
       echo "\033[1;32mPASSED: ${test_file}\033[0m"
     fi
@@ -118,7 +124,7 @@ if [[ ${#BDD_TAGS[@]} -gt 0 ]] ; then
   
   if [[ ${?} -ne 0 ]] ; then
     echo "\033[1;31mBDD Tests FAILED\033[0m"
-    [[ "${FAIL_FAST}" == "true" ]] && exit ${VDE_ERR_GENERAL}
+    [[ "${FAIL_FAST}" == "true" ]] && exit 1
   else
     echo "\033[1;32mBDD Tests PASSED\033[0m"
   fi
