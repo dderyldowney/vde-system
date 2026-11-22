@@ -3,7 +3,6 @@
 # Grandfathered zsh files that do not yet carry the literal shibboleth line. Entries may only be REMOVED (a file gains the line); the pre-commit hook rejects additions and the audit reports an entry that has gained the line as stale. See lib/vde-shibboleth. Out of scope entirely: bin/archive/, plans/, conductor/.
 
 bin/add-vm-type
-bin/check-zsh-shebang.zsh
 bin/cleanup-ports
 bin/coverage.zsh
 bin/demo-schema-updates.zsh
