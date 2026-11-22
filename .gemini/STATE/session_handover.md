@@ -1,4 +1,4 @@
-# VDE Session Handover: 2026-11-21
+# VDE Session Handover: 2026-11-22
 # @shared-law (Forge Component)
 
 > **Handing over to another agent? Start with `.gemini/STATE/handoff.md`:** the rules, the current state, the sequence and the traps, written for any AI agent. Verify its facts with the commands it gives.
@@ -16,7 +16,8 @@ This file is one half of a pair with [plans/session_handover_remediation.md](../
 - **Gospel Audit**: GOSPEL-SUCCESS
 
 ## NEXT STRIKE
-Done as of 2026-11-21: 1.5.7 released; `vde upgrade` (#679), the 1.5.7 record (#678), the state files (#681, #686), the `vde upgrade` review fixes (#684, Signet #683) and two develop -> stable rolls without a release (#682, #687). VERIFY with `gh pr list --state merged --limit 10` before relying on this line.
+Done as of 2026-11-21: 1.5.7 released; `vde upgrade` (#679), the 1.5.7 record (#678), the state files (#681, #686), the `vde upgrade` review fixes (#684, Signet #683) and two develop -> stable rolls without a release (#682, #687). Since then (2026-11-22): the fail-closed audit and check scripts (#724, Signet #719), the security process (#738, Signet #736) and the private security directory (#739, Signet #737: the Forge creates `~/.vde-security/`, or the path in `VDE_SECURITY_DIR`, with mode 0700 through `lib/vde-security-dir`, called from the Sovereign Audit; nothing on the student install or upgrade path calls it). This state refresh is Signet #740. VERIFY with `gh pr list --state merged --limit 10` before relying on this line.
+**NEXT ACTION: Signet #725** (tests that can fail, and the coverage job), then the 1.5.8 items below. Ask the User before starting.
 Queue, in the User's order:
 1. **1.5.8, the SECURITY release** (#726, which replaced #668, plus the security-related items parked earlier, and ONLY security-related work): its own Signet, PR and release chain, with the User's approval at each outward step. Security comes BEFORE docs, even if session time is mixed. All security work follows the project security process (`docs/governance/security-process.md`, binding agent rules in `.gemini/RULES/security.md`; Signet #736). The 1.5.8 items are tracked as neutral issues (#707-#718, #722, #723, #726 and the sub-issues #727-#735 of #720 and #721) with private draft advisories; #725 is done first so the fixes have tests that can fail.
 2. **1.5.9, the docs release** (approved scope below): starts only after 1.5.8 ships; Signet first, each part its own Strike.

@@ -1,0 +1,16 @@
+# Tests that the CI "Code Coverage" job (bin/coverage.zsh) deliberately does NOT run (Signet #725).
+# @forge (Governance Sentinel)
+#
+# The coverage job otherwise runs every tests/unit/*.test.zsh and every tests/integration/*.test.zsh.
+# An exclusion is for a test the hosted runner genuinely cannot run (for example, one that needs a
+# Docker daemon or Spokes the runner does not have). It is not a way to skip a failing test.
+# Excluded tests must still be run by hand before a release.
+#
+# One entry per line:
+#     <dir>/<name>.test.zsh<whitespace><reason>
+# <dir> is `unit` or `integration`, a path relative to tests/. A reason is mandatory, and an entry
+# naming a test file that does not exist is an error: the coverage job refuses to start in either
+# case, so this list cannot rot silently. Blank lines and # comments are ignored.
+#
+integration/jupyterlab-spoke.test.zsh  Needs a running Docker daemon: it ignites the vde-jupyterlab Spoke and polls port 8888; the hosted runner has no Docker images or Spokes. Run by hand with Docker available.
+integration/tech-stack-empirical.test.zsh  Needs Docker and is destructive: it begins with `vde stop all -f` (stops every Spoke on the host) and then builds and ignites the python, postgres and redis Spokes. Run by hand only, never on a shared host.
