@@ -12,7 +12,7 @@ typeset _audit_root="${0:A:h:h}"
 # 1. Dynamic Repo Discovery (Rule 4 Alignment)
 typeset _repo=""
 if command -v gh >/dev/null 2>&1; then
-    _repo=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
+    _repo=$(cd "${_audit_root}" && gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
     if [[ -z "${_repo}" ]]; then
         if ! gh auth status >/dev/null 2>&1 && [[ -z "${GH_TOKEN:-}${GITHUB_TOKEN:-}" ]]; then
             echo "[SECURITY] Warning: gh is not authenticated. Skipping the CodeQL audit here (the CI \"Security & Privacy Audit\" job runs it with a token)."

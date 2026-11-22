@@ -10,11 +10,13 @@ typeset _ZSH_PURE=${(%):-%x}
 #
 #   Cases 1-4  bin/vde-security-audit.zsh  (CodeQL query, API failure, leak scan root)
 #   Cases 5-8  bin/check-zsh-shebang.zsh   (violations in bin/ and lib/, interpreter match)
-#   Case  9    bin/targeted-test.zsh       (--fail-fast must exit non-zero)
-#   Case 10    bin/coverage.zsh            (unknown test type must exit non-zero)
+#   Case  9    bin/targeted-test.zsh       (--fail-fast exits non-zero and stops after the first failure)
+#   Case 10    bin/coverage.zsh            (unknown test type is rejected with a non-zero exit)
 #   Case 11    bin/vde-security-audit.zsh  (gh present but repository unknown must fail closed)
 #   Case 12    bin/targeted-test.zsh       (a selector matching no test must exit non-zero)
 #   Case 13    bin/vde-security-audit.zsh  (unauthenticated gh is a loud skip, exit 0, leak scan still runs)
+#   Case 14    bin/targeted-test.zsh       (without --fail-fast every test runs, and the run still exits non-zero)
+#   Case 15    bin/check-zsh-shebang.zsh   (hidden scripts and shebang-less files are checked, not skipped)
 #
 # `gh` is replaced by a stub that behaves like the real one where it matters: it rejects the
 # unsupported `--params` flag exactly as `gh api --params` does ("unknown flag"). No network,
@@ -81,7 +83,18 @@ make_root() {
   mkdir -p -- "${root}/bin" "${root}/lib" "${root}/templates" "${root}/configs/docker" "${root}/tests/unit"
   local s
   for s in "$@"; do cp -- "${VDE_ROOT_DIR}/bin/${s}" "${root}/bin/${s}"; done
+  cp -- "${VDE_ROOT_DIR}/lib/vde-shibboleth" "${root}/lib/vde-shibboleth"
   print -r -- "${root}"
+}
+
+# make_failing_test <root> <name> : tests/unit/<name>.test.zsh touches <name>.ran, then fails.
+make_failing_test() {
+  local root="$1" name="$2"
+  {
+    print -r -- '#!/usr/bin/env zsh'
+    print -r -- 'touch "${0:h}/'"${name}"'.ran"'
+    print -r -- 'exit 1'
+  } > "${root}/tests/unit/${name}.test.zsh"
 }
 
 # run_in <cwd> <mode> <command...> : run with the stub gh first on PATH and a scratch HOME;
@@ -197,6 +210,7 @@ test_case8_clean_tree_still_passes() {
   print -r -- $'#!/usr/bin/env zsh\necho ok' > "${root}/bin/a.zsh"
   print -r -- $'#!/bin/zsh\necho ok' > "${root}/bin/b.zsh"
   print -r -- $'#!/bin/zsh -f\necho ok' > "${root}/bin/flagged.zsh"
+  print -r -- $'#!/usr/bin/env -S zsh -f\necho ok' > "${root}/bin/envs.zsh"
   print -r -- $'#!/usr/bin/env zsh\necho ok' > "${root}/lib/vde-thing"
   print -r -- $'#!/usr/bin/env python3\nprint(1)' > "${root}/lib/helper.py"
   run_in "${TMP_ROOT}" clean zsh "${root}/bin/check-zsh-shebang.zsh"
@@ -209,24 +223,31 @@ test_case8_clean_tree_still_passes() {
 
 # ---------------------------------------------------------------- the two runners
 
-test_case9_fail_fast_exits_non_zero() {
-  test_start "9: targeted-test --fail-fast exits non-zero when a test fails"
+test_case9_fail_fast_stops_after_the_first_failure() {
+  test_start "9: targeted-test --fail-fast exits non-zero and stops after the first failing test"
   local root; root="$(make_root c9 targeted-test.zsh)"
-  print -r -- $'#!/usr/bin/env zsh\nexit 1' > "${root}/tests/unit/boom.test.zsh"
-  run_in "${root}" clean zsh "${root}/bin/targeted-test.zsh" --fail-fast --unit tests/unit/boom.test.zsh
+  make_failing_test "${root}" a
+  make_failing_test "${root}" b
+  run_in "${root}" clean zsh "${root}/bin/targeted-test.zsh" --fail-fast --all-unit
   if (( RC == 0 )); then
-    test_fail "case 9" "exit 0 although the test failed and --fail-fast was given; output: ${OUT}"
+    test_fail "case 9" "exit 0 although the tests failed and --fail-fast was given; output: ${OUT}"
+  elif [[ ! -e "${root}/tests/unit/a.ran" ]]; then
+    test_fail "case 9" "the first failing test never ran; output: ${OUT}"
+  elif [[ -e "${root}/tests/unit/b.ran" ]]; then
+    test_fail "case 9" "--fail-fast kept running after the first failure (b ran); output: ${OUT}"
   else
     test_pass "case 9"
   fi
 }
 
 test_case10_coverage_unknown_type_exits_non_zero() {
-  test_start "10: coverage.zsh with an unknown test type exits non-zero"
+  test_start "10: coverage.zsh with an unknown test type exits non-zero because the type is rejected"
   local root; root="$(make_root c10 coverage.zsh)"
   run_in "${root}" clean zsh "${root}/bin/coverage.zsh" bogus-type
   if (( RC == 0 )); then
     test_fail "case 10" "exit 0 for an unknown test type; output: ${OUT}"
+  elif [[ "${OUT}" != *"Unknown test type"* ]]; then
+    test_fail "case 10" "exited ${RC} but did not reject the type as unknown; output: ${OUT}"
   else
     test_pass "case 10"
   fi
@@ -269,6 +290,41 @@ test_case12_targeted_test_with_no_matching_test_fails() {
   fi
 }
 
+test_case14_without_fail_fast_every_test_runs_and_the_run_fails() {
+  test_start "14: targeted-test without --fail-fast runs every failing test and still exits non-zero"
+  local root; root="$(make_root c14 targeted-test.zsh)"
+  make_failing_test "${root}" a
+  make_failing_test "${root}" b
+  run_in "${root}" clean zsh "${root}/bin/targeted-test.zsh" --all-unit
+  if (( RC == 0 )); then
+    test_fail "case 14" "exit 0 although the tests failed; output: ${OUT}"
+  elif [[ ! -e "${root}/tests/unit/a.ran" || ! -e "${root}/tests/unit/b.ran" ]]; then
+    test_fail "case 14" "without --fail-fast every test must run (a.ran or b.ran missing); output: ${OUT}"
+  else
+    test_pass "case 14"
+  fi
+}
+
+test_case15_hidden_and_shebangless_files_are_checked() {
+  test_start "15: a hidden non-zsh script in bin/ and a shebang-less file in lib/ both fail the check"
+  local root; root="$(make_root c15 check-zsh-shebang.zsh)"
+  print -r -- $'#!/usr/bin/env zsh\necho ok' > "${root}/bin/good.zsh"
+  print -r -- $'#!/bin/bash\necho bad' > "${root}/bin/.hidden.zsh"
+  run_in "${TMP_ROOT}" clean zsh "${root}/bin/check-zsh-shebang.zsh"
+  if (( RC == 0 )) || [[ "${OUT}" != *".hidden.zsh"* ]]; then
+    test_fail "case 15" "hidden bin/.hidden.zsh with a bash shebang was not reported (rc=${RC}); output: ${OUT}"
+    return 0
+  fi
+  local root2; root2="$(make_root c15b check-zsh-shebang.zsh)"
+  print -r -- 'echo hi' > "${root2}/lib/nolib"
+  run_in "${TMP_ROOT}" clean zsh "${root2}/bin/check-zsh-shebang.zsh"
+  if (( RC == 0 )) || [[ "${OUT}" != *nolib* ]]; then
+    test_fail "case 15" "lib/nolib with no shebang was not reported (rc=${RC}); output: ${OUT}"
+  else
+    test_pass "case 15"
+  fi
+}
+
 test_case1_codeql_query_uses_supported_flags
 test_case2_api_failure_fails_closed
 test_case3_open_alert_fails
@@ -277,11 +333,13 @@ test_case5_bad_shebang_in_bin_fails
 test_case6_bad_shebang_in_lib_fails
 test_case7_interpreter_match_is_exact
 test_case8_clean_tree_still_passes
-test_case9_fail_fast_exits_non_zero
+test_case9_fail_fast_stops_after_the_first_failure
 test_case10_coverage_unknown_type_exits_non_zero
 test_case11_unknown_repository_fails_closed
 test_case12_targeted_test_with_no_matching_test_fails
 test_case13_unauthenticated_gh_skips_with_a_warning
+test_case14_without_fail_fast_every_test_runs_and_the_run_fails
+test_case15_hidden_and_shebangless_files_are_checked
 
 print -r -- ""
 print -r -- "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"

@@ -67,17 +67,24 @@ run_test_with_coverage() {
 run_directory_with_coverage() {
     local dir="${1}"
     local test_count=0
+    local -i failures=0
 
     # Use setopt for null_glob behavior (zsh-specific)
     setopt local_options null_glob
     for test_file in "${dir}"/*.zsh(N); do
         if [[ -f "${test_file}" ]] ; then
-            run_test_with_coverage "${test_file}"
+            run_test_with_coverage "${test_file}" || failures+=1
             ((test_count++))
         fi
     done
 
+    if (( failures > 0 )) ; then
+        print -P "${RED}✗ ${failures} test(s) failed in ${dir//\%/%%}${NC}"
+        return 1
+    fi
+
     print -P "${GREEN}✓ Ran ${test_count} test(s) from ${dir//\%/%%}${NC}"
+    return 0
 }
 
 # Merge coverage reports
@@ -143,30 +150,31 @@ generate_summary() {
 # Main
 main() {
     local test_type="${1:-all}"
+    typeset -i overall=0
 
     case "${test_type}" in
         unit)
             print -P "${YELLOW}Running unit tests with coverage...${NC}"
             clean_coverage
-            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/unit"
+            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/unit" || overall=1
             ;;
         integration)
             print -P "${YELLOW}Running integration tests with coverage...${NC}"
             clean_coverage
-            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/integration"
+            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/integration" || overall=1
             ;;
         comprehensive)
             print -P "${YELLOW}Running comprehensive tests with coverage...${NC}"
             clean_coverage
-            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/unit/test_vde_parser_comprehensive.sh"
-            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/unit/test_vde_commands_comprehensive.sh"
-            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/integration/test_integration_comprehensive.sh"
+            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/unit/test_vde_parser_comprehensive.sh" || overall=1
+            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/unit/test_vde_commands_comprehensive.sh" || overall=1
+            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/integration/test_integration_comprehensive.sh" || overall=1
             ;;
         all)
             print -P "${YELLOW}Running all tests with coverage...${NC}"
             clean_coverage
-            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/unit"
-            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/integration"
+            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/unit" || overall=1
+            run_directory_with_coverage "${VDE_ROOT_DIR}/tests/integration" || overall=1
             ;;
         *)
             print -P "${RED}Unknown test type: ${test_type//\%/%%}${NC}"
@@ -175,8 +183,10 @@ main() {
             ;;
     esac
 
-    merge_coverage
-    generate_summary
+    merge_coverage || overall=1
+    generate_summary || overall=1
+
+    return ${overall}
 }
 
 main "${@}"
