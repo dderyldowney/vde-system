@@ -8,7 +8,7 @@ This file is one half of a pair with [plans/session_handover_remediation.md](../
 
 ## SOVEREIGN STATE
 - **Baseline**: 1.5.7 (Sovereign Baseline) — RELEASED 2026-11-21, tag 1.5.7 on `main` (daffb810; code baseline `c4560371`): https://github.com/dderyldowney/vde-system/releases/tag/1.5.7
-- **develop**: advances past `debc2e81` (the 1.5.7 roll, PR #673) with each merged PR; read it from `git log`
+- **develop**: read the tip with `git log -1 origin/develop` (advances past the 1.5.7 roll as code and doc PRs merge)
 - **main**: `daffb810` (production — 1.5.7, Merge PR #675 stable → main)
 - **stable**: read the tip with `git ls-remote origin stable`; after the 1.5.7 release it equalled `main` (PR #674 rolled develop into it at 66a04308; the Update Stable Alias workflow then reset it to `main` on the #675 push). `stable` is for release plus updates; it may sit ahead of `main` between releases.
 - **Status**: 100% GREEN
@@ -16,7 +16,7 @@ This file is one half of a pair with [plans/session_handover_remediation.md](../
 - **Gospel Audit**: GOSPEL-SUCCESS
 
 ## NEXT STRIKE
-Done as of 2026-11-21: 1.5.7 released; `vde upgrade` (#679), the 1.5.7 record (#678), the state files (#681), the `vde upgrade` review fixes (#684, Signet #683) and the develop -> stable roll (#682, merge commit, no release). VERIFY with `gh pr list --state merged --limit 10` before relying on this line.
+Done as of 2026-11-21: 1.5.7 released; `vde upgrade` (#679), the 1.5.7 record (#678), the state files (#681, #686), the `vde upgrade` review fixes (#684, Signet #683) and two develop -> stable rolls without a release (#682, #687). VERIFY with `gh pr list --state merged --limit 10` before relying on this line.
 Queue, in the User's order:
 1. **1.5.8, the SECURITY release** (#668 plus the security-related items parked earlier, and ONLY security-related work): its own Signet, PR and release chain, with the User's approval at each outward step. Security comes BEFORE docs, even if session time is mixed.
 2. **1.5.9, the docs release** (approved scope below): starts only after 1.5.8 ships; Signet first, each part its own Strike.
