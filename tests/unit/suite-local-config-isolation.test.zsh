@@ -72,7 +72,7 @@ run_suite() {
 
 typeset REAL_ENV="${REPO}/.env"
 typeset ENV_BEFORE="absent"
-[[ -e "${REAL_ENV}" ]] && ENV_BEFORE=$(stat -c '%Y:%s' "${REAL_ENV}")
+[[ -e "${REAL_ENV}" ]] && ENV_BEFORE=$(cksum < "${REAL_ENV}")
 
 typeset OUT_PATH="${SCRATCH}/path-with-env.out"
 typeset OUT_MOUNTS="${SCRATCH}/mounts-with-env.out"
@@ -109,13 +109,13 @@ check "control vm-mounts-projects-base without local file" \
 # The real repository's local configuration file must be untouched.
 test_start "the real repository's local configuration file was not read or modified"
 typeset ENV_AFTER="absent"
-[[ -e "${REAL_ENV}" ]] && ENV_AFTER=$(stat -c '%Y:%s' "${REAL_ENV}")
+[[ -e "${REAL_ENV}" ]] && ENV_AFTER=$(cksum < "${REAL_ENV}")
 if [[ "${ENV_BEFORE}" == "absent" ]]; then
     test_pass "real repository local configuration file is absent (nothing to compare; skipped)"
 else
-    check "real repository local configuration file unchanged" \
+    check "real repository local configuration file unchanged (content checksum)" \
         '[[ "${ENV_BEFORE}" == "${ENV_AFTER}" ]]' \
-        "stat before ${ENV_BEFORE}, after ${ENV_AFTER}"
+        "content checksum before ${ENV_BEFORE}, after ${ENV_AFTER}"
 fi
 
 echo ""
