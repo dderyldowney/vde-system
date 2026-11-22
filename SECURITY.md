@@ -64,7 +64,7 @@ VDE follows coordinated disclosure (ISO/IEC 29147 and 30111, and the OpenSSF gui
 
 1. Your report becomes a private draft GitHub Security Advisory. The details stay there.
 2. The fix is developed privately, in the advisory's temporary private fork. Until the fix ships, the only public trace is a neutrally worded tracking issue ("security hardening").
-3. The fix ships in a patch release. On the same day the advisory is published, a CVE is requested through GitHub for every vulnerability of Medium severity or higher, and you are credited (unless you prefer not to be).
+3. The fix ships in a patch release; it is merged to the public branches only as part of that patch release. On the same day the advisory is published, a CVE is requested through GitHub for every vulnerability of Medium severity or higher, and you are credited (unless you prefer not to be).
 4. Disclosure happens no later than 90 days after the report, even if a fix is not ready; it happens sooner if the problem is being exploited or becomes public. In that case the advisory publishes what is known plus a workaround.
 
 Please keep the details private until the advisory is published.

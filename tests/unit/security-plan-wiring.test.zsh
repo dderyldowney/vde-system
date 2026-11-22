@@ -29,7 +29,9 @@ typeset -r INDEX='docs/security/advisories.md'
 typeset -r RULE='.gemini/RULES/security.md'
 typeset -r SKILL='.gemini/SKILLS/security-auditor.md'
 
-tracked() { git -C "${VDE_ROOT_DIR}" ls-files --error-unmatch -- "$1" >/dev/null 2>&1; }
+# tracked FILE: in git's index AND present, non-empty, in the working tree (a file
+# deleted from the worktree is still "tracked" until it is committed away).
+tracked() { git -C "${VDE_ROOT_DIR}" ls-files --error-unmatch -- "$1" >/dev/null 2>&1 && [[ -f "${VDE_ROOT_DIR}/$1" && -s "${VDE_ROOT_DIR}/$1" ]]; }
 # has FILE FIXED-STRING
 has() { grep -qF -- "$2" "${VDE_ROOT_DIR}/$1" 2>/dev/null; }
 # expect_has LABEL FILE FIXED-STRING
@@ -89,8 +91,8 @@ test_enforcer_requires_policy() {
     # directory above its own bin/), so the existence loop itself is exercised.
     local tmp fx out f
     tmp="$(mktemp -d "${TMPDIR:-/tmp}/vde-secplan.XXXXXX")" || { test_fail "scratch dir" "mktemp failed"; return; }
-    local -a base=(AGENTS.md GEMINI.md .gemini/STATE/MEMORY.md "${POLICY}" "${RULE}" "${PROCESS}")
-    for f in "${POLICY}" "${RULE}" "${PROCESS}"; do
+    local -a base=(AGENTS.md GEMINI.md .gemini/STATE/MEMORY.md "${POLICY}" "${RULE}" "${PROCESS}" "${INDEX}")
+    for f in "${POLICY}" "${RULE}" "${PROCESS}" "${INDEX}"; do
         # Fixture A: every mandatory file present and non-empty except F, which is deleted.
         fx="${tmp}/missing-${f:t:r}"
         mkdir -p "${fx}"
@@ -109,6 +111,15 @@ test_enforcer_requires_policy() {
         [[ "${out}" == *"Mandatory file missing or empty: ${f}"* && "${out}" != *"RC=0" ]] \
             && test_pass "an empty ${f} fails the audit" \
             || test_fail "an empty ${f} fails the audit" "output: ${${out//$'\n'/ | }[1,240]}"
+        # Fixture C: F replaced by a NON-EMPTY DIRECTORY (-s alone accepts one).
+        fx="${tmp}/dir-${f:t:r}"
+        mkdir -p "${fx}"
+        for g in "${base[@]}"; do mkdir -p "${fx}/${g:h}"; print -r -- "x" > "${fx}/${g}"; done
+        rm -f -- "${fx}/${f}"; mkdir -p "${fx}/${f}"; print -r -- "x" > "${fx}/${f}/inner"
+        out="$(run_enforcer_in "${fx}")"
+        [[ "${out}" == *"Mandatory file missing or empty: ${f}"* && "${out}" != *"RC=0" ]] \
+            && test_pass "a directory in place of ${f} fails the audit" \
+            || test_fail "a directory in place of ${f} fails the audit" "output: ${${out//$'\n'/ | }[1,240]}"
     done
     # Control: with every file present and non-empty, the mandatory check reports nothing
     # (other checks may still fail in a bare fixture; only this check is judged).
@@ -153,6 +164,12 @@ test_process_lifecycle() {
     expect_has "classifies with CWE" "${PROCESS}" 'CWE'
     expect_has "uses the advisory's temporary private fork" "${PROCESS}" 'temporary private fork'
     expect_has "says how the Strike Protocol runs in a private fork" "${PROCESS}" '**The Strike Protocol in a private fork.**'
+    expect_has "fixes merge to public branches only in the release-day sequence" "${PROCESS}" '**Release-day sequence for a private fork.**'
+    expect_has "reserves each item number in the private ledger first" "${PROCESS}" '**Reserve the item number first.**'
+    expect_has "checks for a duplicate before drafting an advisory" "${PROCESS}" '**Check for a duplicate first.**'
+    expect_has "closes the draft advisory on Hardening or Not an issue" "${PROCESS}" '**Close the draft on Hardening or Not an issue.**'
+    expect_has "records a finding in the private ledger without being asked" "${PROCESS}" 'without waiting to be asked'
+    expect_has "names the one early-disclosure exception" "${PROCESS}" '**Early disclosure.**'
 }
 
 test_agent_rule() {
@@ -163,12 +180,21 @@ test_agent_rule() {
     expect_has "every Vulnerability is fixed privately" "${RULE}" 'Every Vulnerability (any severity) is fixed in the advisory'
     expect_has "CLAUDE.md routes Vulnerability fixes to the private fork" CLAUDE.md "advisory's temporary private fork"
     expect_has "follows the process document" "${RULE}" "${PROCESS}"
+    expect_has "early disclosure is the User's decision" "${RULE}" "**Early disclosure is the User's decision.**"
+    expect_has "findings are recorded in the ledger without being asked" "${RULE}" 'without waiting to be asked'
+    expect_has "the fork merges only in the release-day sequence" "${RULE}" 'release-day sequence'
+    # Standing order (the User, 2026-11-22): public disclosure by any bot or person is hidden at once.
+    expect_has "standing order: hide public text that discloses a weakness" "${RULE}" '**Hide any public text that discloses a weakness we are fixing.**'
+    expect_has "the process document carries the same standing order" "${PROCESS}" '**Hide any public text that discloses a weakness we are fixing.**'
+    expect_has "the public policy says fixes reach public branches only with the release" "${POLICY}" 'only as part of that patch release'
 }
 
 test_issue_chooser() {
     test_start "8: the issue chooser sends reporters to private reporting"
     expect_has "config.yml links private reporting" .github/ISSUE_TEMPLATE/config.yml \
         'https://github.com/dderyldowney/vde-system/security/advisories/new'
+    # A public blank issue is the wrong place for a security report: templates only.
+    expect_has "config.yml disables blank issues" .github/ISSUE_TEMPLATE/config.yml 'blank_issues_enabled: false'
 }
 
 test_files_tracked

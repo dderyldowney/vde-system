@@ -61,7 +61,7 @@ if [[ -d "${plans_dir}" ]]; then
 fi
 
 # Mandatory config files (Mandate 0 & 14 integration; the security policy, rule and process: Signet #736)
-MANDATORY_FILES=("AGENTS.md" "GEMINI.md" ".gemini/STATE/MEMORY.md" "SECURITY.md" ".gemini/RULES/security.md" "docs/governance/security-process.md")
+MANDATORY_FILES=("AGENTS.md" "GEMINI.md" ".gemini/STATE/MEMORY.md" "SECURITY.md" ".gemini/RULES/security.md" "docs/governance/security-process.md" "docs/security/advisories.md")
 
 # Colors for output
 RED='\033[0;31m'
@@ -72,8 +72,8 @@ NC='\033[0m' # No Color
 # 1. Check for mandatory config files [Mandate 0]
 [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-START]${NC} Verifying mandatory configurations..."
 for file in "${MANDATORY_FILES[@]}"; do
-    # -s: the file must exist AND be non-empty (an emptied policy file is as bad as a missing one).
-    if [[ ! -s "${VDE_ROOT_DIR}/${file}" ]]; then
+    # -f and -s: a regular file AND non-empty (an emptied policy file, or a directory put in its place, is as bad as a missing one).
+    if [[ ! -f "${VDE_ROOT_DIR}/${file}" || ! -s "${VDE_ROOT_DIR}/${file}" ]]; then
         echo -e "${RED}[UAP-ERROR]${NC} Mandatory file missing or empty: ${file}"
         errors=$((errors + 1))
     fi
