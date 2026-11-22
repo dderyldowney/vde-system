@@ -9,6 +9,7 @@ MANDATE: In VDE workspace, follow instructions in AGENTS.md.
 
 - **Project state (read at session start):** `.gemini/STATE/MEMORY.md` (standing watch, baseline, recent Strikes) and `.gemini/STATE/session_handover.md` (current session goals and constraints).
 - **Project rules:** `.gemini/RULES/` (one file per rule family), `STYLE_GUIDE.md` (repository root) and `.gemini/instructions.md`.
+- **Security (binding):** `.gemini/RULES/security.md` (the rules every agent follows) and `docs/governance/security-process.md` (the full process from a report to the public advisory). A suspected vulnerability never goes into public text.
 - **Procedures (the `/vde-*` commands and role skills named in these rules):** `.gemini/COMMANDS/` and `.gemini/SKILLS/`. Antigravity discovers them natively through `.agents/skills` and Claude Code through `.claude/skills` (both folders hold only symlinks to these files); for every other agent they are not auto-discovered: read the named file and follow it.
 - **Plans and remediation:** `plans/` (Forge development artifacts; the active remediation plan is `plans/session_handover_remediation.md`). Retired plans are archived under `.gemini/PLANS/archive/`.
 - **Certified status record:** `PROJECT_STATUS.md` (repository root; part of the version-sync and Gospel mechanism).
@@ -109,3 +110,5 @@ Failure of any ritual constitutes a **Protocol Blockade**.
 **THE BOT FEEDBACK MANDATE**: Before ANY Pull Request is closed, merged, or considered complete, the agent MUST query and remediate feedback from ALL active CI sentinels. No PR may be finalized while any sentinel has open findings.
 
 **THE PROOF OF LIFE MANDATE**: If the user says "Give me proof of life", the agent MUST immediately execute the `tests/features/core-infrastructure/proof-of-life-the-contract.feature` test and report results.
+
+**THE SECURITY MANDATE**: The project security plan is the default for all security work, now and going forward. Every finding, fix, patch release, disclosure and alert follows `docs/governance/security-process.md`, and every agent obeys `.gemini/RULES/security.md`: weakness detail NEVER appears in public text before its fix has shipped, findings go to a private draft GitHub Security Advisory, and only the User publishes an advisory or requests a CVE. `SECURITY.md` is the public policy. Breaking this mandate is helmet removal.

@@ -2,6 +2,9 @@
 # @forge (Governance Sentinel)
 blank_issues_enabled: true
 contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/dderyldowney/vde-system/security/advisories/new
+    about: Please report security vulnerabilities privately here, never in a public issue. See SECURITY.md.
   - name: Questions and Discussions
     url: https://github.com/dderyldowney/vde-system/discussions
     about: Please use GitHub Discussions for questions, usage help, and general conversation.

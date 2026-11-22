@@ -1,0 +1,14 @@
+# Security Rules (Binding)
+<!-- @forge (Governance Sentinel) -->
+
+These rules bind every agent (main agent and sub-agents) in this repository. They implement [`docs/governance/security-process.md`](../../docs/governance/security-process.md), which is the full procedure; read it before any security work. Breaking one of these rules is a Creed violation: stop, report it to the User, and remediate before continuing.
+
+1. **NEVER put weakness detail in public text.** Until the fix has shipped, no issue, pull request, branch name, commit message, code comment, test name, state file (`.gemini/STATE/`), changelog, release note or chat message posted anywhere public may name the weakness, the attack, the affected file or component, or how to exploit it. Use the neutral form `fix: <version> security hardening, item NN` and refer to findings by issue or item number only.
+2. **Private first.** A suspected vulnerability is recorded in a draft GitHub Security Advisory (private) and in the security lead's private ledger, which lives outside the repository. Never commit, paste or quote the ledger or an advisory draft into the repository. Create or edit a draft advisory only when the User asks.
+3. **Agents NEVER publish.** Publishing an advisory, requesting a CVE, deleting or recreating issues, and making a security fix public are the User's decisions, each with explicit written approval in the current session.
+4. **Triage before fixing.** Reproduce the finding (record EXEC, SOURCE or OPEN), apply the threat model, classify it (Vulnerability, Hardening, Not an issue) and score it with CVSS v4.0 and CWE, as the process document describes.
+5. **Every Vulnerability (any severity) is fixed in the advisory's temporary private fork.** The neutral public issue is the Signet; the feature branch, the pull request (targeting `develop`) and the RED and GREEN evidence live in the fork; the fork is merged, with the User's written approval, as part of the release. Only Hardening items (no boundary crossed, no advisory) use a normal Strike with a neutral public pull request. Any other route needs the User's written decision.
+6. **Every fix proves itself.** A regression test shown failing before the fix and passing after it, a variant analysis (search for the same pattern elsewhere), and a green Proof of Life. Test names and comments stay neutral until release.
+7. **Disclosure happens only at release.** On release day, and only with the User's approval: publish the advisories, request CVEs (Medium and higher), credit reporters, correct public docs, and add the entries to `docs/security/advisories.md`.
+8. **Respect the clock.** Report to the User when a target from `SECURITY.md` (acknowledge, triage, fix, the 90-day disclosure limit) is at risk.
+9. **New findings during other work** are not filed publicly. Tell the User privately in the session and record them in the private ledger when asked.

@@ -5,7 +5,7 @@ Written 2026-11-21 at the end of a long working session, for ANY AI agent (not o
 
 ## 1. Start here
 
-1. Read, in order: `CLAUDE.md`, `.gemini/instructions.md`, `AGENTS.md`, `.gemini/STATE/MEMORY.md`, `.gemini/STATE/session_handover.md`, then this file.
+1. Read, in order: `CLAUDE.md`, `.gemini/instructions.md`, `AGENTS.md`, `.gemini/RULES/security.md`, `.gemini/STATE/MEMORY.md`, `.gemini/STATE/session_handover.md`, then this file.
 2. The Contract in `.gemini/instructions.md` binds any agent that works here.
 3. Check the world before trusting this file or running any lifecycle test:
    - `git fetch origin && git log --oneline -8 origin/develop`
@@ -44,7 +44,7 @@ Every unit of work: open an Issue (the Signet) BEFORE any code; branch from `dev
 
 ## 5. What comes next, in order
 
-1. **1.5.8 is the SECURITY release.** Strictly security-related work only. It contains #668 and the security-related items from the parked list (triage them when this starts; take only the genuinely security-related ones). What is already merged stays; the 1.5.8 notes name it plainly and headline the security items. Do not describe an unpatched weakness in public text, state files, PR text or the changelog until the fix has shipped; refer to it by issue number. Its own Signet, PR and release chain, with the User's approval at every outward step.
+1. **1.5.8 is the SECURITY release.** Strictly security-related work only. It contains #726 (which replaced #668), the neutral issues #707-#718, #722, #723, the sub-issues #727-#735 of #720 and #721, and #725 (done first, so the fixes have tests that can fail). All of it follows the project security process: `docs/governance/security-process.md` and the binding agent rules in `.gemini/RULES/security.md` (Signet #736). What is already merged stays; the 1.5.8 notes name it plainly and headline the security items. Do not describe an unpatched weakness in public text, state files, PR text or the changelog until the fix has shipped; refer to it by issue number. Its own Signet, PR and release chain, with the User's approval at every outward step.
 2. **1.5.9 is the DOCS release**, and security comes first. Scope the User approved: rewrite the docs for students and for VDE developers in a plain, direct, 1970s helper-manual voice (second person, payoff first, short sentences, a verification line in every step, dry wit sparingly); remove ALL mythos from human-facing docs (it stays only in agent-facing files: `CLAUDE.md`, `AGENTS.md`, `.gemini/`); new-student and onboarding docs FIRST, VDE-developer docs SECOND, including a developer doc that explains the agent layer in plain language (why it exists, how and why it is applied, how to maintain it); every command shown must have been run, in the order printed; explain what lives inside and outside the container and how to change the Projects location at install and after (`--projects-dir`, `vde set-projects-dir`); link each doc to the code it describes; take a census of docs versus code before moving or deleting anything (the vendored zsh manual and `bin/archive/` are large); Hub and Spoke and the command `path-of-the-foundling` stay.
    - **The mantra: "Well documented, empirically tested."**
 3. Later: #671 and the other open code Issues (`gh issue list`), and the parked items that are not security-related.
@@ -68,6 +68,6 @@ Marketing-style hero and headline; "What's new" as short benefit blocks in secon
 
 ## 8. Parked, not yet Issues
 
-Needs the User's approval to file. Security-related parked items (queued for 1.5.8 alongside `#668`) are kept out of public state files until fixed; refer to them by issue number once filed. Non-security parked items include minor CLI and script follow-ups (`vde upgrade` retry rebuild guidance, `bin/add-vm-type` quiet-flag forwarding, `bin/cleanup-ports` counter arithmetic under `set -e`, and other non-security backlog items deferred past 1.5.8/1.5.9).
+Needs the User's approval to file. Security-related parked items (queued for 1.5.8 alongside `#726`) are kept out of public state files until fixed; refer to them by issue number once filed. Non-security parked items include minor CLI and script follow-ups (`vde upgrade` retry rebuild guidance, `bin/add-vm-type` quiet-flag forwarding, `bin/cleanup-ports` counter arithmetic under `set -e`, and other non-security backlog items deferred past 1.5.8/1.5.9).
 
 **This is the Way.**
