@@ -1,0 +1,84 @@
+#!/usr/bin/env zsh
+# @forge (Governance Sentinel)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
+# VDE Private Security Directory (Signet #737)
+# Source this library with: source ./lib/vde-security-dir
+#
+# The security process (docs/governance/security-process.md) keeps private working
+# material in a directory OUTSIDE the repository: ${VDE_SECURITY_DIR:-$HOME/.vde-security}.
+# Nothing may assume it exists. vde_security_dir_ensure creates it, safely, the first time
+# the Forge is used on a machine. FORGE ONLY: the Sovereign Audit calls it; the student
+# (@armor) install and upgrade paths never do.
+#
+# It NEVER deletes or overwrites anything. It refuses (return 1; nothing is created and
+# nothing is chmod'ed) a relative path, a path inside the repository, a symlink, a
+# non-directory and a directory owned by someone else.
+# Dependencies: mkdir, chmod and the zsh builtins.
+
+if typeset -f vde_security_dir_ensure >/dev/null 2>&1; then
+    return 0
+fi
+
+# vde_security_dir_path: prints the directory this machine uses (it may not exist yet).
+vde_security_dir_path() {
+    print -r -- "${VDE_SECURITY_DIR:-${HOME}/.vde-security}"
+}
+
+# _vde_security_dir_refuse PATH REASON: one line on stderr, then return 1.
+_vde_security_dir_refuse() {
+    print -u2 -r -- "[SECURITY-DIR] refused ${1}: ${2}"
+    return 1
+}
+
+# vde_security_dir_ensure [REPO_ROOT]: makes sure the private directory exists with mode
+# 0700 and prints its path on stdout (return 0). REPO_ROOT defaults to VDE_ROOT_DIR.
+# On a refusal it prints one "[SECURITY-DIR] refused ..." line on stderr and returns 1.
+vde_security_dir_ensure() {
+    local root="${1:-${VDE_ROOT_DIR}}" dir real rroot
+    if [[ -z "${VDE_SECURITY_DIR}" && -z "${HOME}" ]]; then
+        _vde_security_dir_refuse "(default path)" "HOME is not set and VDE_SECURITY_DIR is empty"
+        return
+    fi
+    dir="$(vde_security_dir_path)"
+    if [[ "${dir}" != /* ]]; then
+        _vde_security_dir_refuse "${dir}" "must be an absolute path"
+        return
+    fi
+    while (( ${#dir} > 1 )) && [[ "${dir}" == */ ]]; do dir="${dir%/}"; done
+    # A symlink at the path itself (even a dangling one: -L tests the link, not its target).
+    if [[ -L "${dir}" ]]; then
+        _vde_security_dir_refuse "${dir}" "is a symlink"
+        return
+    fi
+    # Resolve every parent, so a symlinked parent that leads into the repository is caught.
+    if [[ -z "${root}" ]]; then
+        _vde_security_dir_refuse "${dir}" "the repository root is unknown, so the path cannot be checked"
+        return
+    fi
+    real="${dir:A}"; rroot="${root:A}"
+    if [[ "${real}" == "${rroot}" || "${real}" == "${rroot}"/* ]]; then
+        _vde_security_dir_refuse "${dir}" "is inside the repository"
+        return
+    fi
+    if [[ -e "${dir}" && ! -d "${dir}" ]]; then
+        _vde_security_dir_refuse "${dir}" "exists and is not a directory"
+        return
+    fi
+    if [[ -d "${dir}" && ! -O "${dir}" ]]; then
+        _vde_security_dir_refuse "${dir}" "is not owned by you"
+        return
+    fi
+    if [[ ! -d "${dir}" ]]; then
+        if ! ( umask 077; mkdir -p -- "${dir}" ) 2>/dev/null; then
+            _vde_security_dir_refuse "${dir}" "could not be created"
+            return
+        fi
+    fi
+    if ! chmod 700 -- "${dir}" 2>/dev/null; then
+        _vde_security_dir_refuse "${dir}" "its mode could not be set to 0700"
+        return
+    fi
+    print -r -- "${dir}"
+}

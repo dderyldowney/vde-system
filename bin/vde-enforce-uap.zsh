@@ -79,6 +79,23 @@ for file in "${MANDATORY_FILES[@]}"; do
     fi
 done
 
+# 1b. The private security directory (Signet #737): the Forge creates it, never assumes it.
+# FORGE ONLY: nothing on the student (@armor) install or upgrade path calls this. The path
+# is not printed, so a public CI log never shows where it is.
+if [[ ! -f "${VDE_ROOT_DIR}/lib/vde-security-dir" ]]; then
+    echo -e "${RED}[UAP-ERROR]${NC} lib/vde-security-dir missing; cannot create the private security directory."
+    errors=$((errors + 1))
+else
+    source "${VDE_ROOT_DIR}/lib/vde-security-dir"
+    if ! typeset -f vde_security_dir_ensure >/dev/null; then
+        echo -e "${RED}[UAP-ERROR]${NC} lib/vde-security-dir did not define vde_security_dir_ensure; the private security directory cannot be created."
+        errors=$((errors + 1))
+    elif ! vde_security_dir_ensure "${VDE_ROOT_DIR}" >/dev/null; then
+        echo -e "${RED}[UAP-ERROR]${NC} The private security directory is unavailable (see the [SECURITY-DIR] line above); security work needs it."
+        errors=$((errors + 1))
+    fi
+fi
+
 # 2. The Audit Function (Deep Content Inspection)
 audit_file_content() {
     local file=$1
