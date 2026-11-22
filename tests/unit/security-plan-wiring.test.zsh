@@ -183,9 +183,9 @@ test_agent_rule() {
     expect_has "early disclosure is the User's decision" "${RULE}" "**Early disclosure is the User's decision.**"
     expect_has "findings are recorded in the ledger without being asked" "${RULE}" 'without waiting to be asked'
     expect_has "the fork merges only in the release-day sequence" "${RULE}" 'release-day sequence'
-    # Standing order (the User, 2026-11-22): public disclosure by any bot or person is hidden at once.
-    expect_has "standing order: hide public text that discloses a weakness" "${RULE}" '**Hide any public text that discloses a weakness we are fixing.**'
-    expect_has "the process document carries the same standing order" "${PROCESS}" '**Hide any public text that discloses a weakness we are fixing.**'
+    # Standing order (the User, 2026-11-22): public disclosure by any bot or person is preserved privately, then deleted.
+    expect_has "standing order: remove public text that discloses a weakness" "${RULE}" '**Remove any public text that discloses a weakness we are fixing.**'
+    expect_has "the process document carries the same standing order" "${PROCESS}" '**Remove any public text that discloses a weakness we are fixing.**'
     expect_has "the public policy says fixes reach public branches only with the release" "${POLICY}" 'only as part of that patch release'
 }
 
