@@ -16,3 +16,7 @@ Every unit of work (a "Strike") MUST follow this sequence. There is no bypass ex
 6. **MERGE**: Only after User written approval. Use `gh pr merge`.
 
 Committing implementation directly to `develop` is a Creed violation. If you catch yourself writing code or running `git commit` on `develop` without a prior `gh issue create` and feature branch, STOP immediately and retro-fix the process before continuing.
+
+## SECURITY PLAN — MANDATORY. NO EXCEPTIONS.
+
+All security work follows `docs/governance/security-process.md` and the binding agent rules in `.gemini/RULES/security.md` (read it at session start). Never put weakness detail in public text (issues, PRs, branches, commits, state files, changelogs) before its fix has shipped; findings go to a private draft GitHub Security Advisory; only the User publishes an advisory or requests a CVE. `SECURITY.md` is the public policy. For a Vulnerability the Strike runs in the advisory's temporary private fork: the Signet is the neutral public issue, while the branch and the PR (targeting `develop`) live in the fork and are merged as part of the release, after the User's written approval. Only Hardening uses a public PR.
