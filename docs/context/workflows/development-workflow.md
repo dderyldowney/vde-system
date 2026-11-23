@@ -234,7 +234,7 @@ How this improves student or new hire experience
 ### Stage 6: The Merge
 
 **Purpose**: Integrate changes into develop branch  
-**Command**: `gh pr merge N --merge --delete-branch` (a merge commit: squash and rebase are disabled in the repository settings; the full command, with the approved head commit and the merge body, is in CLAUDE.md step 6)
+**Command**: `gh pr merge N --merge --delete-branch --match-head-commit <the approved head sha> --subject "$SUBJECT" --body "$BODY"` (a merge commit: squash and rebase are disabled in the repository settings; the full command, with the approved head commit and the merge body, is in CLAUDE.md step 6)
 
 **Requirements**:
 - All automated checks pass

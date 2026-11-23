@@ -87,7 +87,7 @@ git commit -m "chore(release): prepare 1.6.0 release"
 gh pr create --base main --title "Release 1.6.0" --body "..."
 # Get approvals, then:
 # (a merge commit: squash and rebase are disabled in the repository settings; the full command is in CLAUDE.md step 6)
-gh pr merge N --merge
+gh pr merge N --merge --match-head-commit <the approved head sha> --subject "$SUBJECT" --body "$BODY"   # promotion PRs omit --delete-branch
 
 # For release branch:
 git checkout main
@@ -337,7 +337,7 @@ bin/run-tests
 gh pr create --base main --title "Release 1.5.2" --body "..."
 
 # 3. Get approvals and merge
-gh pr merge N --merge
+gh pr merge N --merge --match-head-commit <the approved head sha> --subject "$SUBJECT" --body "$BODY"   # promotion PRs omit --delete-branch
 
 # 4. Tag and release
 git tag 1.5.2

@@ -416,7 +416,7 @@ test_case18_real_history_five_commits_back_lands_on_the_tip() {
     && test_pass "case18c HEAD is exactly the tip of the branch under test (${tip[1,8]})" || test_fail "case18c HEAD is exactly the tip of the branch under test" "head=$(head_of "${f}") tip=${tip}"
   [[ -z "$(git -C "${f}/install" diff --stat "${tip}")" ]] \
     && test_pass "case18d the working tree equals the tip, file for file" || test_fail "case18d the working tree equals the tip, file for file" "$(git -C "${f}/install" diff --stat "${tip}" | tail -3)"
-  [[ -z "$(git -C "${f}/install" status --porcelain --untracked-files=no)" ]] \
+  [[ -z "$(git -C "${f}/install" status --porcelain --untracked-files=all)" ]] \
     && test_pass "case18e no stray changes were left behind" || test_fail "case18e no stray changes were left behind" "$(git -C "${f}/install" status --short | head -3)"
   run_up "${f}"
   [[ "${UP_RC}" == 0 && "${UP_OUT}" == *"up to date"* ]] \
@@ -698,7 +698,7 @@ test_case33_upstream_history_made_of_merge_commits() {
   [[ "$(cat "${f}/install/file-b")" == "b 3 2" ]] \
     && test_pass "case33f the modified tracked file carries the last feature's content" \
     || test_fail "case33f the modified tracked file carries the last feature's content" "file-b=$(cat "${f}/install/file-b")"
-  [[ -z "$(git -C "${f}/install" status --porcelain --untracked-files=no)" ]] \
+  [[ -z "$(git -C "${f}/install" status --porcelain --untracked-files=all)" ]] \
     && test_pass "case33g no stray changes were left behind" \
     || test_fail "case33g no stray changes were left behind" "$(git -C "${f}/install" status --short | head -3)"
   run_up "${f}"

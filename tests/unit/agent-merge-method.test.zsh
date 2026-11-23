@@ -76,6 +76,9 @@ prohibits_flags() {
         aft_from=i+8
         aft_to=i+7+window
         after="${line[aft_from,aft_to]}"
+        # Only the same sentence counts: cut the window at the nearest sentence break.
+        before="${before##*(. |; |\! |\? )}"
+        after="${after%%(. |; |\! |\? )*}"
         [[ "${before}" =~ ${never_re} || "${after}" =~ ${never_re} ]] || return 1
     done
     return 0
@@ -86,6 +89,8 @@ prohibits_flags() {
 typeset SELF_LOOSE='Use `--squash` when the setting is disabled'
 typeset SELF_STRICT='Never `--squash` or `--rebase` here'
 check "the prohibition matcher rejects a loose prohibition (no never nearby)" '! prohibits_flags "${SELF_LOOSE}"' "loose wording was accepted"
+typeset SELF_CROSS='Use `--squash` now. Never mind the rest of this line'
+check "the prohibition matcher rejects a never in the next sentence" '! prohibits_flags "${SELF_CROSS}"' "cross-sentence never was accepted"
 check "the prohibition matcher accepts a Never prohibition" 'prohibits_flags "${SELF_STRICT}"' "Never prohibition was rejected"
 
 # The agent-facing files: entry points, then every *.md under the four agent folders.
@@ -126,7 +131,20 @@ for f in "${SCAN_FILES[@]}"; do
     rel="${f#${REPO}/}"
     is_agent=0
     (( ${AGENT_FILES[(Ie)${f}]} )) && is_agent=1
+    # Join backslash-continued lines so a wrapped command is checked as one command.
     file_lines=("${(@f)$(<"${f}")}")
+    typeset -a joined=()
+    typeset acc=""
+    for line in "${file_lines[@]}"; do
+        if [[ "${line}" == *'\' ]]; then
+            acc+="${line%\\}"
+        else
+            joined+=("${acc}${line}")
+            acc=""
+        fi
+    done
+    [[ -n "${acc}" ]] && joined+=("${acc}")
+    file_lines=("${joined[@]}")
     BAD_MERGE=""
     BAD_SQUASH=""
     BAD_FULL=""
@@ -139,9 +157,8 @@ for f in "${SCAN_FILES[@]}"; do
         if ! prohibits_flags "${line}"; then
             BAD_SQUASH+=" ${rel}:${n}"
         fi
-        # instructions.md mentions the command in short form (Rules P and R), so
-        # only --merge is required there.
-        if (( is_agent )) && [[ "${rel}" != .gemini/instructions.md ]]; then
+        # Every documented command carries the full flag set, in every scanned file.
+        if true; then
             if [[ "${line}" == *'gh pr merge'* ]] && [[ "${line}" != *'--match-head-commit'* || "${line}" != *'--subject'* || "${line}" != *'--body'* ]]; then
                 BAD_FULL+=" ${rel}:${n}"
             fi
@@ -149,7 +166,7 @@ for f in "${SCAN_FILES[@]}"; do
     done
     check "${rel}: every gh pr merge line carries --merge" "[[ -z \"\${BAD_MERGE}\" ]]" "lines without --merge:${BAD_MERGE}"
     check "${rel}: --squash and --rebase appear only in a prohibition" "[[ -z \"\${BAD_SQUASH}\" ]]" "lines without never/disabled:${BAD_SQUASH}"
-    if (( is_agent )) && [[ "${rel}" != .gemini/instructions.md ]]; then
+    if true; then
         check "${rel}: every gh pr merge line carries --match-head-commit, --subject and --body" "[[ -z \"\${BAD_FULL}\" ]]" "lines missing a required flag:${BAD_FULL}"
     fi
 done
