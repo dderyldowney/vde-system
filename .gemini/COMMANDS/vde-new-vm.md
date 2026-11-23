@@ -5,6 +5,9 @@ description: "Guided workflow to add a new VM type (lang or service) following d
 ---
 # VDE-NEW-VM
 <!-- @forge (Governance Sentinel) -->
+
+> **Security (binding):** every action here is bound by [.gemini/RULES/security-preamble.md](../RULES/security-preamble.md). NO AID TO THE ENEMY: nothing public about unfixed weaknesses; when unsure, keep it private.
+
 Guided workflow to add a new VM type following docs/governance/vde-spec.md.
 
 ## Usage

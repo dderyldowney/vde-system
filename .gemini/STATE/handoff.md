@@ -30,6 +30,7 @@ Every unit of work: open an Issue (the Signet) BEFORE any code; branch from `dev
 - Do NOT add a `Co-Authored-By` line (or a "Generated with" line) to commit messages or PR bodies: the tooling adds it automatically. Write a neutral message and `Refs #N` / `Closes #N`.
 - Public text that discloses an unfixed weakness (a bot review, a comment) is handled by the standing order in `.gemini/RULES/security.md` rule 10: save a private copy in the private security directory, then delete it; hide only what cannot be deleted. Scan every bot review, including the review body, before merging; answer each review thread.
 - The private security directory is `~/.vde-security/` (or `VDE_SECURITY_DIR`), created by the Forge at mode 0700 through `lib/vde-security-dir` (called from `bin/vde-enforce-uap.zsh`). Ledger and evidence live there, never in the repository.
+- **NO AID TO THE ENEMY.** The repository is public: nothing about the inner workings or failings of unfixed code goes into any public text, and when unsure it stays private. Every agent, however activated, obeys `.gemini/RULES/security-preamble.md`, and every sub-agent prompt begins with it. Security-item branches are named `fix/sec-item-NN` (NN = the item number in the neutral issue title). New findings go to the private ledger first; the public issue is created neutral from the start.
 
 ## 3. Branches, releases and tags
 

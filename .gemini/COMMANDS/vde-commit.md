@@ -6,6 +6,8 @@ description: "Verified git finalization under the UAP pre-flight gates: stages a
 # /vde-commit Command (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 
+> **Security (binding):** every action here is bound by [.gemini/RULES/security-preamble.md](../RULES/security-preamble.md). NO AID TO THE ENEMY: nothing public about unfixed weaknesses; when unsure, keep it private.
+
 Verified Git Finalization following Phase 5 UAP mandates.
 
 ## Usage

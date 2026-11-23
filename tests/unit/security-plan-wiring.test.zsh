@@ -28,6 +28,7 @@ typeset -r PROCESS='docs/governance/security-process.md'
 typeset -r INDEX='docs/security/advisories.md'
 typeset -r RULE='.gemini/RULES/security.md'
 typeset -r SKILL='.gemini/SKILLS/security-auditor.md'
+typeset -r PREAMBLE='.gemini/RULES/security-preamble.md'
 
 # tracked FILE: in git's index AND present, non-empty, in the working tree (a file
 # deleted from the worktree is still "tracked" until it is committed away).
@@ -91,8 +92,8 @@ test_enforcer_requires_policy() {
     # directory above its own bin/), so the existence loop itself is exercised.
     local tmp fx out f
     tmp="$(mktemp -d "${TMPDIR:-/tmp}/vde-secplan.XXXXXX")" || { test_fail "scratch dir" "mktemp failed"; return; }
-    local -a base=(AGENTS.md GEMINI.md .gemini/STATE/MEMORY.md "${POLICY}" "${RULE}" "${PROCESS}" "${INDEX}")
-    for f in "${POLICY}" "${RULE}" "${PROCESS}" "${INDEX}"; do
+    local -a base=(AGENTS.md GEMINI.md .gemini/STATE/MEMORY.md "${POLICY}" "${RULE}" "${PROCESS}" "${INDEX}" "${PREAMBLE}")
+    for f in "${POLICY}" "${RULE}" "${PROCESS}" "${INDEX}" "${PREAMBLE}"; do
         # Fixture A: every mandatory file present and non-empty except F, which is deleted.
         fx="${tmp}/missing-${f:t:r}"
         mkdir -p "${fx}"
@@ -197,6 +198,43 @@ test_issue_chooser() {
     expect_has "config.yml disables blank issues" .github/ISSUE_TEMPLATE/config.yml 'blank_issues_enabled: false'
 }
 
+test_agent_reach() {
+    test_start "9: every agent, however it is activated, is bound by the stance and the preamble"
+    local preamble='.gemini/RULES/security-preamble.md' s f
+    tracked "${preamble}" && test_pass "${preamble} is tracked" || test_fail "${preamble} is tracked" "not tracked"
+    expect_has "preamble acts only when the User approves" "${preamble}" 'only when the User approves'
+    expect_has "preamble tells the User what it finds" "${preamble}" 'tell the User'
+    has "${preamble}" 'then file a neutral issue' && test_fail "the preamble no longer tells an agent to file an issue on its own" "still present" \
+        || test_pass "the preamble no longer tells an agent to file an issue on its own"
+    for s in 'NO AID TO THE ENEMY' 'fix/sec-item-NN' 'keep it private' 'outside the repository' "${RULE}"; do
+        expect_has "preamble contains [${s}]" "${preamble}" "${s}"
+    done
+    for s in 'NO AID TO THE ENEMY' 'When unsure whether something is safe to publish, keep it private.' \
+        'Every security-item branch is named' 'fix/sec-item-NN' 'Every sub-agent prompt begins with the security preamble'; do
+        expect_has "${RULE} contains [${s}]" "${RULE}" "${s}"
+    done
+    for f in CLAUDE.md AGENTS.md .gemini/instructions.md; do
+        expect_has "${f} contains security-preamble.md" "${f}" 'security-preamble.md'
+        expect_has "${f} contains NO AID TO THE ENEMY" "${f}" 'NO AID TO THE ENEMY'
+    done
+    local -a skills commands
+    skills=("${VDE_ROOT_DIR}"/.gemini/SKILLS/*.md(N))
+    commands=("${VDE_ROOT_DIR}"/.gemini/COMMANDS/*.md(N))
+    (( ${#skills[@]} >= 11 )) && test_pass "at least 11 skill files were found (${#skills[@]})" \
+        || test_fail "at least 11 skill files were found" "found ${#skills[@]}"
+    (( ${#commands[@]} >= 8 )) && test_pass "at least 8 command files were found (${#commands[@]})" \
+        || test_fail "at least 8 command files were found" "found ${#commands[@]}"
+    for f in "${skills[@]}"; do
+        expect_has "skill ${f:t} binds the security preamble" ".gemini/SKILLS/${f:t}" '.gemini/RULES/security-preamble.md'
+    done
+    for f in "${commands[@]}"; do
+        expect_has "command ${f:t} binds the security preamble" ".gemini/COMMANDS/${f:t}" '.gemini/RULES/security-preamble.md'
+    done
+    expect_has "the security process names the fix/sec-item-NN branch for every security item" "${PROCESS}" \
+        'Every security item, Hardening or Vulnerability, uses the branch name'
+    expect_has "the security process names the fix/sec-item-NN branch pattern" "${PROCESS}" 'fix/sec-item-NN'
+}
+
 test_files_tracked
 test_reading_locations
 test_startup_binding
@@ -205,6 +243,7 @@ test_public_policy
 test_process_lifecycle
 test_agent_rule
 test_issue_chooser
+test_agent_reach
 
 echo ""
 echo "Results: ${TESTS_PASSED} passed, ${TESTS_FAILED} failed"

@@ -6,6 +6,8 @@ description: "Runs a full logic and security audit of changed files for the Revi
 # /vde-review Command (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 
+> **Security (binding):** every action here is bound by [.gemini/RULES/security-preamble.md](../RULES/security-preamble.md). NO AID TO THE ENEMY: nothing public about unfixed weaknesses; when unsure, keep it private.
+
 Full Logic and Security Audit. Enforces the Reviewer side of the Dual Approval gate.
 
 ## Usage
