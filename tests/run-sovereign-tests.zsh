@@ -14,6 +14,10 @@
 VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 export VDE_ROOT_DIR
 
+# The suites run against their own scratch Projects base, never the caller's.
+source "${VDE_ROOT_DIR}/lib/vde-test-env" || { echo "ERROR: cannot load lib/vde-test-env" >&2; exit 1; }
+vde_test_env_enter || { echo "ERROR: cannot create a scratch Projects base" >&2; exit 1; }
+
 # Colors for high-fidelity output
 RED='\033[0;31m'
 GREEN='\033[0;32m'

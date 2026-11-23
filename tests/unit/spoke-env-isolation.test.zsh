@@ -2,6 +2,8 @@
 # @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 # Unit Tests: a Spoke receives only what it needs from the root .env (Signet #666,
 # split from #441 item 4).

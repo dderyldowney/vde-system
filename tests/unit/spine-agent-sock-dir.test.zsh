@@ -2,6 +2,8 @@
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 # Unit Tests for Pillar IV of the spine check when ~/.ssh/vde/agent.sock is a
 # DIRECTORY (Signet #616). Docker creates that directory, as root, when a Spoke

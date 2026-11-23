@@ -14,6 +14,9 @@
 # (its reader is replaced below; VDE_ROOT_DIR stays the real repo for the registry, and
 # VDE_PROJECTS_DIR is set in the environment, which outranks .env).
 
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
+
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 fi

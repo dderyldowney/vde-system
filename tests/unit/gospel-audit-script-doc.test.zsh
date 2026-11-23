@@ -9,6 +9,8 @@
 # docs/available-scripts.md behind an `[[ -f ]]` guard, so the cross-reference
 # silently never ran. Both must target docs/reference/scripts.md, and a missing
 # doc must be a hard failure (audit exits non-zero) rather than a silent pass.
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"

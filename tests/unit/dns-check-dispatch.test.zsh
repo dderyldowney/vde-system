@@ -11,6 +11,9 @@
 # registered names; it needs no running Spoke (the script's only side effects are
 # read-only `docker exec` probes, and the handshake log line carries the args).
 
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
+
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 fi

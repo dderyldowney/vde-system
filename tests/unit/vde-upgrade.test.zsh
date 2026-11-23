@@ -2,6 +2,8 @@
 # @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 # Unit Tests for `vde upgrade` (Signet #676): bin/vde-upgrade.zsh brings an install up to
 # date with the latest of the branch it is on, and refuses, changing nothing, whenever it
