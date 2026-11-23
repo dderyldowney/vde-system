@@ -5,6 +5,9 @@ description: "Debug failing VDE tests or runtime errors with a parallel swarm: c
 ---
 # VDE-DEBUG
 <!-- @forge (Governance Sentinel) -->
+
+> **Security (binding):** every action here is bound by [.gemini/RULES/security-preamble.md](../RULES/security-preamble.md). NO AID TO THE ENEMY: nothing public about unfixed weaknesses; when unsure, keep it private.
+
 Debug failing tests or runtime errors in VDE using a parallel swarm.
 
 ## Usage

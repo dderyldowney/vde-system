@@ -6,6 +6,8 @@ description: "Runs the UAP Universal Supervisor audit on described work to verif
 # /vde-enforce Command (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 
+> **Security (binding):** every action here is bound by [.gemini/RULES/security-preamble.md](../RULES/security-preamble.md). NO AID TO THE ENEMY: nothing public about unfixed weaknesses; when unsure, keep it private.
+
 Universal Supervisor Pass. Verifies compliance with Phase 0-5 lifecycle and UAP mandates.
 
 ## Usage

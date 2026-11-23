@@ -5,6 +5,9 @@ description: "Smart test runner that detects changed files and runs only the min
 ---
 # VDE-TEST
 <!-- @forge (Governance Sentinel) -->
+
+> **Security (binding):** every action here is bound by [.gemini/RULES/security-preamble.md](../RULES/security-preamble.md). NO AID TO THE ENEMY: nothing public about unfixed weaknesses; when unsure, keep it private.
+
 Smart test runner — detects what changed and runs the minimal appropriate tests.
 
 ## Usage

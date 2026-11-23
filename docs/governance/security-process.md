@@ -46,6 +46,8 @@ Targets: acknowledge an outside report within **3 business days**; finish triage
 | Public issue (the Signet) | Title `fix: <version> security hardening, item NN` and a generic body | Everyone |
 | Branch, commits, pull request | A Vulnerability: in the advisory's temporary private fork. Hardening: public, with the same neutral wording (branch `fix/sec-item-NN`) | Vulnerability: maintainer and reporter. Hardening: everyone |
 
+Every security item, Hardening or Vulnerability, uses the branch name `fix/sec-item-NN` (NN is the item number in the neutral issue title). For a Vulnerability the branch lives in the advisory's temporary private fork; the name reveals nothing and maps straight to the neutral issue. The stance behind all of this is **NO AID TO THE ENEMY**: the repository is public, so nothing about the inner workings or failings of unfixed code is published first, and when unsure the item stays private.
+
 Public text names no component, file, weakness class or attack until the fix has shipped. An item number links the public issue to the private record.
 
 **Reserve the item number first.** The security lead assigns each item number by writing it in the private ledger before any issue, branch or parallel triage uses it. A number is never reused.

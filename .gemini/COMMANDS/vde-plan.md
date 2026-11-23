@@ -6,6 +6,9 @@ description: "Plan a VDE feature or fix following the Phase 0-1 UAP mandates, st
 # /vde-plan Command (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 
+> **Security (binding):** every action here is bound by [.gemini/RULES/security-preamble.md](../RULES/security-preamble.md). NO AID TO THE ENEMY: nothing public about unfixed weaknesses; when unsure, keep it private.
+
+
 Plan a VDE feature or fix following the Phase 0-1 UAP mandates.
 
 ## Usage
