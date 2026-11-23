@@ -20,6 +20,11 @@ readonly NC='\033[0m'
 # The root MUST be absolute. CI exports VDE_ROOT_DIR at job level and every child test
 # inherits it; the old relative "." (from ${0:h:h}) clobbered it for every child test.
 VDE_ROOT_DIR="${0:A:h:h}"
+
+# The tests run against their own scratch Projects base, never the caller's.
+source "${VDE_ROOT_DIR}/lib/vde-test-env" || { print -u2 -r -- "ERROR: cannot load lib/vde-test-env"; exit 1; }
+vde_test_env_enter || { print -u2 -r -- "ERROR: cannot create a scratch Projects base"; exit 1; }
+
 COVERAGE_DIR="${VDE_ROOT_DIR}/coverage"
 COVERAGE_MERGED="${COVERAGE_DIR}/merged"
 

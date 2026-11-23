@@ -2,6 +2,8 @@
 # @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 #
 # Regression tests — vde_projects_dir() .env fallback (Signet #543)
 # =============================================================================
@@ -74,7 +76,7 @@ cleanup() {
         rm -rf -- "${SANDBOX_ROOT}"
     fi
 }
-trap cleanup EXIT INT TERM
+trap "cleanup; vde_test_env_leave" EXIT INT TERM
 
 # Make a fresh sandbox VDE_ROOT_DIR; echoes its path.
 new_sandbox() {

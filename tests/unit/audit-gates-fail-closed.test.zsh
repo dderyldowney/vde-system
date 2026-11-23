@@ -2,6 +2,8 @@
 # @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 # Unit Tests for Signet #719: the project's own check scripts must FAIL CLOSED.
 # A gate that reports success when it cannot do its job, or when it finds a violation, is
@@ -84,6 +86,7 @@ make_root() {
   local s
   for s in "$@"; do cp -- "${VDE_ROOT_DIR}/bin/${s}" "${root}/bin/${s}"; done
   cp -- "${VDE_ROOT_DIR}/lib/vde-shibboleth" "${root}/lib/vde-shibboleth"
+  cp -- "${VDE_ROOT_DIR}/lib/vde-test-env" "${root}/lib/vde-test-env"
   print -r -- "${root}"
 }
 

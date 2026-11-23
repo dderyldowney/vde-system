@@ -16,6 +16,9 @@
 #
 # Hermetic: sandboxes under mktemp; the repo's own .env is never read or written.
 
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
+
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 fi
@@ -43,7 +46,7 @@ assert_eq() {  # <label> <expected> <actual>
 
 typeset SANDBOX
 SANDBOX="$(mktemp -d /tmp/vde-base-resolver.XXXXXX)"
-trap '[[ "${SANDBOX}" == /tmp/vde-base-resolver.* ]] && rm -rf -- "${SANDBOX}"' EXIT INT TERM
+trap '[[ "${SANDBOX}" == /tmp/vde-base-resolver.* ]] && rm -rf -- "${SANDBOX}"; vde_test_env_leave' EXIT INT TERM
 
 # resolve <raw> [reldir]  -> sets RES_RC, RES (result or error text)
 resolve() {

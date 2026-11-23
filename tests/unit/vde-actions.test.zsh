@@ -13,6 +13,8 @@
 # or was already in the desired state; 1 if any target is unknown or its docker
 # operation failed. (It used to be the accident of a trailing `[[ ]] &&` list.)
 
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 fi
