@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 #===============================================================================
 # VDE CLI - Unified Virtual Development Environment
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 export VDE_ORCHESTRATED=1
 # Version: ${VDE_VERSION:-$(vde_get_version)}

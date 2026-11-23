@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 # list-vms - List all predefined VM types
 # Enhanced with --name-only flag and improved formatting
+typeset _ZSH_PURE=${(%):-%x}
 
 # Reset all zsh options to defaults to avoid local var printing issues
 emulate zsh

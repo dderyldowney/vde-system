@@ -4,6 +4,7 @@
 # vde-vision - Observability Dashboard for VDE
 # Provides a real-time Markdown-based status grid of the Sovereign environment.
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 set -e
 

@@ -10,6 +10,7 @@
 # - Deletes all VMs, images, docker networks, volumes
 # - Allows safe removal so user can rm -rf the project directory
 #
+typeset _ZSH_PURE=${(%):-%x}
 # Usage: uninstall-vde [--skip-confirm] [--no-backup] [--dry-run]
 #===============================================================================
 

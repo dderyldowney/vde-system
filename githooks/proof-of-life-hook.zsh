@@ -2,6 +2,7 @@
 # @forge (Governance Sentinel)
 # githooks/proof-of-life-hook.zsh - Enforces Mandate L (Proof of Life)
 # Part of the Pre-Strike Sentinel
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 
 # Determine VDE root directory

@@ -3,6 +3,7 @@
 # VDE Atomic File Locking Library (v2.0.8 Hardened)
 # Codified under THE ARCHIVIST’S INTEL (Section 11)
 # Forged in Beskar
+typeset _ZSH_PURE=${(%):-%x}
 
 # ZSH-native logic demonstration (UAP Mandate 1)
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}

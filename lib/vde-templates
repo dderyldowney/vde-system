@@ -8,6 +8,7 @@
 # - Template file rendering with variable substitution
 # - VM-specific template wrappers (language, service)
 # - SSH configuration entry generation
+typeset _ZSH_PURE=${(%):-%x}
 
 if [[ "${_VDE_TEMPLATES_LOADED:-}" = "1" ]]; then
     return 0 2>/dev/null || exit 0

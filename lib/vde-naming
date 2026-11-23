@@ -9,6 +9,7 @@
 #   Containers & SSH Aliases: vde-<name> (e.g., vde-python, vde-postgres)
 #
 # Shell Compatibility: ZSH-exclusive (ZSH 5.0+)
+typeset _ZSH_PURE=${(%):-%x}
 
 # ZSH-native logic demonstration (UAP Mandate 1)
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}

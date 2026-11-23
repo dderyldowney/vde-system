@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 #===============================================================================
 # vde-info - Show VDE system and VM information
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 # Usage: vde-info [vm_name]
 #===============================================================================

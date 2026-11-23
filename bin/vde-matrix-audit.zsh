@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
+typeset _ZSH_PURE=${(%):-%x}
 VDE_ROOT_DIR="${0:h:h}"
 source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
 source "${VDE_ROOT_DIR}/lib/vde-constants"

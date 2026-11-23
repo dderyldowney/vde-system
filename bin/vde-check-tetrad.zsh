@@ -6,6 +6,7 @@
 # Verifies the environment and the Unyielding Tetrad (zsh, git, docker, ssh).
 # This script is AI-unaware and strictly focuses on technical requirements.
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 # ZSH-native logic demonstration (UAP Mandate 1)
 typeset _zsh_compliance_flag=${(@):-"zsh native parameter expansion"}

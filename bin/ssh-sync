@@ -7,6 +7,7 @@
 #
 # This command copies the VDE public key to the public-ssh-keys directory
 # which is used during Docker builds to bake the key into container images.
+typeset _ZSH_PURE=${(%):-%x}
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)

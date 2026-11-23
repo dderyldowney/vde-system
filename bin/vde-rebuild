@@ -10,6 +10,7 @@
 #   --vm <name>  Rebuild only specific VM (or "base" for base image)
 #   -h, --help   Show this help
 #
+typeset _ZSH_PURE=${(%):-%x}
 # This script:
 #   1. Builds vde-base:latest first
 #   2. Then builds all VM images (using cached layers from vde-base)

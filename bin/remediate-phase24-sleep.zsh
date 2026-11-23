@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 
 # Use python for reliable multi-line/regex replacement in step file

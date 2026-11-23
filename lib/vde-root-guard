@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # Intended to be sourced by entry points (e.g. bin/vde) during startup.
+typeset _ZSH_PURE=${(%):-%x}
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)

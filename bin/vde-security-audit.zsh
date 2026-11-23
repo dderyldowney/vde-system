@@ -3,6 +3,7 @@
 #===============================================================================
 # vde-security-audit.zsh - Continuous CodeQL & Privacy Monitoring
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 typeset _zsh_pure=${(%):-%x}
 
 # Anchor every scan to the repo root (this script's grandparent dir), not the

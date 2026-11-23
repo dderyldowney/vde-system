@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 #===============================================================================
 # vde-spine-check.zsh - @system-spine Empirical Check Script
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 #
 # Verifies the Unyielding Tetrad of VDE:

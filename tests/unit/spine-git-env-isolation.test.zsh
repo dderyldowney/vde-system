@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 # Unit Tests for the spine check's Pillar II git probe (Signet #493).

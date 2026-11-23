@@ -10,6 +10,7 @@
 # - Script path detection
 # - Array iteration
 #
+typeset _ZSH_PURE=${(%):-%x}
 # Minimum Requirements:
 # - zsh 5.0+
 #

@@ -8,6 +8,7 @@
 # 2. Updates "Date" and "Last Updated" fields across artifacts.
 # 3. Synchronizes docs/reference/scripts.md with bin/ contents.
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 # 1. Initialize the Spine
 emulate -L zsh

@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 # bin/generate_video
 # Usage: ./generate_video <output_path> [tape_commands...]

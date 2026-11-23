@@ -7,6 +7,7 @@
 # This script forces the regeneration of the VM types cache from the
 # source configuration files (data/vm-types.conf or data/vm-types.json).
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 # Determine VDE root directory
 

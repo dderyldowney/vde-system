@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # Targeted Test Runner for VDE
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 # Focuses on speed and isolation for iterative development.
 

@@ -10,6 +10,7 @@
 #
 # MODULAR ARCHITECTURE (Stage 5):
 # This library now sources specialized libraries for:
+typeset _ZSH_PURE=${(%):-%x}
 #   - vde-ssh: SSH key management and configuration
 #   - vde-docker: Docker container management
 #   - vde-templates: Template rendering for VM creation

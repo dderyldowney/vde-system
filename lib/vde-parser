@@ -10,6 +10,7 @@
 #   "what VMs are running?"
 #   "create a new rust container"
 #
+typeset _ZSH_PURE=${(%):-%x}
 # Shell Compatibility (Stage 4):
 # - Uses vde-shell-compat for portable operations
 # - Supports zsh 5.0+

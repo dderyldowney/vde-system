@@ -10,6 +10,7 @@
 # 3. Container network segmentation
 # 4. Secure SSH key management
 # 5. Matching naming convention ('vde-') for images and containers
+typeset _ZSH_PURE=${(%):-%x}
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)

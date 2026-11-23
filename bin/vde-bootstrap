@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # VDE-BOOTSTRAP (Version-Agnostic)
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 
 # ZSH-native logic demonstration (UAP Mandate 1)

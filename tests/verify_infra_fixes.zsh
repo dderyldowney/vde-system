@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @forge (Governance Sentinel)
 # tests/verify_infra_fixes.zsh
+typeset _ZSH_PURE=${(%):-%x}
 
 # This test verifies that VDE_ROOT_DIR and VDE_CACHE_DIR are correctly set
 # after the surgical edits.

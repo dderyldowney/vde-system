@@ -3,6 +3,7 @@
 # pre-push - VDE Gatekeeper Hook
 #
 # Enforces Mandate L (Proof of Life) before code leaves the local Forge.
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 
 # Zsh-native parameter expansion (UAP Mandate 1)

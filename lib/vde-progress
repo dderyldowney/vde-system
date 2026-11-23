@@ -10,6 +10,7 @@
 # - Elapsed time display for long operations
 # - Quiet mode support (--quiet flag to disable)
 #
+typeset _ZSH_PURE=${(%):-%x}
 # Shell Compatibility: zsh
 #
 # Usage:

@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 # remediate-installation-ambiguity.zsh - Resolve AmbiguousStep (V12)
 # Mandate: ZSH ONLY.
+typeset _ZSH_PURE=${(%):-%x}
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)
