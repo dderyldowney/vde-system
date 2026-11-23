@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests: `vde dns-check` forwards the words as typed (Signet #532).
 #

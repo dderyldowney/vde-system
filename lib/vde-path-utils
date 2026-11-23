@@ -6,6 +6,7 @@
 #
 # These utilities help with cross-platform path handling, making VDE scripts
 # portable across Linux native, WSL2, and macOS.
+typeset _ZSH_PURE=${(%):-%x}
 
 # =============================================================================
 # SOURCE GUARD

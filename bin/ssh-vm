@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 # VDE Spoke Access - SSH Connector
 # Provides direct SSH access to VDE Spoke containers
+typeset _ZSH_PURE=${(%):-%x}
 
 # 1. ENVIRONMENT & CONTEXT
 # Use zsh-native relative path detection

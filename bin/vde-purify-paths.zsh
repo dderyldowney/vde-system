@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 # @forge (Sovereign Path Purifier)
+typeset _ZSH_PURE=${(%):-%x}
 
 # This script performs the mass path purification across the VDE ecosystem.
 # It replaces absolute path derivation logic with relative derivation logic.

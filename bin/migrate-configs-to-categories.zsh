@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # migrate-configs-to-categories.zsh - Reorganize VDE configs into languages/services
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 # Part of Phase P Architectural Refactoring
 

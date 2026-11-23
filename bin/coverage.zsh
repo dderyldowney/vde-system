@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 # VDE Coverage Script
 # Runs test suite with code coverage using kcov
+typeset _ZSH_PURE=${(%):-%x}
 
 # Note: Don't use set -e here as we need to handle kcov exit codes explicitly
 

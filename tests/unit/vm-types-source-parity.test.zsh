@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests: load_vm_types yields identical arrays from either registry source
 # (Signet #576).

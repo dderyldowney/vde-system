@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @forge (Governance Sentinel)
 # .gemini/COMMANDS/remediate.zsh
+typeset _ZSH_PURE=${(%):-%x}
 
 # 1. Capture the failure log from the Enforcer
 LOG_FILE="logs/uap_failure_$(date +%Y%m%d_%H%M%S).log"

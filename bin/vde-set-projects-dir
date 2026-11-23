@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 #===============================================================================
 # vde-set-projects-dir - Re-point the Projects base for an existing Forge
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 # Usage: vde set-projects-dir [<new-path>]
 #

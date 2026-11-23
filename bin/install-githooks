@@ -3,6 +3,7 @@
 # install-githooks - Install VDE git hooks
 #
 # Installs project git hooks from githooks/ to .git/hooks/
+typeset _ZSH_PURE=${(%):-%x}
 
 # ZSH-native logic demonstration (UAP Mandate 1)
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}

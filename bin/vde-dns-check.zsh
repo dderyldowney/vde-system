@@ -5,6 +5,7 @@
 # vde-dns-check - Verify cross-Spoke DNS resolution within vde-net
 # Usage: vde-dns-check <source_vm> <target_vm> [port]
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 set -e
 

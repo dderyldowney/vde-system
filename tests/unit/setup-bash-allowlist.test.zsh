@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests: bash/sh in scripts/setup/*.zsh is allowlisted (Signet #594).
 #

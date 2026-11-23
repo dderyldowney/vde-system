@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests: language composes match a fresh render of the template (Signet #531).
 #

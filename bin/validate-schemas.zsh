@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # Validate all JSON schemas in the VDE system
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 # Usage: ./bin/validate-schemas.zsh [--verbose]
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests for the shared Projects-base resolver (Signet #564, hardening of #545).
 #

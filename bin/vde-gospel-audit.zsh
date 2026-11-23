@@ -8,6 +8,7 @@
 # 2. Verifies version consistency across the ecosystem.
 # 3. Cross-references bin/ with docs/reference/scripts.md.
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 # 1. Initialize the Spine
 emulate -L zsh

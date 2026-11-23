@@ -10,6 +10,7 @@
 #
 # This script is AI-Blind and Forge-Blind.
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 # 1. Initialize the Spine
 emulate -L zsh

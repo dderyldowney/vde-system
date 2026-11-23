@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 #===============================================================================
 # vde-port - Show port mappings for a VDE container
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 # Usage: vde-port <vm_name> [port]
 #

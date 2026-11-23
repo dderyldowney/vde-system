@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 #===============================================================================
 # vde-cluster - Multi-VM Cluster Management for VDE

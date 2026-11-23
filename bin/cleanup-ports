@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 #===============================================================================
 # cleanup-ports - Remove stale port-registry entries
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 #
 # The port registry (.cache/port-registry/*.port) can accumulate entries for

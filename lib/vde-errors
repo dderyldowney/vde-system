@@ -10,6 +10,7 @@
 # - Documentation link integration
 # - Verbose mode support for detailed error output
 #
+typeset _ZSH_PURE=${(%):-%x}
 # Shell Compatibility: ZSH ONLY (Language of the Tribe)
 #
 # Usage:

@@ -10,6 +10,7 @@
 # Exit codes:
 #   0 - All tests passed
 #   1 - One or more tests failed
+typeset _ZSH_PURE=${(%):-%x}
 
 # =============================================================================
 # Configuration

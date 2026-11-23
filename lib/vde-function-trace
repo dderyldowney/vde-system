@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @forge (Function Trace: Support Diagnostic Tool)
 # Provides vde_trace_install() and vde_trace_display() for the function-trace command.
+typeset _ZSH_PURE=${(%):-%x}
 
 typeset -ga _VDE_TRACE_RECORDS=()
 typeset -gi _VDE_TRACE_CALL_DEPTH=0

@@ -10,6 +10,7 @@
 # Shell Compatibility:
 # - ZSH 5.0+ (Mandatory)
 # - Not POSIX-compliant (Uses ZSH extensions for efficiency)
+typeset _ZSH_PURE=${(%):-%x}
 #
 # Return Codes: All functions use standardized return codes from vde-constants:
 #   VDE_SUCCESS (0)        - Operation completed successfully

@@ -8,6 +8,7 @@
 #   --no-stream    Show current stats only (no streaming)
 #   -q, --quiet    Only show container names
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 # Determine VDE root directory
 

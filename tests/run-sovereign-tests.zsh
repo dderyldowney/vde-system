@@ -9,6 +9,7 @@
 # lines allowed). An exclusion with no reason, or one naming a suite that does not exist, is an
 # error. `--list` prints the plan ("run  <suite>" / "skip <suite> :: <reason>") and exits 0 before
 # the audit and before running anything.
+typeset _ZSH_PURE=${(%):-%x}
 
 # Determine VDE root directory
 VDE_ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"

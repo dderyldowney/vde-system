@@ -9,6 +9,7 @@
 #   -q, --quiet     Only show network names
 #   -a, --all       Show all VDE networks (vde-*)
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 set -e
 

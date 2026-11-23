@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 # Demo: Schema Update Mechanisms
 # Demonstrates version detection, compatibility checking, backup, and validation
+typeset _ZSH_PURE=${(%):-%x}
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)

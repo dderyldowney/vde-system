@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @forge (Governance Sentinel)
 # tests/reproduce_csharp_build_failure.zsh
+typeset _ZSH_PURE=${(%):-%x}
 
 set -e
 

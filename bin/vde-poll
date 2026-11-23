@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 #===============================================================================
 # vde-poll - Deterministic Readiness Polling Utility
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 # Anchored in ZSH for Tier 3: Spoke Environment Verification
 # Part of the VDE v2.0.6 Hardened Rule Spine
