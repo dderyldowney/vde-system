@@ -12,18 +12,18 @@ source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 # the CodeQL step is a loud skip) and a scratch HOME. No network, no docker.
 
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
-    export VDE_ROOT_DIR="${0:A:h:h:h}"
+  export VDE_ROOT_DIR="${0:A:h:h:h}"
 fi
 
 typeset -i TESTS_PASSED=0 TESTS_FAILED=0
 if [[ -t 1 ]]; then
-    typeset GREEN='\033[0;32m' RED='\033[0;31m' YELLOW='\033[0;33m' RESET='\033[0m'
+  typeset GREEN='%F{green}' RED='%F{red}' YELLOW='%F{yellow}' RESET='%f'
 else
-    typeset GREEN='' RED='' YELLOW='' RESET=''
+  typeset GREEN='' RED='' YELLOW='' RESET=''
 fi
-test_start() { echo -e "${YELLOW}[TEST]${RESET} $1"; }
-test_pass()  { echo -e "${GREEN}[PASS]${RESET} $1"; (( ++TESTS_PASSED )); }
-test_fail()  { echo -e "${RED}[FAIL]${RESET} $1: $2"; (( ++TESTS_FAILED )); }
+test_start() { print -P -- "${YELLOW}[TEST]${RESET} ${1//\%/%%}"; }
+test_pass()  { print -P -- "${GREEN}[PASS]${RESET} ${1//\%/%%}"; (( ++TESTS_PASSED )); }
+test_fail()  { print -P -- "${RED}[FAIL]${RESET} ${1//\%/%%}: ${2//\%/%%}"; (( ++TESTS_FAILED )); }
 
 typeset TMP_ROOT
 TMP_ROOT="$(mktemp -d)" || exit 1
@@ -46,56 +46,56 @@ TOKEN_HEX="$(printf 'ab%.0s' {1..24})"
 
 # make_root <name> : a git repository holding a copy of the audit and the dirs it requires.
 make_root() {
-    local root="${TMP_ROOT}/$1"
-    mkdir -p -- "${root}/bin" "${root}/lib" "${root}/templates" "${root}/configs/docker"
-    cp -- "${VDE_ROOT_DIR}/bin/vde-security-audit.zsh" "${root}/bin/"
-    print -r -- "clean" > "${root}/templates/readme.txt"
-    git -C "${root}" init -q . && git -C "${root}" add -A \
-        && git -C "${root}" -c user.name=t -c user.email=t@t commit -q -m init
-    print -r -- "${root}"
+  local root="${TMP_ROOT}/$1"
+  mkdir -p -- "${root}/bin" "${root}/lib" "${root}/templates" "${root}/configs/docker"
+  cp -- "${VDE_ROOT_DIR}/bin/vde-security-audit.zsh" "${root}/bin/"
+  print -r -- "clean" > "${root}/templates/readme.txt"
+  git -C "${root}" init -q . && git -C "${root}" add -A \
+    && git -C "${root}" -c user.name=t -c user.email=t@t commit -q -m init
+  print -r -- "${root}"
 }
 
 typeset RC OUT
 run_audit() {
-    OUT="$(cd "$1" && env -u GH_TOKEN -u GITHUB_TOKEN HOME="${SCRATCH_HOME}" PATH="${FAKEBIN}:${PATH}" zsh bin/vde-security-audit.zsh 2>&1)"
-    RC=$?
+  OUT="$(cd "$1" && env -u GH_TOKEN -u GITHUB_TOKEN HOME="${SCRATCH_HOME}" PATH="${FAKEBIN}:${PATH}" zsh bin/vde-security-audit.zsh 2>&1)"
+  RC=$?
 }
 
 check() { if eval "$3"; then test_pass "$1"; else test_fail "$1" "$2"; fi; }
 
 test_clean_repo_passes() {
-    test_start "a repository with no tracked token passes"
-    local root; root="$(make_root clean)"
-    run_audit "${root}"
-    check "clean repo exits 0" "rc=${RC}" '(( RC == 0 ))'
+  test_start "a repository with no tracked token passes"
+  local root; root="$(make_root clean)"
+  run_audit "${root}"
+  check "clean repo exits 0" "rc=${RC}" '(( RC == 0 ))'
 }
 
 test_tracked_token_fails() {
-    test_start "a tracked file carrying a URL access token fails the audit"
-    local root; root="$(make_root tracked)"
-    print -r -- "http://127.0.0.1:8889/lab?token=${TOKEN_HEX}" > "${root}/server.txt"
-    git -C "${root}" add server.txt
-    run_audit "${root}"
-    check "exits non-zero" "rc=${RC}" '(( RC != 0 ))'
-    check "names the credential scan" "${OUT}" '[[ "${OUT}" == *"Access Token"* ]]'
-    check "never prints the token" "token echoed" '[[ "${OUT}" != *"${TOKEN_HEX}"* ]]'
+  test_start "a tracked file carrying a URL access token fails the audit"
+  local root; root="$(make_root tracked)"
+  print -r -- "http://127.0.0.1:8889/lab?token=${TOKEN_HEX}" > "${root}/server.txt"
+  git -C "${root}" add server.txt
+  run_audit "${root}"
+  check "exits non-zero" "rc=${RC}" '(( RC != 0 ))'
+  check "names the credential scan" "${OUT}" '[[ "${OUT}" == *"Access Token"* ]]'
+  check "never prints the token" "token echoed" '[[ "${OUT}" != *"${TOKEN_HEX}"* ]]'
 }
 
 test_untracked_token_ignored() {
-    test_start "an untracked file with a token is not the audit's business"
-    local root; root="$(make_root untracked)"
-    print -r -- "?token=${TOKEN_HEX}" > "${root}/server.txt"
-    run_audit "${root}"
-    check "untracked token exits 0" "rc=${RC}" '(( RC == 0 ))'
+  test_start "an untracked file with a token is not the audit's business"
+  local root; root="$(make_root untracked)"
+  print -r -- "?token=${TOKEN_HEX}" > "${root}/server.txt"
+  run_audit "${root}"
+  check "untracked token exits 0" "rc=${RC}" '(( RC == 0 ))'
 }
 
 test_short_value_ignored() {
-    test_start "a short token= value is not flagged"
-    local root; root="$(make_root short)"
-    print -r -- "x?token=abc123" > "${root}/notes.txt"
-    git -C "${root}" add notes.txt
-    run_audit "${root}"
-    check "short value exits 0" "rc=${RC}" '(( RC == 0 ))'
+  test_start "a short token= value is not flagged"
+  local root; root="$(make_root short)"
+  print -r -- "x?token=abc123" > "${root}/notes.txt"
+  git -C "${root}" add notes.txt
+  run_audit "${root}"
+  check "short value exits 0" "rc=${RC}" '(( RC == 0 ))'
 }
 
 test_clean_repo_passes
