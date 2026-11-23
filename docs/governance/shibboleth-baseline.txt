@@ -46,7 +46,6 @@ bin/vde-ps
 bin/vde-purify-paths.zsh
 bin/vde-rebuild
 bin/vde-rebuild-cache
-bin/vde-release.zsh
 bin/vde-security-audit.zsh
 bin/vde-set-projects-dir
 bin/vde-spine-check.zsh
