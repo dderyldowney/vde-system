@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests: tracked language compose baseline (Signet #561).
 #
@@ -12,6 +13,9 @@
 # of passing the add-vm-type --custom flag where a VM name belongs.
 #
 # Reads only git's index and the working tree; no Docker, no writes.
+
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"

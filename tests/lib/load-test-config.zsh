@@ -2,6 +2,7 @@
 # @forge (Governance Sentinel)
 # Zsh test config loader - reads schema-validated JSON configs
 # Allows zsh unit tests to use pytest-config.json settings
+typeset _ZSH_PURE=${(%):-%x}
 
 # Find project root
 if [[ -n "${VDE_ROOT_DIR}" ]]; then

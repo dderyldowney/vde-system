@@ -4,6 +4,7 @@
 # vde-audit - Audit Logging Library for VDE
 # Records all state-changing operations for security and compliance
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 # Source dependencies
 

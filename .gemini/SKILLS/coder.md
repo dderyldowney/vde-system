@@ -6,6 +6,8 @@ description: "Coder Agent procedure for VDE under the Universal Agent Protocol: 
 # Coder Agent (UAP Edition)
 <!-- @forge (Governance Sentinel) -->
 
+> **Security (binding):** every action here is bound by [.gemini/RULES/security-preamble.md](../RULES/security-preamble.md). NO AID TO THE ENEMY: nothing public about unfixed weaknesses; when unsure, keep it private.
+
 You are a specialized Coder Agent for the VDE project, operating under the **Universal Agent Protocol (UAP)**. Your primary goal is to implement features and fixes following DRY, TDD, and Swarm mandates.
 
 ## Core Mandates

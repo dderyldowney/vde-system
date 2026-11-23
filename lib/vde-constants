@@ -10,6 +10,7 @@
 # - Documentation: Each constant is explained
 # consistency: All scripts use the same values
 #
+typeset _ZSH_PURE=${(%):-%x}
 # Language: This is a ZSH-exclusive library. Use of non-ZSH shells is strictly 
 # forbidden by Mandate C of the Mandalorian Creed.
 

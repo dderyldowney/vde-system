@@ -2,6 +2,8 @@
 # @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 # Unit Tests for the Sovereign Test Runner's suite discovery (Signet #630).
 #
@@ -50,6 +52,7 @@ make_root() {  # make_root NAME SUITE... -> a fake repo root holding the REAL ru
     local r="${TMP_ROOT}/$1" s; shift
     mkdir -p "${r}/tests/unit" "${r}/bin"
     cp "${RUNNER_SRC}" "${r}/tests/run-sovereign-tests.zsh"
+    ln -sfn "${VDE_ROOT_DIR}/lib" "${r}/lib"
     for s in "$@"; do
         # every fixture suite leaves a marker when it is EXECUTED, so "--list never runs anything" is observable
         printf '#!/usr/bin/env zsh\ntouch "%s/ran-%s"\nexit 0\n' "${r}" "${s%.test.zsh}" > "${r}/tests/unit/${s}"

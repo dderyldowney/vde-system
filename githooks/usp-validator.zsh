@@ -2,6 +2,7 @@
 # @forge (Governance Sentinel)
 # githooks/usp-validator.zsh - Codifies USP Mandates from usp-validation.feature
 # Part of the Pre-Strike Sentinel
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 
 # Determine VDE root directory

@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 #===============================================================================
 # vde-ps - List VDE containers
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 # Usage: vde-ps [options]
 #

@@ -3,6 +3,7 @@
 # VDE USP Hydration Script: couchdb
 # Client-only hydration to satisfy matrix requirements
 # Forged in Beskar
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 
 # 1. THE PACKAGE ALLOY

@@ -10,6 +10,7 @@
 #   init      Initialize SSH environment (keys, agent, config)
 #   start     Start SSH agent and load VDE key
 #   stop      Stop VDE-specific SSH agent
+typeset _ZSH_PURE=${(%):-%x}
 #   autostart Configure shell to auto-start SSH agent on login
 #   generate  Regenerate VM SSH config only
 

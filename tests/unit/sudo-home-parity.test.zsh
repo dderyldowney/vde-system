@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests: setup scripts run devuser commands with sudo -H (Signet #555).
 #
@@ -8,6 +9,8 @@
 # that install under ~ (pyenv, rustup, SDKMAN, PlatformIO, ...) can target the
 # wrong directory. Every sudo that runs as devuser in scripts/setup/*.zsh must
 # pass -H (elixir fix, defcb672). Static scan only; no Docker, no writes.
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"

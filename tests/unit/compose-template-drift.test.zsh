@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests: language composes match a fresh render of the template (Signet #531).
 #
@@ -15,6 +16,9 @@
 # registry "-" fields mean "none" and load as empty strings from both sources
 # (guarded by vm-types-source-parity.test.zsh). Files are compared byte for
 # byte, including the single trailing newline the generator's echo writes.
+
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"

@@ -66,6 +66,7 @@ tests/test-logs/
 !requirements-dev.txt
 !docs/governance/shibboleth-baseline.txt
 !tests/ci-unit-exclusions.txt
+!tests/ci-coverage-exclusions.txt
 !scripts/setup/*.zsh
 !plans/scripts/**/*.log
 !plans/scripts/**/*.txt

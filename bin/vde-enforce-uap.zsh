@@ -60,8 +60,8 @@ if [[ -d "${plans_dir}" ]]; then
     fi
 fi
 
-# Mandatory config files (Mandate 0 & 14 integration)
-MANDATORY_FILES=("AGENTS.md" "GEMINI.md" ".gemini/STATE/MEMORY.md")
+# Mandatory config files (Mandate 0 & 14 integration; the security policy, rule and process: Signet #736)
+MANDATORY_FILES=("AGENTS.md" "GEMINI.md" ".gemini/STATE/MEMORY.md" "SECURITY.md" ".gemini/RULES/security.md" ".gemini/RULES/security-preamble.md" "docs/governance/security-process.md" "docs/security/advisories.md")
 
 # Colors for output
 RED='\033[0;31m'
@@ -72,11 +72,29 @@ NC='\033[0m' # No Color
 # 1. Check for mandatory config files [Mandate 0]
 [[ $quiet -eq 0 ]] && echo -e "${GREEN}[UAP-START]${NC} Verifying mandatory configurations..."
 for file in "${MANDATORY_FILES[@]}"; do
-    if [[ ! -f "${VDE_ROOT_DIR}/${file}" ]]; then
-        echo -e "${RED}[UAP-ERROR]${NC} Mandatory file missing: ${file}"
+    # -f and -s: a regular file AND non-empty (an emptied policy file, or a directory put in its place, is as bad as a missing one).
+    if [[ ! -f "${VDE_ROOT_DIR}/${file}" || ! -s "${VDE_ROOT_DIR}/${file}" ]]; then
+        echo -e "${RED}[UAP-ERROR]${NC} Mandatory file missing or empty: ${file}"
         errors=$((errors + 1))
     fi
 done
+
+# 1b. The private security directory (Signet #737): the Forge creates it, never assumes it.
+# FORGE ONLY: nothing on the student (@armor) install or upgrade path calls this. The path
+# is not printed, so a public CI log never shows where it is.
+if [[ ! -f "${VDE_ROOT_DIR}/lib/vde-security-dir" ]]; then
+    echo -e "${RED}[UAP-ERROR]${NC} lib/vde-security-dir missing; cannot create the private security directory."
+    errors=$((errors + 1))
+else
+    source "${VDE_ROOT_DIR}/lib/vde-security-dir"
+    if ! typeset -f vde_security_dir_ensure >/dev/null; then
+        echo -e "${RED}[UAP-ERROR]${NC} lib/vde-security-dir did not define vde_security_dir_ensure; the private security directory cannot be created."
+        errors=$((errors + 1))
+    elif ! vde_security_dir_ensure "${VDE_ROOT_DIR}" >/dev/null; then
+        echo -e "${RED}[UAP-ERROR]${NC} The private security directory is unavailable (see the [SECURITY-DIR] line above); security work needs it."
+        errors=$((errors + 1))
+    fi
+fi
 
 # 2. The Audit Function (Deep Content Inspection)
 audit_file_content() {

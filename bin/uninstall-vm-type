@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 #===============================================================================
 # uninstall-vm-type - Remove a language or service type from VDE
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 #
 # This removes the following associated with a VM type:

@@ -10,6 +10,7 @@
 # - SSH known_hosts management
 # - SSH agent integration
 #
+typeset _ZSH_PURE=${(%):-%x}
 # Dependencies:
 #   - vde-core (sets VDE_ROOT_DIR and core constants)
 #   - vde-errors (error handling)

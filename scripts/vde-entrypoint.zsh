@@ -4,6 +4,7 @@
 # VDE Sovereign Entrypoint
 # Version: 2.5.5 (Issue #457: Host-safe Docker socket GID handling)
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 # Ensure path includes local bin and VDE lib, but PRESERVE existing PATH (Rule 24)
 # We append system paths to avoid shadowing Spoke-specific binaries (like Cargo)

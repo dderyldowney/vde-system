@@ -10,6 +10,7 @@
 # force, _vde_help_status) and may `exit`, as the inline arms did.
 #
 # Handlers that act on several Spokes (stop, restart, remove) exit 0 when every target was
+typeset _ZSH_PURE=${(%):-%x}
 # handled or already in the desired state, and 1 if any target was unknown or its docker
 # operation failed (Signet #590).
 # Source this library with: source "${VDE_ROOT_DIR}/lib/vde-actions"

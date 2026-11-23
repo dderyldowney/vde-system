@@ -10,6 +10,7 @@
 # - SSH port allocation and management
 # - Docker Compose integration
 #
+typeset _ZSH_PURE=${(%):-%x}
 # Dependencies:
 #   - vde-constants (return codes)
 #   - vde-errors (error handling)

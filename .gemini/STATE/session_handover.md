@@ -1,4 +1,4 @@
-# VDE Session Handover: 2026-11-21
+# VDE Session Handover: 2026-11-22
 # @shared-law (Forge Component)
 
 > **Handing over to another agent? Start with `.gemini/STATE/handoff.md`:** the rules, the current state, the sequence and the traps, written for any AI agent. Verify its facts with the commands it gives.
@@ -8,7 +8,7 @@ This file is one half of a pair with [plans/session_handover_remediation.md](../
 
 ## SOVEREIGN STATE
 - **Baseline**: 1.5.7 (Sovereign Baseline) — RELEASED 2026-11-21, tag 1.5.7 on `main` (daffb810; code baseline `c4560371`): https://github.com/dderyldowney/vde-system/releases/tag/1.5.7
-- **develop**: advances past `debc2e81` (the 1.5.7 roll, PR #673) with each merged PR; read it from `git log`
+- **develop**: read the tip with `git log -1 origin/develop` (advances past the 1.5.7 roll as code and doc PRs merge)
 - **main**: `daffb810` (production — 1.5.7, Merge PR #675 stable → main)
 - **stable**: read the tip with `git ls-remote origin stable`; after the 1.5.7 release it equalled `main` (PR #674 rolled develop into it at 66a04308; the Update Stable Alias workflow then reset it to `main` on the #675 push). `stable` is for release plus updates; it may sit ahead of `main` between releases.
 - **Status**: 100% GREEN
@@ -16,15 +16,16 @@ This file is one half of a pair with [plans/session_handover_remediation.md](../
 - **Gospel Audit**: GOSPEL-SUCCESS
 
 ## NEXT STRIKE
-Done as of 2026-11-21: 1.5.7 released; `vde upgrade` (#679), the 1.5.7 record (#678), the state files (#681), the `vde upgrade` review fixes (#684, Signet #683) and the develop -> stable roll (#682, merge commit, no release). VERIFY with `gh pr list --state merged --limit 10` before relying on this line.
+Done as of 2026-11-21: 1.5.7 released; `vde upgrade` (#679), the 1.5.7 record (#678), the state files (#681, #686), the `vde upgrade` review fixes (#684, Signet #683) and two develop -> stable rolls without a release (#682, #687). Since then (2026-11-22): the fail-closed audit and check scripts (#724, Signet #719), the security process (#738, Signet #736) and the private security directory (#739, Signet #737: the Forge creates `~/.vde-security/`, or the path in `VDE_SECURITY_DIR`, with mode 0700 through `lib/vde-security-dir`, called from the Sovereign Audit; nothing on the student install or upgrade path calls it), and the coverage job that fails when a test fails (#725, PR #743). This state refresh is Signet #740. VERIFY with `gh pr list --state merged --limit 10` before relying on this line.
+**NEXT ACTION: the 1.5.8 security items** (#707-#718, #722, #723, #726, #727-#735 and #742), in the severity order the User approves. Ask the User before starting.
 Queue, in the User's order:
-1. **1.5.8, the SECURITY release** (#668 plus the security-related items parked earlier, and ONLY security-related work): its own Signet, PR and release chain, with the User's approval at each outward step. Security comes BEFORE docs, even if session time is mixed.
+1. **1.5.8, the SECURITY release** (#726, which replaced #668, plus the security-related items parked earlier, and ONLY security-related work): its own Signet, PR and release chain, with the User's approval at each outward step. Security comes BEFORE docs, even if session time is mixed. All security work follows the project security process (`docs/governance/security-process.md`, binding agent rules in `.gemini/RULES/security.md`; Signet #736). The 1.5.8 items are tracked as neutral issues (#707-#718, #722, #723, #726, #742 and the sub-issues #727-#735 of #720 and #721) with private draft advisories; #725 is done (PR #743), so the fixes have tests that can fail.
 2. **1.5.9, the docs release** (approved scope below): starts only after 1.5.8 ships; Signet first, each part its own Strike.
 3. **#671** — alias uniqueness inside the lock and stale SSH port locks (#538 items 1, 6, 7; Signet open, investigation done, no code).
 4. Then ask about #621 and #629.
 
 ### Version plan (the User, 2026-11-21)
-**1.5.7 is the CURRENT RELEASE** (tag on `main` at daffb810). **1.5.8 = the security release** (#668, plus the security-related items parked earlier; only security-related work enters it; the details stay in the issues, not here). **1.5.9 = the docs release** (the programme below; it was first planned as 1.5.8). Versions are MAJOR.MINOR.STEP, so there is no 1.5.7.x. Order: security (1.5.8) FIRST, then docs (1.5.9); the User confirmed security before docs even if session time is mixed. What is already merged stays; the 1.5.8 notes name it plainly (the `vde upgrade` command and its hardening) and headline the security items. Expect major changes to the docs in 1.5.9.
+**1.5.7 is the CURRENT RELEASE** (tag on `main` at daffb810). **1.5.8 = the security release** (#726, which replaced #668, plus the security-related items parked earlier; only security-related work enters it; the details stay in the issues, not here). **1.5.9 = the docs release** (the programme below; it was first planned as 1.5.8). Versions are MAJOR.MINOR.STEP, so there is no 1.5.7.x. Order: security (1.5.8) FIRST, then docs (1.5.9); the User confirmed security before docs even if session time is mixed. What is already merged stays; the 1.5.8 notes name it plainly (the `vde upgrade` command and its hardening) and headline the security items. Expect major changes to the docs in 1.5.9.
 
 ### 1.5.9 = THE DOCS RELEASE (scope APPROVED by the User, 2026-11-21; renumbered from 1.5.8)
 1.5.9 is all about documentation. Each part is its own Strike (Signet first).

@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 #===============================================================================
 # vde-inspect - Inspect a VDE container
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 # Usage: vde-inspect <vm_name> [options]
 #

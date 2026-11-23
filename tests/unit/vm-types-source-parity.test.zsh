@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 
 # Unit Tests: load_vm_types yields identical arrays from either registry source
 # (Signet #576).
@@ -10,6 +11,8 @@
 # generate-all-configs renders different composes depending on which source
 # happened to load. Each source is loaded in its own child zsh with a private
 # cache and no lock, so the repo's real cache and locks are never touched.
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"

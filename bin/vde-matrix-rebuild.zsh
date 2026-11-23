@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 # ZSH-native shibboleth: ${(%):-%x}
 # Use zsh-native absolute path detection (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 VDE_ROOT_DIR="${0:h:h}"
 source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
 source "${VDE_ROOT_DIR}/lib/vde-constants"

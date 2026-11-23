@@ -2,68 +2,59 @@
 # @armor (Engine Core)
 # check-zsh-shebang - Verify all scripts use zsh shebang
 # This script is used in CI to enforce zsh-only policy
+typeset _ZSH_PURE=${(%):-%x}
 
-set -e
+print -r -- "Checking zsh shebang enforcement..."
 
-VDE_SCRIPTS_DIR="$(cd "$(dirname "${0}")" && pwd)"
-cd "${VDE_SCRIPTS_DIR}"
+typeset VDE_ROOT="${0:A:h:h}"
 
-echo "Checking zsh shebang enforcement..."
+# Shared zsh-shebang predicate (vde_shib_is_zsh FILE) from the one shibboleth library
+if [[ ! -r "${VDE_ROOT}/lib/vde-shibboleth" ]]; then
+  print -r -- "FAIL: lib/vde-shibboleth is missing, cannot check shebangs"
+  exit 1
+fi
+source "${VDE_ROOT}/lib/vde-shibboleth"
 
-failed=0
+typeset failed=0
+typeset file relpath shebang
+typeset -a files=( "${VDE_ROOT}"/bin/**/*(.ND) "${VDE_ROOT}"/lib/**/*(.ND) )
 
-# Check all scripts in bin/ directory
-# Use ZSH-native expansion (f) to split find results
-for file in ${(f)"$(find . -type f -name "*.zsh" -o -name "*.sh" 2>/dev/null)"}; do
-    # Skip directories
-    [[ -f "${file}" ]] || continue
-    
-    # Skip backup files and cache
-    [[ "${file}" == *".bak" ]] && continue
-    [[ "${file}" == *".cache"* ]] && continue
-    [[ "${file}" == *"backup/"* ]] && continue
-    
-    # Get the shebang
-    shebang=$(head -1 "${file}" 2>/dev/null || true)
-    
-    # Check if it has a shebang
-    if [[ "${shebang}" == \#\!* ]]; then
-        # Check if it's zsh
-        if [[ "${shebang}" == *(zsh|/bin/zsh)* ]]; then
-            continue
-        else
-            echo "FAIL: ${file} uses non-zsh shebang: ${shebang}"
-            failed=1
-        fi
-    else
-        # No shebang - might be a library file, warn but don't fail
-        echo "WARN: ${file} has no shebang"
-    fi
+for file in "${files[@]}"; do
+  # Skip archived, cached, backup and non-script files
+  [[ "${file}" == */bin/archive/* ]] && continue
+  [[ "${file}" == */.cache/* ]] && continue
+  [[ "${file}" == */backup/* ]] && continue
+  [[ "${file}" == *.bak ]] && continue
+  [[ "${file}" == *.py ]] && continue
+  [[ "${file}" == *.md ]] && continue
+  [[ "${file}" == *.json ]] && continue
+  [[ "${file}" == *.txt ]] && continue
+
+  relpath="${file#${VDE_ROOT}/}"
+
+  # Shared predicate decides; a bin/ or lib/ file without a zsh shebang is a failure
+  if vde_shib_is_zsh "${file}"; then
+    continue
+  fi
+
+  # Read only the first line for the message
+  # (read returns non-zero for a last line with no trailing newline but still sets the variable)
+  shebang=""
+  IFS= read -r shebang < "${file}" 2>/dev/null || [[ -n "${shebang}" ]]
+  if [[ -n "${shebang}" ]]; then
+    print -r -- "FAIL: ${relpath} uses non-zsh shebang: ${shebang}"
+  else
+    print -r -- "FAIL: ${relpath} has no readable zsh shebang (no shebang or unreadable)"
+  fi
+  failed=1
 done
 
-# Check library files in lib/
-for file in $(find lib -type f 2>/dev/null); do
-    # Skip backup files explicitly
-    [[ "${file}" == *".bak" ]] && continue
-
-    shebang=$(head -1 "${file}" 2>/dev/null || true)
-    
-    if [[ "${shebang}" == \#\!* ]]; then
-        if [[ "${shebang}" == *zsh* ]]; then
-            continue
-        else
-            echo "FAIL: ${file} uses non-zsh shebang: ${shebang}"
-            failed=1
-        fi
-    fi
-done
-
-if [[ ${failed} -eq 0 ]]; then
-    echo "SUCCESS: All scripts use zsh shebang"
-    exit ${VDE_SUCCESS}
+if (( failed == 0 )); then
+  print -r -- "SUCCESS: All scripts use zsh shebang"
+  exit 0
 else
-    echo ""
-    echo "ERROR: Some scripts do not use zsh shebang"
-    echo "This project requires: #!/usr/bin/env zsh or #!/bin/zsh"
-    exit ${VDE_ERR_GENERAL}
+  print -r -- ""
+  print -r -- "ERROR: Some scripts do not use zsh shebang"
+  print -r -- "This project requires: #!/usr/bin/env zsh or #!/bin/zsh"
+  exit 1
 fi

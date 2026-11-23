@@ -10,6 +10,7 @@
 # model. ttyUSB<n> is assigned by enumeration order, not by socket. The USB
 # PORT PATH (e.g. "1-3.3" = bus 1, hub port 3, downstream port 3) is a
 # property of where the cable is plugged, so it is stable across replugs.
+typeset _ZSH_PURE=${(%):-%x}
 #
 # HOW: sysfs is visible inside a container even though udev is not.
 #   /sys/class/tty/ttyUSB1 -> .../usb1/1-3/1-3.3/1-3.3:1.0/ttyUSB1/tty/ttyUSB1

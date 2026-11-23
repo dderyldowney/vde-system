@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 # Unit Tests for the spine check's Pillar II git probe (Signet #493).
@@ -12,6 +13,8 @@ typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 # that situation with a scratch repository and prove the probe leaves it alone,
 # and that the probe still fails closed when git itself is broken.
 
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 fi

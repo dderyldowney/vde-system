@@ -4,6 +4,7 @@
 #
 # Enforces Rule C (Zsh Purity) and Rule 12 (Security Law)
 # and performs a silent spine check.
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 
 # Zsh-native parameter expansion (UAP Mandate 1)

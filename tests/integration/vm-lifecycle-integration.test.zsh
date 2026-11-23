@@ -3,6 +3,8 @@
 # Integration Tests for VM Lifecycle (v2.1.0 Hardened)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 # Tests end-to-end VM creation, startup, and management workflows
 

@@ -5,6 +5,7 @@
 # Invoked through the canonical entrypoint: "vde usb-map <spoke> [...]".
 # Refreshes the map inside each named Spoke and prints it, because a container
 # receives no udev events and so cannot notice a plug on its own.
+typeset _ZSH_PURE=${(%):-%x}
 
 emulate -L zsh
 setopt pipe_fail

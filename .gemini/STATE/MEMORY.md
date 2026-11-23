@@ -8,8 +8,8 @@
 - All prior versions (1.5.6 and earlier) are of historical archival value only.
 - Heartbeat Certified: 2026-11-21 (6/6 scenarios, 73/73 steps)
 - **Latest Release**: Tag 1.5.7 on main (SHA daffb810, the stable-into-main merge; contains code baseline c4560371 from docs/releases/1.5.7.md), published 2026-11-21
-- **develop HEAD**: debc2e81 at the 1.5.7 roll (PR #673); later doc-only PRs advance it
-- **stable HEAD**: read it with `git ls-remote origin stable`. It equalled `main` after the 1.5.7 release because `.github/workflows/update-stable-alias.yml` force-pushes `stable` to `main` on every push to `main` (it moved stable from 66a04308 to daffb810, 13 s after PR #675). `stable` is for release plus updates, so a develop -> stable roll without a release is normal and leaves it ahead of `main` until the next release.
+- **develop HEAD**: read the tip with `git log -1 origin/develop` (advances past the 1.5.7 roll as code and doc PRs merge)
+- **stable HEAD**: read it with `git ls-remote origin stable`. It equalled `main` after the 1.5.7 release because `.github/workflows/update-stable-alias.yml` updates `stable` to `main` on pushes to `main` (it moved stable from 66a04308 to daffb810, 13 s after PR #675). `stable` is for release plus updates, so a develop -> stable roll without a release is normal and leaves it ahead of `main` until the next release.
 
 ## 2026-05-06
 ## Security Audit: Postgres Dev Secret Build Arg Exposure
@@ -81,9 +81,10 @@ bin/vde path-of-the-foundling
 Per VDE Protocol: No environment-specific logic shall be implemented without empirical testing on target environment. WSL2 fixes blocked pending volunteer beta testers.
 
 ## NEXT STRIKES QUEUE
-Done as of 2026-11-21: 1.5.7 released; `vde upgrade` (#679), the 1.5.7 record (#678), the state files (#681), the `vde upgrade` review fixes (#684, Signet #683) and the develop -> stable roll (#682, merge commit, no release). VERIFY with `gh pr list --state merged --limit 10` before relying on this line.
+Done as of 2026-11-21: 1.5.7 released; `vde upgrade` (#679), the 1.5.7 record (#678), the state files (#681, #686), the `vde upgrade` review fixes (#684, Signet #683) and two develop -> stable rolls without a release (#682, #687). Since then (2026-11-22): the fail-closed audit and check scripts (#724, Signet #719), the security process (#738, Signet #736) and the private security directory (#739, Signet #737: the Forge creates `~/.vde-security/`, or the path in `VDE_SECURITY_DIR`, with mode 0700 through `lib/vde-security-dir`, called from the Sovereign Audit). This state refresh is Signet #740. VERIFY with `gh pr list --state merged --limit 10` before relying on this line.
+`#725` (tests that can fail, and the coverage job) is DONE in PR #743; the Code Coverage job now fails when a test fails (the git-fixture-isolation suite and two Docker-only integration tests are listed in `tests/ci-coverage-exclusions.txt`). **NEXT ACTION:** the 1.5.8 security items (#707-#718, #722, #723, #726, #727-#735, #742), in the severity order the User approves; ask the User before starting.
 In the User's order:
-1. **1.5.8, the SECURITY release** (#668 plus the security-related items parked earlier, and ONLY security-related work): its own Signet, PR and release chain, with the User's approval at each outward step. Security comes BEFORE docs, even if session time is mixed.
+1. **1.5.8, the SECURITY release** (#726, which replaced #668, plus the security-related items parked earlier, and ONLY security-related work): its own Signet, PR and release chain, with the User's approval at each outward step. Security comes BEFORE docs, even if session time is mixed. All security work follows the project security process (`docs/governance/security-process.md`, binding agent rules in `.gemini/RULES/security.md`; Signet #736). The 1.5.8 items are tracked as neutral issues (#707-#718, #722, #723, #726 and the sub-issues #727-#735 of #720 and #721) with private draft advisories; #725 was done first (PR #743) so the fixes have tests that can fail.
 2. **1.5.9, the docs release** (programme below): starts only after 1.5.8 ships; Signet first, each part its own Strike.
 3. **#671** — fix(armor): alias uniqueness inside the lock and stale SSH port locks (#538 items 1, 6, 7).
 4. Ask the User about **#621** and **#629**.
@@ -91,7 +92,7 @@ In the User's order:
 Left open until after these: #441 function-trace JSONL export, #442 Ollama daemon connection, #539 USB debug probe, #653, #628, #615, #627, #631.
 
 ### Version plan (the User, 2026-11-21)
-**1.5.7 is the CURRENT RELEASE** (tag on `main` at daffb810). **1.5.8 = the security release** (#668, plus the security-related items parked earlier; only security-related work enters it; the details stay in the issues, not here). **1.5.9 = the docs release** (the programme below; it was first planned as 1.5.8). Versions are MAJOR.MINOR.STEP, so there is no 1.5.7.x. Order: security (1.5.8) FIRST, then docs (1.5.9); the User confirmed security before docs even if session time is mixed. What is already merged stays; the 1.5.8 notes name it plainly (the `vde upgrade` command and its hardening) and headline the security items. Expect major changes to the docs in 1.5.9.
+**1.5.7 is the CURRENT RELEASE** (tag on `main` at daffb810). **1.5.8 = the security release** (#726, which replaced #668, plus the security-related items parked earlier; only security-related work enters it; the details stay in the issues, not here). **1.5.9 = the docs release** (the programme below; it was first planned as 1.5.8). Versions are MAJOR.MINOR.STEP, so there is no 1.5.7.x. Order: security (1.5.8) FIRST, then docs (1.5.9); the User confirmed security before docs even if session time is mixed. What is already merged stays; the 1.5.8 notes name it plainly (the `vde upgrade` command and its hardening) and headline the security items. Expect major changes to the docs in 1.5.9.
 
 ### 1.5.9 = THE DOCS RELEASE (scope APPROVED by the User, 2026-11-21; renumbered from 1.5.8)
 1.5.9 is all about documentation. Each part is its own Strike (Signet first).

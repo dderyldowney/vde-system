@@ -9,6 +9,7 @@ MANDATE: In VDE workspace, follow instructions in AGENTS.md.
 
 - **Project state (read at session start):** `.gemini/STATE/MEMORY.md` (standing watch, baseline, recent Strikes) and `.gemini/STATE/session_handover.md` (current session goals and constraints).
 - **Project rules:** `.gemini/RULES/` (one file per rule family), `STYLE_GUIDE.md` (repository root) and `.gemini/instructions.md`.
+- **Security (binding):** `.gemini/RULES/security.md` (the rules every agent follows) and `docs/governance/security-process.md` (the full process from a report to the public advisory). A suspected vulnerability never goes into public text.
 - **Procedures (the `/vde-*` commands and role skills named in these rules):** `.gemini/COMMANDS/` and `.gemini/SKILLS/`. Antigravity discovers them natively through `.agents/skills` and Claude Code through `.claude/skills` (both folders hold only symlinks to these files); for every other agent they are not auto-discovered: read the named file and follow it.
 - **Plans and remediation:** `plans/` (Forge development artifacts; the active remediation plan is `plans/session_handover_remediation.md`). Retired plans are archived under `.gemini/PLANS/archive/`.
 - **Certified status record:** `PROJECT_STATUS.md` (repository root; part of the version-sync and Gospel mechanism).
@@ -96,9 +97,9 @@ Failure of any ritual constitutes a **Protocol Blockade**.
 * **M. The Gatekeeper Mandate**: The Proof of Life contract MUST be verified via a `pre-push` git hook.
 * **N. The Sovereign Baseline**: A version only holds the title of "Sovereign Baseline" when it is both recorded in the SPEC and passes the Proof of Life.
 * **O. The Chronicler's Mandate**: Every Sovereign Baseline MUST be documented in the permanent archive.
-* **P. The Sovereign Branching Law**: `main` (Production) is for certified releases only. `stable` receives develop merges. `develop` is The Anvil. ALL commits require a Signet (Issue) and Chronicle (PR).
+* **P. The Sovereign Branching Law**: `main` (Production) is for certified releases only. `stable` receives develop merges. `develop` is The Anvil. ALL commits require a Signet (Issue) and Chronicle (PR). Pull requests merge with a **merge commit** only (`gh pr merge N --merge --delete-branch --match-head-commit <the approved head sha> --subject "$SUBJECT" --body "$BODY"`); `--squash` and `--rebase` are never used (they are disabled in the repository settings) because squash drops a branch's own commits from the history and every commit made during the work must stay individually in `develop`. A promotion PR (its head is `develop` or `stable`) omits `--delete-branch`: permanent branches are never deleted.
 * **Q. The Authority of the Record**: Only the Orchestrator (Alor) and the User may alter the Chronicle. Sub-agents are strictly forbidden from making autonomous commits.
-* **R. The Clan Leader Authority**: The agent MUST obtain explicit written approval from the User before any PR action or merge.
+* **R. The Clan Leader Authority**: The agent MUST obtain explicit written approval from the User before any PR action or merge, and the approval covers that PR only.
 
 ---
 
@@ -109,3 +110,7 @@ Failure of any ritual constitutes a **Protocol Blockade**.
 **THE BOT FEEDBACK MANDATE**: Before ANY Pull Request is closed, merged, or considered complete, the agent MUST query and remediate feedback from ALL active CI sentinels. No PR may be finalized while any sentinel has open findings.
 
 **THE PROOF OF LIFE MANDATE**: If the user says "Give me proof of life", the agent MUST immediately execute the `tests/features/core-infrastructure/proof-of-life-the-contract.feature` test and report results.
+
+**THE SECURITY MANDATE**: The project security plan is the default for all security work, now and going forward. Every finding, fix, patch release, disclosure and alert follows `docs/governance/security-process.md`, and every agent obeys `.gemini/RULES/security.md`: weakness detail NEVER appears in public text before its fix has shipped, findings go to a private draft GitHub Security Advisory, and only the User publishes an advisory or requests a CVE. `SECURITY.md` is the public policy. Breaking this mandate is helmet removal.
+
+**NO AID TO THE ENEMY.** The repository is public, so nothing about the inner workings or failings of unfixed code goes into any public text, and when unsure it stays private. Every agent, however activated (main agent, sub-agent, skill or command), obeys `.gemini/RULES/security-preamble.md`; every sub-agent prompt begins with it. Security-item branches are named `fix/sec-item-NN`.

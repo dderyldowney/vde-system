@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @forge (Context Synchronization)
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 cat <<'PROMPT'
 Please review and update the VDE context documentation:
 

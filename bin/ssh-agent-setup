@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 # VDE SSH Agent Setup
 # Automatically sets up SSH keys, agent, and configuration
+typeset _ZSH_PURE=${(%):-%x}
 
 
 # ZSH-native logic demonstration (UAP Mandate 1)

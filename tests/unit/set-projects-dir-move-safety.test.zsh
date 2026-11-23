@@ -2,6 +2,8 @@
 # @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 #
 # Move-safety tests for `vde set-projects-dir` (Signet #669, #545 items 6,7,8,10)
 # =============================================================================
@@ -63,7 +65,7 @@ cleanup() {
     [[ -n "${SANDBOX_ROOT}" && "${SANDBOX_ROOT}" == /tmp/vde-spd-move.* ]] && rm -rf -- "${SANDBOX_ROOT}"
     [[ -n "${SHM_ROOT}" && "${SHM_ROOT}" == /dev/shm/vde-spd-move.* ]] && rm -rf -- "${SHM_ROOT}"
 }
-trap cleanup EXIT INT TERM
+trap "cleanup; vde_test_env_leave" EXIT INT TERM
 
 # The real mv, baked into stubs so a stub never recurses into itself.
 typeset -r REAL_MV="$(whence -p mv)"

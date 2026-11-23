@@ -2,6 +2,7 @@
 # @armor (Engine Core)
 #===============================================================================
 # vde-tactical-sweep.zsh - Comprehensive Forge Cleanup Tool
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 #
 # Part of the Sovereign Baseline 1.5.7.

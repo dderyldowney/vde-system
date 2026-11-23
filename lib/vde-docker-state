@@ -7,6 +7,7 @@
 # This file should be sourced after vm-common:
 #   source ./lib/vm-common
 #   source ./lib/vde-docker-state
+typeset _ZSH_PURE=${(%):-%x}
 
 # -----------------------
 # Container Name Helpers

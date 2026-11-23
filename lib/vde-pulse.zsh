@@ -3,6 +3,7 @@
 # VDE Identity Pulse Library
 # Active Bridge Monitoring for SSH agent connectivity
 # Source this library with: source ./lib/vde-pulse.zsh
+typeset _ZSH_PURE=${(%):-%x}
 
 # ZSH-native logic demonstration (UAP Mandate 1)
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}

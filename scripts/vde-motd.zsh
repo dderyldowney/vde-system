@@ -4,6 +4,7 @@
 # VDE-MOTD (Message of the Day)
 # Outputs consistent environment metadata for interactive users.
 #===============================================================================
+typeset _ZSH_PURE=${(%):-%x}
 
 # Guard: Only output for interactive TTY sessions
 if [[ -t 1 ]]; then

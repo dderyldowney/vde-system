@@ -4,6 +4,7 @@
 # Usage: source "${VDE_ROOT_DIR}/lib/vde-trace-bootstrap"
 #
 # This enables VDE's function-trace feature to work across script boundaries.
+typeset _ZSH_PURE=${(%):-%x}
 
 # Only activate if we're in trace mode and haven't already installed in this process
 if [[ -n "${VDE_TRACE_MODE}" && -z "${_VDE_TRACE_BOOTSTRAPPED:-}" ]]; then

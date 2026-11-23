@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 # @armor (Engine Core)
 # Forged in Beskar: vde-certified-ghost
+typeset _ZSH_PURE=${(%):-%x}
 set -e
 export DEBIAN_FRONTEND=noninteractive
 export VDE_ROOT_DIR="${VDE_ROOT_DIR:-${0:a:h:h:h}}"
