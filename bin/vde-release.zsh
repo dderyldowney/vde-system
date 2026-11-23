@@ -335,10 +335,11 @@ ok "PR #${PR_NUM} created: ${PR_URL}"
 
 # Merge PR to develop
 log "Merging PR #${PR_NUM} to develop..."
-gh pr merge "$PR_NUM" --repo "$GITHUB_REPO" --squash --delete-branch 2>/dev/null || {
+# Merge commit only: squash and rebase are disabled in the repository settings.
+gh pr merge "$PR_NUM" --repo "$GITHUB_REPO" --merge --delete-branch 2>/dev/null || {
     # Retry after stashing any hook-generated changes
     git stash --include-untracked 2>/dev/null || true
-    gh pr merge "$PR_NUM" --repo "$GITHUB_REPO" --squash --delete-branch
+    gh pr merge "$PR_NUM" --repo "$GITHUB_REPO" --merge --delete-branch
 }
 ok "PR #${PR_NUM} merged to develop"
 
