@@ -61,7 +61,7 @@ if [[ -d "${plans_dir}" ]]; then
 fi
 
 # Mandatory config files (Mandate 0 & 14 integration; the security policy, rule and process: Signet #736)
-MANDATORY_FILES=("AGENTS.md" "GEMINI.md" ".gemini/STATE/MEMORY.md" "SECURITY.md" ".gemini/RULES/security.md" "docs/governance/security-process.md" "docs/security/advisories.md")
+MANDATORY_FILES=("AGENTS.md" "GEMINI.md" ".gemini/STATE/MEMORY.md" "SECURITY.md" ".gemini/RULES/security.md" ".gemini/RULES/security-preamble.md" "docs/governance/security-process.md" "docs/security/advisories.md")
 
 # Colors for output
 RED='\033[0;31m'

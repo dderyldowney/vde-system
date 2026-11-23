@@ -28,6 +28,7 @@ typeset -r PROCESS='docs/governance/security-process.md'
 typeset -r INDEX='docs/security/advisories.md'
 typeset -r RULE='.gemini/RULES/security.md'
 typeset -r SKILL='.gemini/SKILLS/security-auditor.md'
+typeset -r PREAMBLE='.gemini/RULES/security-preamble.md'
 
 # tracked FILE: in git's index AND present, non-empty, in the working tree (a file
 # deleted from the worktree is still "tracked" until it is committed away).
@@ -91,8 +92,8 @@ test_enforcer_requires_policy() {
     # directory above its own bin/), so the existence loop itself is exercised.
     local tmp fx out f
     tmp="$(mktemp -d "${TMPDIR:-/tmp}/vde-secplan.XXXXXX")" || { test_fail "scratch dir" "mktemp failed"; return; }
-    local -a base=(AGENTS.md GEMINI.md .gemini/STATE/MEMORY.md "${POLICY}" "${RULE}" "${PROCESS}" "${INDEX}")
-    for f in "${POLICY}" "${RULE}" "${PROCESS}" "${INDEX}"; do
+    local -a base=(AGENTS.md GEMINI.md .gemini/STATE/MEMORY.md "${POLICY}" "${RULE}" "${PROCESS}" "${INDEX}" "${PREAMBLE}")
+    for f in "${POLICY}" "${RULE}" "${PROCESS}" "${INDEX}" "${PREAMBLE}"; do
         # Fixture A: every mandatory file present and non-empty except F, which is deleted.
         fx="${tmp}/missing-${f:t:r}"
         mkdir -p "${fx}"
@@ -201,6 +202,10 @@ test_agent_reach() {
     test_start "9: every agent, however it is activated, is bound by the stance and the preamble"
     local preamble='.gemini/RULES/security-preamble.md' s f
     tracked "${preamble}" && test_pass "${preamble} is tracked" || test_fail "${preamble} is tracked" "not tracked"
+    expect_has "preamble acts only when the User approves" "${preamble}" 'only when the User approves'
+    expect_has "preamble tells the User what it finds" "${preamble}" 'tell the User'
+    has "${preamble}" 'then file a neutral issue' && test_fail "the preamble no longer tells an agent to file an issue on its own" "still present" \
+        || test_pass "the preamble no longer tells an agent to file an issue on its own"
     for s in 'NO AID TO THE ENEMY' 'fix/sec-item-NN' 'keep it private' 'outside the repository' "${RULE}"; do
         expect_has "preamble contains [${s}]" "${preamble}" "${s}"
     done
