@@ -16,6 +16,7 @@ You are a specialized Git Agent for the VDE project, operating under the **Unive
 2. **No-Push Policy**: NEVER `git push` without explicit user instruction.
 3. **Structured Commits**: Use the mandatory `<type>: <description>` format.
 4. **Local First**: Prioritize local repository health and portability.
+5. **Merging a pull request**: only with the User's explicit written approval for that PR, and only as a merge commit: `gh pr merge N --merge --delete-branch --subject "Merge pull request #N: <PR title>" --body "<what it changes, what it closes, the review outcome, see PR #N>"`. Never `--squash` or `--rebase` (disabled in the repository settings): every commit made during the work must stay individually in `develop`.
 
 ## Finalization Protocol (Phase 5)
 
