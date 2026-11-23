@@ -1,0 +1,112 @@
+#!/usr/bin/env zsh
+# @forge (Governance Sentinel)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
+# VDE Test Projects Base (scratch Projects base for test and gate runs)
+# Source this library with: source ./lib/vde-test-env
+#
+# Test and gate runs use their own scratch Projects base (VDE_PROJECTS_DIR), never the caller's value.
+# vde_test_env_enter unsets VDE_PROJECTS_DIR, creates a fresh scratch directory under ${TMPDIR:-/tmp}
+# and exports it. vde_test_env_leave restores the caller's value exactly (or unsets it) and removes only
+# the scratch directory this library created. Leave also runs at shell exit, and on SIGTERM and SIGINT
+# when the shell has no handler of its own for them.
+#
+# Usage:
+#   source ./lib/vde-test-env
+#   vde_test_env_enter || exit 1
+#   ...                      # VDE_PROJECTS_DIR now names the scratch directory
+#   vde_test_env_leave       # optional: runs anyway at shell exit
+#
+# Output: enter and leave print nothing on success. A refusal prints one "[TEST-ENV] ..." line on
+# stderr. vde_test_env_dir prints the scratch path while active and returns 1 otherwise.
+# Dependencies: mktemp, rm and the zsh builtins. Functions change options only inside themselves.
+
+if typeset -f vde_test_env_enter >/dev/null 2>&1; then
+    return 0
+fi
+
+typeset -g _VDE_TENV_ACTIVE=${_VDE_TENV_ACTIVE:-0}
+typeset -g _VDE_TENV_DIR="${_VDE_TENV_DIR:-}"
+typeset -g _VDE_TENV_WAS_SET=${_VDE_TENV_WAS_SET:-0}
+typeset -g _VDE_TENV_ORIG="${_VDE_TENV_ORIG:-}"
+
+# vde_test_env_enter: idempotent. Records the caller's VDE_PROJECTS_DIR (set or unset, exact value),
+# creates a fresh scratch directory and exports it. Returns 1 with VDE_PROJECTS_DIR unset if the
+# directory cannot be created (fail closed).
+vde_test_env_enter() {
+    # local_options only (not emulate -L): emulate -L also sets local_traps, which would make the
+    # TRAPTERM and TRAPINT definitions below vanish when this function returns.
+    setopt local_options
+    if (( _VDE_TENV_ACTIVE )); then
+        return 0
+    fi
+    local dir
+    if [[ -n "${VDE_PROJECTS_DIR+x}" ]]; then
+        _VDE_TENV_WAS_SET=1
+        _VDE_TENV_ORIG="${VDE_PROJECTS_DIR}"
+    else
+        _VDE_TENV_WAS_SET=0
+        _VDE_TENV_ORIG=""
+    fi
+    unset VDE_PROJECTS_DIR
+    _VDE_TENV_DIR=""
+    dir="$(mktemp -d "${TMPDIR:-/tmp}/vde-test-projects.XXXXXX" 2>/dev/null)" || dir=""
+    if [[ -z "${dir}" || ! -d "${dir}" ]]; then
+        print -u2 -r -- "[TEST-ENV] refused: the scratch directory could not be created"
+        return 1
+    fi
+    dir="${dir:A}"
+    _VDE_TENV_DIR="${dir}"
+    export VDE_PROJECTS_DIR="${dir}"
+    _VDE_TENV_ACTIVE=1
+    if (( ! ${zshexit_functions[(I)vde_test_env_leave]:-0} )); then
+        zshexit_functions+=(vde_test_env_leave)
+    fi
+    # Signal handlers are defined only here, so sourcing the library alone changes no signal behaviour,
+    # and only when the shell has not defined its own.
+    if (( ! ${+functions[TRAPTERM]} )); then
+        TRAPTERM() { emulate -L zsh; vde_test_env_leave; return 143; }
+    fi
+    if (( ! ${+functions[TRAPINT]} )); then
+        TRAPINT() { emulate -L zsh; vde_test_env_leave; return 130; }
+    fi
+    return 0
+}
+
+# vde_test_env_leave: no-op unless active. Restores VDE_PROJECTS_DIR, then removes only the scratch
+# directory recorded at enter time (basename vde-test-projects.*, a real directory, not a symlink).
+# Always returns 0.
+vde_test_env_leave() {
+    emulate -L zsh
+    if (( ! _VDE_TENV_ACTIVE )); then
+        return 0
+    fi
+    local dir="${_VDE_TENV_DIR}"
+    if (( _VDE_TENV_WAS_SET )); then
+        export VDE_PROJECTS_DIR="${_VDE_TENV_ORIG}"
+    else
+        unset VDE_PROJECTS_DIR
+    fi
+    _VDE_TENV_ACTIVE=0
+    if [[ -n "${dir}" && "${dir:t}" == vde-test-projects.* && -d "${dir}" && ! -L "${dir}" && "${dir:A}" == "${dir}" ]]; then
+        rm -rf -- "${dir}"
+    elif [[ -n "${dir}" ]]; then
+        print -u2 -r -- "[TEST-ENV] refused to remove ${dir}: not a scratch directory this helper created"
+    fi
+    _VDE_TENV_DIR=""
+    return 0
+}
+
+# vde_test_env_dir: prints the recorded scratch path. Prints nothing and returns 1 when not active.
+vde_test_env_dir() {
+    emulate -L zsh
+    if (( _VDE_TENV_ACTIVE )) && [[ -n "${_VDE_TENV_DIR}" ]]; then
+        print -r -- "${_VDE_TENV_DIR}"
+        return 0
+    fi
+    return 1
+}
+
+# Register leave once per shell. zshexit_functions runs at shell exit; a suite's own EXIT trap is untouched.
+# (Registration happens in enter, so sourcing alone changes nothing.)

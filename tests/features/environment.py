@@ -7,6 +7,7 @@ This environment runs minimal setup and lets tests define their own requirements
 Includes persistent zsh process for parser tests.
 """
 
+import atexit
 import os
 import shutil
 import subprocess
@@ -71,8 +72,62 @@ def test_vde_command(command, timeout=60):
         return None
 
 
+_PROJECTS_ENV = "VDE_PROJECTS_DIR"
+_PROJECTS_SCRATCH_PREFIX = "vde-test-projects."
+_projects_scratch_path = None
+_projects_atexit_registered = False
+
+
+def _remove_projects_scratch(path):
+    """Remove the scratch Projects base, and nothing else."""
+    if not path:
+        return
+    if not os.path.basename(os.path.normpath(path)).startswith(_PROJECTS_SCRATCH_PREFIX):
+        return
+    if os.path.islink(path) or not os.path.isdir(path):
+        return
+    shutil.rmtree(path)
+
+
+def _remove_projects_scratch_at_exit():
+    """Interrupted runs: remove the scratch Projects base only."""
+    try:
+        _remove_projects_scratch(_projects_scratch_path)
+    except OSError:
+        pass
+
+
+def _isolate_projects_base(context):
+    """Run against a scratch Projects base; the caller's setting is restored in after_all."""
+    global _projects_scratch_path, _projects_atexit_registered
+    # Record the caller's setting first, so a failure below still restores it.
+    context._vde_projects_dir_was = _PROJECTS_ENV in os.environ
+    context._vde_projects_dir_orig = os.environ.get(_PROJECTS_ENV)
+    context._vde_projects_dir_scratch = None
+    os.environ.pop(_PROJECTS_ENV, None)
+    scratch = tempfile.mkdtemp(prefix=_PROJECTS_SCRATCH_PREFIX)
+    context._vde_projects_dir_scratch = scratch
+    _projects_scratch_path = scratch
+    os.environ[_PROJECTS_ENV] = scratch
+    if not _projects_atexit_registered:
+        atexit.register(_remove_projects_scratch_at_exit)
+        _projects_atexit_registered = True
+
+
+def _restore_projects_base(context):
+    """Put the caller's Projects base setting back and remove the scratch base."""
+    try:
+        if context._vde_projects_dir_was:
+            os.environ[_PROJECTS_ENV] = context._vde_projects_dir_orig
+        else:
+            os.environ.pop(_PROJECTS_ENV, None)
+    finally:
+        _remove_projects_scratch(getattr(context, "_vde_projects_dir_scratch", None))
+
+
 def before_all(context):
     """Global setup for BDD tests."""
+    _isolate_projects_base(context)
     context.vde_root = VDE_ROOT
     context.temp_dir = tempfile.mkdtemp(prefix="vde_test_")
 
@@ -91,8 +146,13 @@ def before_all(context):
 
 def after_all(context):
     """Global cleanup."""
-    if hasattr(context, "temp_dir") and os.path.exists(context.temp_dir):
-        shutil.rmtree(context.temp_dir)
+    try:
+        if hasattr(context, "temp_dir") and os.path.exists(context.temp_dir):
+            shutil.rmtree(context.temp_dir)
+    finally:
+        # Last, even when the cleanup above raises; skipped if before_all never isolated.
+        if hasattr(context, "_vde_projects_dir_was"):
+            _restore_projects_base(context)
 
 
 def _cleanup_feature_containers(tags):

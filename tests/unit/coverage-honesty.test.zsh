@@ -2,6 +2,8 @@
 # @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 # Unit tests for the honesty of bin/coverage.zsh (Signet #725).
@@ -111,6 +113,7 @@ new_root() {
     mkdir -p "${root}/bin" "${root}/tests/unit" "${root}/tests/integration"
     cp "${REAL_COV}" "${root}/bin/coverage.zsh"
     chmod +x "${root}/bin/coverage.zsh"
+    ln -sfn "${REPO}/lib" "${root}/lib"
     print -r -- "${root}"
 }
 

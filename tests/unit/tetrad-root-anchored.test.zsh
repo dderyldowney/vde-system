@@ -2,6 +2,8 @@
 # @forge (Governance Sentinel)
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
 
 # Unit Tests for the Tetrad gate's root anchoring (Signet #655).

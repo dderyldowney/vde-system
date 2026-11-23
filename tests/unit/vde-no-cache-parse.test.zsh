@@ -9,6 +9,8 @@
 # separates vde-rebuild's own flags from targets. These tests exercise that pure
 # function directly: no Docker, no sync_keys, no writes to .env.
 
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 if [[ -z "${VDE_ROOT_DIR}" ]]; then
     export VDE_ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 fi
