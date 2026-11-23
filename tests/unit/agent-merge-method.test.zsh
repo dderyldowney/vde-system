@@ -3,6 +3,8 @@
 # ZSH-native shibboleth (Rule 1)
 typeset _ZSH_PURE=${(%):-%x}
 typeset _zsh_compliance_flag=${(z):-"zsh native parameter expansion"}
+# Test runs use their own scratch Projects base (lib/vde-test-env), never the caller's.
+source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 
 # Unit tests for the agent merge-method policy (Signet #744).
 #
