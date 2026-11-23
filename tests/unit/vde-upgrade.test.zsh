@@ -416,7 +416,7 @@ test_case18_real_history_five_commits_back_lands_on_the_tip() {
     && test_pass "case18c HEAD is exactly the tip of the branch under test (${tip[1,8]})" || test_fail "case18c HEAD is exactly the tip of the branch under test" "head=$(head_of "${f}") tip=${tip}"
   [[ -z "$(git -C "${f}/install" diff --stat "${tip}")" ]] \
     && test_pass "case18d the working tree equals the tip, file for file" || test_fail "case18d the working tree equals the tip, file for file" "$(git -C "${f}/install" diff --stat "${tip}" | tail -3)"
-  [[ -z "$(git -C "${f}/install" status --porcelain --untracked-files=no)" ]] \
+  [[ -z "$(git -C "${f}/install" status --porcelain --untracked-files=all)" ]] \
     && test_pass "case18e no stray changes were left behind" || test_fail "case18e no stray changes were left behind" "$(git -C "${f}/install" status --short | head -3)"
   run_up "${f}"
   [[ "${UP_RC}" == 0 && "${UP_OUT}" == *"up to date"* ]] \
@@ -654,6 +654,58 @@ test_case30_the_router_keeps_the_scripts_own_message_and_status() {
     && test_pass "case30e through the router the script's own status (2) and message arrive, without the error mapper's text" || test_fail "case30e through the router the script's own status (2) and message arrive, without the error mapper's text" "rc=${rc} out=${out}"
 }
 
+test_case33_upstream_history_made_of_merge_commits() {
+  test_start "33: upstream publishes through merge commits: an install behind the tip lands exactly on the tip"
+  # Guard: expected to PASS against the current script. Upstream history is three pull-request
+  # style merges (--no-ff), each carrying two feature commits, so the tip is a merge commit.
+  local f; f="$(make_fixture c33)"
+  local i j tip missing=''
+  for i in 1 2 3; do
+    git -C "${f}/seed" checkout -q -b "feature-${i}" stable
+    for j in 1 2; do
+      print -r -- "feature ${i} file ${j}" > "${f}/seed/feature-${i}-${j}.txt"
+      print -r -- "b ${i} ${j}" > "${f}/seed/file-b"
+      git -C "${f}/seed" add -A
+      git -C "${f}/seed" commit -qm "feature ${i} commit ${j}"
+    done
+    git -C "${f}/seed" checkout -q stable
+    git -C "${f}/seed" merge -q --no-ff -m "Merge pull request #${i}: feature ${i}" "feature-${i}"
+    git -C "${f}/seed" push -q origin stable 2>/dev/null
+  done
+  tip="$(git -C "${f}/seed" rev-parse stable)"
+  local -a parents=( ${=$(git -C "${f}/origin.git" rev-list --parents -n1 stable)} )
+  (( ${#parents} == 3 )) \
+    && test_pass "case33a the upstream tip is a merge commit (3 shas: itself and 2 parents)" \
+    || test_fail "case33a the upstream tip is a merge commit" "rev-list --parents lists ${#parents} sha(s)"
+  local behind; behind="$(git -C "${f}/origin.git" rev-list --count "$(head_of "${f}")..${tip}")"
+  (( behind >= 1 )) \
+    && test_pass "case33b the install starts ${behind} commit(s) behind the tip" \
+    || test_fail "case33b the install starts behind the tip" "behind=${behind}"
+
+  run_up "${f}"
+  [[ "${UP_RC}" == 0 ]] && test_pass "case33c the upgrade exits 0" || test_fail "case33c the upgrade exits 0" "rc=${UP_RC} out=${UP_OUT}"
+  [[ "$(head_of "${f}")" == "${tip}" && "$(origin_head "${f}" stable)" == "${tip}" ]] \
+    && test_pass "case33d install HEAD is exactly the upstream merge tip (${tip[1,8]})" \
+    || test_fail "case33d install HEAD is exactly the upstream merge tip" "head=$(head_of "${f}") tip=${tip}"
+  for i in 1 2 3; do
+    for j in 1 2; do
+      [[ "$(cat "${f}/install/feature-${i}-${j}.txt" 2>/dev/null)" == "feature ${i} file ${j}" ]] || missing+=" feature-${i}-${j}.txt"
+    done
+  done
+  [[ -z "${missing}" ]] \
+    && test_pass "case33e every file added by the feature commits exists with its content" \
+    || test_fail "case33e every file added by the feature commits exists with its content" "wrong or missing:${missing}"
+  [[ "$(cat "${f}/install/file-b")" == "b 3 2" ]] \
+    && test_pass "case33f the modified tracked file carries the last feature's content" \
+    || test_fail "case33f the modified tracked file carries the last feature's content" "file-b=$(cat "${f}/install/file-b")"
+  [[ -z "$(git -C "${f}/install" status --porcelain --untracked-files=all)" ]] \
+    && test_pass "case33g no stray changes were left behind" \
+    || test_fail "case33g no stray changes were left behind" "$(git -C "${f}/install" status --short | head -3)"
+  run_up "${f}"
+  [[ "${UP_RC}" == 0 && "${UP_OUT}" == *"up to date"* ]] \
+    && test_pass "case33h running it again is a clean no-op" || test_fail "case33h running it again is a clean no-op" "rc=${UP_RC} out=${UP_OUT}"
+}
+
 test_case1_the_script_exists_and_is_executable
 test_case2_happy_path_fast_forwards_and_reports_versions
 test_case3_already_up_to_date_is_a_no_op
@@ -687,6 +739,7 @@ test_case30_the_router_keeps_the_scripts_own_message_and_status
 test_case28b_hidden_files_that_are_not_edits_do_not_block
 test_case31_restore_never_writes_over_what_exists
 test_case32_the_deadline_watchdog_leaves_nothing_holding_the_pipe
+test_case33_upstream_history_made_of_merge_commits
 
 echo
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"

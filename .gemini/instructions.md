@@ -97,9 +97,9 @@ Failure of any ritual constitutes a **Protocol Blockade**.
 * **M. The Gatekeeper Mandate**: The Proof of Life contract MUST be verified via a `pre-push` git hook.
 * **N. The Sovereign Baseline**: A version only holds the title of "Sovereign Baseline" when it is both recorded in the SPEC and passes the Proof of Life.
 * **O. The Chronicler's Mandate**: Every Sovereign Baseline MUST be documented in the permanent archive.
-* **P. The Sovereign Branching Law**: `main` (Production) is for certified releases only. `stable` receives develop merges. `develop` is The Anvil. ALL commits require a Signet (Issue) and Chronicle (PR).
+* **P. The Sovereign Branching Law**: `main` (Production) is for certified releases only. `stable` receives develop merges. `develop` is The Anvil. ALL commits require a Signet (Issue) and Chronicle (PR). Pull requests merge with a **merge commit** only (`gh pr merge N --merge --delete-branch --match-head-commit <the approved head sha> --subject "$SUBJECT" --body "$BODY"`); `--squash` and `--rebase` are never used (they are disabled in the repository settings) because squash drops a branch's own commits from the history and every commit made during the work must stay individually in `develop`. A promotion PR (its head is `develop` or `stable`) omits `--delete-branch`: permanent branches are never deleted.
 * **Q. The Authority of the Record**: Only the Orchestrator (Alor) and the User may alter the Chronicle. Sub-agents are strictly forbidden from making autonomous commits.
-* **R. The Clan Leader Authority**: The agent MUST obtain explicit written approval from the User before any PR action or merge.
+* **R. The Clan Leader Authority**: The agent MUST obtain explicit written approval from the User before any PR action or merge, and the approval covers that PR only.
 
 ---
 
