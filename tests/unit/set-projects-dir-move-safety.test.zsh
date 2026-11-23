@@ -65,7 +65,7 @@ cleanup() {
     [[ -n "${SANDBOX_ROOT}" && "${SANDBOX_ROOT}" == /tmp/vde-spd-move.* ]] && rm -rf -- "${SANDBOX_ROOT}"
     [[ -n "${SHM_ROOT}" && "${SHM_ROOT}" == /dev/shm/vde-spd-move.* ]] && rm -rf -- "${SHM_ROOT}"
 }
-trap cleanup EXIT INT TERM
+trap "cleanup; vde_test_env_leave" EXIT INT TERM
 
 # The real mv, baked into stubs so a stub never recurses into itself.
 typeset -r REAL_MV="$(whence -p mv)"

@@ -78,7 +78,7 @@ cleanup() {
         rm -rf -- "${SANDBOX_ROOT}"
     fi
 }
-trap cleanup EXIT INT TERM
+trap "cleanup; vde_test_env_leave" EXIT INT TERM
 
 _env_val() {  # echo the persisted VDE_PROJECTS_DIR from a forge's .env
     grep -E '^VDE_PROJECTS_DIR=' "${1}/.env" 2>/dev/null | tail -1 | sed 's/^VDE_PROJECTS_DIR=//'

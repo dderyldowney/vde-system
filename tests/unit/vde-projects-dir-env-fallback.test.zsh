@@ -76,7 +76,7 @@ cleanup() {
         rm -rf -- "${SANDBOX_ROOT}"
     fi
 }
-trap cleanup EXIT INT TERM
+trap "cleanup; vde_test_env_leave" EXIT INT TERM
 
 # Make a fresh sandbox VDE_ROOT_DIR; echoes its path.
 new_sandbox() {

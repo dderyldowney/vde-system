@@ -210,7 +210,7 @@ check "leave after repointing VDE_PROJECTS_DIR: a directory without the prefix i
 
 # SIGTERM: the shell is terminated while the scratch directory is in use.
 typeset SIG_FILE="${SCRATCH}/sigterm.out"
-typeset SIG_PID="" SIG_ZPID="" SIG_VALUE="" SIG_EXISTED=no SIG_GONE=no
+typeset SIG_PID="" SIG_ZPID="" SIG_VALUE="" SIG_EXISTED=no SIG_GONE=no SIG_NEEDED_KILL=no
 typeset _i
 env -u VDE_PROJECTS_DIR HELPER_PATH="${HELPER}" HOME="${HOME}" TMPDIR="${TMPDIR}" SIG_FILE="${SIG_FILE}" \
     timeout 120 zsh -c 'source "${HELPER_PATH}" || exit 90
@@ -232,6 +232,7 @@ if [[ -n "${SIG_ZPID}" ]]; then
         kill -0 "${SIG_ZPID}" 2>/dev/null || break
         tenv_nap
     done
+    kill -0 "${SIG_ZPID}" 2>/dev/null && SIG_NEEDED_KILL=yes
     kill -KILL "${SIG_ZPID}" 2>/dev/null
 fi
 wait "${SIG_PID}" 2>/dev/null
@@ -243,6 +244,32 @@ check "sigterm: a scratch directory existed while the shell ran" \
     '[[ "${SIG_EXISTED}" == yes ]]' "value=${SIG_VALUE}"
 check "sigterm: the scratch directory is removed after TERM" \
     '[[ "${SIG_GONE}" == yes ]]' "value=${SIG_VALUE}"
+check "sigterm: the shell exits on TERM and does not resume (no KILL needed)" \
+    '[[ "${SIG_NEEDED_KILL}" == no ]]' "needed_kill=${SIG_NEEDED_KILL}"
+
+# An inherited active flag must not skip creating a scratch base.
+run_helper 'vde_test_env_enter; print -r -- "dir=${VDE_PROJECTS_DIR-}"
+print -r -- done=yes' "_VDE_TENV_ACTIVE=1" "VDE_PROJECTS_DIR=${SENT}"
+check "inherited active flag: enter still creates a scratch base" \
+    '[[ ${ZRUN_OK} == 1 && "$(kv dir):t" != x && "$(kv dir)" != "${SENT}" && "$(kv dir):t" == *vde-test-projects.* ]]' "out=${ZRUN_OUT}"
+
+# Suites that install their own INT/TERM trap must also run the helper's leave.
+typeset _ts
+for _ts in projects-dir-safety set-projects-dir-move-safety vde-projects-dir-env-fallback vde-projects-base-resolver; do
+    check "own trap chains the helper: ${_ts}" \
+        'timeout 120 grep -q vde_test_env_leave "${REPO}/tests/unit/${_ts}.test.zsh"' "suite=${_ts}"
+done
+
+# Behave helper: static checks for the hardened cleanup.
+typeset _ENVPY="${REPO}/tests/features/environment.py"
+check "behave: caller setting captured before the .env loader" \
+    'timeout 120 grep -q "_CALLER_PROJECTS_WAS" "${_ENVPY}"' ""
+check "behave: SIGTERM removes the scratch base" \
+    'timeout 120 grep -q "signal.signal" "${_ENVPY}"' ""
+check "behave: removal errors reach stderr" \
+    'timeout 120 grep -q "file=sys.stderr" "${_ENVPY}"' ""
+check "behave: scratch path cleared after cleanup" \
+    'timeout 120 grep -q "_projects_scratch_path = None" "${_ENVPY}"' ""
 
 #-------------------------------------------------------------------------------
 # Case B: entry points, each run from a fixture tree that holds a copy of the real script

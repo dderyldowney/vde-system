@@ -26,10 +26,11 @@ if typeset -f vde_test_env_enter >/dev/null 2>&1; then
     return 0
 fi
 
-typeset -g _VDE_TENV_ACTIVE=${_VDE_TENV_ACTIVE:-0}
-typeset -g _VDE_TENV_DIR="${_VDE_TENV_DIR:-}"
-typeset -g _VDE_TENV_WAS_SET=${_VDE_TENV_WAS_SET:-0}
-typeset -g _VDE_TENV_ORIG="${_VDE_TENV_ORIG:-}"
+# Never read from the environment: an inherited value must not skip creating a scratch base.
+typeset -g _VDE_TENV_ACTIVE=0
+typeset -g _VDE_TENV_DIR=""
+typeset -g _VDE_TENV_WAS_SET=0
+typeset -g _VDE_TENV_ORIG=""
 
 # vde_test_env_enter: idempotent. Records the caller's VDE_PROJECTS_DIR (set or unset, exact value),
 # creates a fresh scratch directory and exports it. Returns 1 with VDE_PROJECTS_DIR unset if the
@@ -66,10 +67,10 @@ vde_test_env_enter() {
     # Signal handlers are defined only here, so sourcing the library alone changes no signal behaviour,
     # and only when the shell has not defined its own.
     if (( ! ${+functions[TRAPTERM]} )); then
-        TRAPTERM() { emulate -L zsh; vde_test_env_leave; return 143; }
+        TRAPTERM() { emulate -L zsh; vde_test_env_leave; exit 143; }
     fi
     if (( ! ${+functions[TRAPINT]} )); then
-        TRAPINT() { emulate -L zsh; vde_test_env_leave; return 130; }
+        TRAPINT() { emulate -L zsh; vde_test_env_leave; exit 130; }
     fi
     return 0
 }

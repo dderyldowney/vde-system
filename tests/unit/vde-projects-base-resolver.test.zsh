@@ -46,7 +46,7 @@ assert_eq() {  # <label> <expected> <actual>
 
 typeset SANDBOX
 SANDBOX="$(mktemp -d /tmp/vde-base-resolver.XXXXXX)"
-trap '[[ "${SANDBOX}" == /tmp/vde-base-resolver.* ]] && rm -rf -- "${SANDBOX}"' EXIT INT TERM
+trap '[[ "${SANDBOX}" == /tmp/vde-base-resolver.* ]] && rm -rf -- "${SANDBOX}"; vde_test_env_leave' EXIT INT TERM
 
 # resolve <raw> [reldir]  -> sets RES_RC, RES (result or error text)
 resolve() {

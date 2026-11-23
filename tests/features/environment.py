@@ -9,11 +9,18 @@ Includes persistent zsh process for parser tests.
 
 import atexit
 import os
+import signal
 import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+# The caller's own setting, captured before the .env loader below can populate it.
+_PROJECTS_ENV_NAME = "VDE_PROJECTS_DIR"
+_CALLER_PROJECTS_WAS = _PROJECTS_ENV_NAME in os.environ
+_CALLER_PROJECTS_ORIG = os.environ.get(_PROJECTS_ENV_NAME)
+_DOTENV_PROJECTS_VALUE = None  # set only when the .env file supplied the value, not the caller
 
 # Load root .env file (python.terminal.useEnvFile equivalent for Behave)
 _env_file = Path(__file__).parent.parent.parent / ".env"
@@ -23,6 +30,8 @@ if _env_file.is_file():
             _line = _line.strip()
             if _line and not _line.startswith("#") and "=" in _line:
                 _key, _, _val = _line.partition("=")
+                if _key.strip() == _PROJECTS_ENV_NAME and not _CALLER_PROJECTS_WAS:
+                    _DOTENV_PROJECTS_VALUE = _val.strip()
                 os.environ.setdefault(_key.strip(), _val.strip())
 
 # Add tests directory to path
@@ -91,18 +100,30 @@ def _remove_projects_scratch(path):
 
 def _remove_projects_scratch_at_exit():
     """Interrupted runs: remove the scratch Projects base only."""
+    global _projects_scratch_path
+    path = _projects_scratch_path
+    _projects_scratch_path = None
     try:
-        _remove_projects_scratch(_projects_scratch_path)
-    except OSError:
-        pass
+        _remove_projects_scratch(path)
+    except OSError as exc:
+        print(f"[TEST-ENV] could not remove {path}: {exc}", file=sys.stderr)
+
+
+def _terminate_with_cleanup(signum, _frame):
+    """SIGTERM: remove the scratch base, then exit with the signal status."""
+    _remove_projects_scratch_at_exit()
+    sys.exit(128 + signum)
 
 
 def _isolate_projects_base(context):
     """Run against a scratch Projects base; the caller's setting is restored in after_all."""
     global _projects_scratch_path, _projects_atexit_registered
     # Record the caller's setting first, so a failure below still restores it.
-    context._vde_projects_dir_was = _PROJECTS_ENV in os.environ
-    context._vde_projects_dir_orig = os.environ.get(_PROJECTS_ENV)
+    # A value that only the .env loader supplied is not the caller's: treat it as unset.
+    current = os.environ.get(_PROJECTS_ENV)
+    from_dotenv = _DOTENV_PROJECTS_VALUE is not None and current == _DOTENV_PROJECTS_VALUE
+    context._vde_projects_dir_was = _PROJECTS_ENV in os.environ and not from_dotenv
+    context._vde_projects_dir_orig = None if from_dotenv else current
     context._vde_projects_dir_scratch = None
     os.environ.pop(_PROJECTS_ENV, None)
     scratch = tempfile.mkdtemp(prefix=_PROJECTS_SCRATCH_PREFIX)
@@ -111,6 +132,7 @@ def _isolate_projects_base(context):
     os.environ[_PROJECTS_ENV] = scratch
     if not _projects_atexit_registered:
         atexit.register(_remove_projects_scratch_at_exit)
+        signal.signal(signal.SIGTERM, _terminate_with_cleanup)
         _projects_atexit_registered = True
 
 
@@ -122,7 +144,9 @@ def _restore_projects_base(context):
         else:
             os.environ.pop(_PROJECTS_ENV, None)
     finally:
+        global _projects_scratch_path
         _remove_projects_scratch(getattr(context, "_vde_projects_dir_scratch", None))
+        _projects_scratch_path = None
 
 
 def before_all(context):
