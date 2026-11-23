@@ -101,4 +101,26 @@ elif (( _grep_rc >= 2 )); then
 fi
 echo "[SECURITY] Build-Arg Secret Audit: PASS"
 
+# 5. Tracked-file access-token guard (item 22): a URL-embedded access token in a git-tracked file ships in history.
+echo "[SECURITY] Scanning tracked files for URL access tokens..."
+# Capture the matching FILE LIST only (-l); matched content and the token are never printed.
+typeset _tok_hits _tok_rc
+if git -C "${_audit_root}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    _tok_hits=$(git -C "${_audit_root}" grep -I -l -E '[?&]token=[0-9A-Fa-f]{32,}' --)
+    _tok_rc=$?
+else
+    # No git work tree (a source tarball): scan the files themselves, same exclusions as the leak guard.
+    _tok_hits=$(grep -rIl -E "${_grep_excludes[@]}" -- '[?&]token=[0-9A-Fa-f]{32,}' "${_audit_root}")
+    _tok_rc=$?
+fi
+if (( _tok_rc == 0 )); then
+    echo -e "\033[0;31m[CRITICAL] URL Access Token found in tracked files:\033[0m"
+    echo "${_tok_hits}" | head -n 5
+    exit 1
+elif (( _tok_rc >= 2 )); then
+    echo -e "\033[0;31m[CRITICAL] Access Token scan failed (git grep error ${_tok_rc}) -- treating as unsafe.\033[0m"
+    exit 1
+fi
+echo "[SECURITY] Access Token Audit: PASS"
+
 exit 0
