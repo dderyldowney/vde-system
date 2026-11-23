@@ -21,6 +21,11 @@ check() {
   fi
 }
 
+# Self-check: the reference search must find a name that is certainly referenced, so a broken
+# search cannot pass the "no references" checks vacuously.
+check "the reference search finds a name that is referenced" \
+  '[[ -n "$(git -C "${REPO}" grep -lF -e "vde-enforce-uap.zsh" -- . ":(exclude)tests/unit/retired-scripts.test.zsh")" ]]'
+
 typeset -a RETIRED=(bin/vde-release.zsh)
 typeset r
 for r in "${RETIRED[@]}"; do
@@ -28,7 +33,7 @@ for r in "${RETIRED[@]}"; do
   check "${r}: not in the script reference" '! grep -qF -- "${r:t}" "${REPO}/docs/reference/scripts.md"'
   check "${r}: not in the shibboleth baseline" '! grep -qF -- "${r}" "${REPO}/docs/governance/shibboleth-baseline.txt"'
   check "${r}: no tracked file other than this test refers to it" \
-    '[[ -z "$(git -C "${REPO}" grep -lF -- "${r:t}" -- . ":(exclude)tests/unit/retired-scripts.test.zsh")" ]]'
+    '[[ -z "$(git -C "${REPO}" grep -lF -e "${r:t}" -- . ":(exclude)tests/unit/retired-scripts.test.zsh")" ]]'
 done
 
 print -r -- "Passed: ${PASS}  Failed: ${FAIL}"
