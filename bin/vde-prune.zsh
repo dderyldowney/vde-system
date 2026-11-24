@@ -72,7 +72,6 @@ is_clean_tracked() {
 is_protected() {
     local dir="$1" file="$2"
     [[ "$dir" == "docs/releases" && "$file" == "${CURRENT_BASELINE}.md" ]] && return 0
-    [[ "$file" == "system-spine-contract.md" ]] && return 0
     [[ "$file" == "2026-04-13-pruning-ritual-plan.md" ]] && return 0
     [[ "$file" == "2026-04-13-ingot-stash-plan.md" ]] && return 0
     [[ "$file" == *-init.zsh ]] && return 0

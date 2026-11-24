@@ -67,7 +67,7 @@ bin/vde path-of-the-foundling
 
 ### Completed (Safe, Environment-Agnostic)
 - Tactical sweep (`bin/vde-tactical-sweep.zsh`) now cleans queue directories
-- 5 scenario BDD test coverage (`tests/core-infrastructure/wsl2-locks-remediation.feature`)
+- 5 scenario BDD test coverage (`tests/features/core-infrastructure/wsl2-locks-remediation.feature`)
 - 12 WSL2 test step definitions simulating dead PID conditions
 - All 72 Proof of Life steps passing
 

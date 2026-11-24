@@ -35,7 +35,7 @@ git diff --name-only --cached
 | `tests/features/steps/*.py` | Run the feature file(s) for those steps |
 | Multiple `lib/` files | Run all affected feature files, NOT full suite |
 | `$ARGUMENTS` = feature name | Run that feature directly |
-| `$ARGUMENTS` = `full` | Run `./tests/run-full-test-suite.zsh` |
+| `$ARGUMENTS` = `full` | Run `./tests/run-sovereign-tests.zsh` (the CI-safe suite), then `python3 -m behave tests/features/` (Docker required) |
 
 **Step 3: Execute (Swarm — spawn simultaneously)**
 
