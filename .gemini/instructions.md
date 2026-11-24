@@ -10,6 +10,7 @@ MANDATE: In VDE workspace, follow instructions in AGENTS.md.
 - **Project state (read at session start):** `.gemini/STATE/MEMORY.md` (standing watch, baseline, recent Strikes) and `.gemini/STATE/session_handover.md` (current session goals and constraints).
 - **Project rules:** `.gemini/RULES/` (one file per rule family), `STYLE_GUIDE.md` (repository root) and `.gemini/instructions.md`. Scratch work follows `.gemini/RULES/scratch.md`.
 - **Security (binding):** `.gemini/RULES/security.md` (the rules every agent follows) and `docs/governance/security-process.md` (the full process from a report to the public advisory). A suspected vulnerability never goes into public text.
+- **Design principle:** free mixing, set out in `docs/governance/vde-spec.md` section 6.1: every Spoke on `vde-net` uses every other freely, with no setup, and security work never adds a gate between Spokes.
 - **Procedures (the `/vde-*` commands and role skills named in these rules):** `.gemini/COMMANDS/` and `.gemini/SKILLS/`. Antigravity discovers them natively through `.agents/skills` and Claude Code through `.claude/skills` (both folders hold only symlinks to these files); for every other agent they are not auto-discovered: read the named file and follow it.
 - **Plans and remediation:** `plans/` (Forge development artifacts; the active remediation plan is `plans/session_handover_remediation.md`). Retired plans are archived under `.gemini/PLANS/archive/`.
 - **Certified status record:** `PROJECT_STATUS.md` (repository root; part of the version-sync and Gospel mechanism).
