@@ -230,12 +230,15 @@ test_reading_blocks_are_identical() {
 }
 
 test_no_dead_paths_in_instruction_files() {
-    test_start "14: every repository path an instruction file names EXISTS (spec, state, rules, commands, skills)"
+    test_start "14: every repository path an instruction file names is TRACKED (entry points, spec, state, rules, commands, skills)"
     # Instruction files must name only paths that exist. Only tokens that start with a real
     # top-level directory are checked, so patterns (<alias>, *), remote refs (origin/develop),
     # branch names and container paths (/vde/...) are never mistaken for repository files.
     local root="${VDE_ROOT_DIR}" f token rel bad=0 n=0 msg="" base
-    local -a files=(docs/governance/vde-spec.md .gemini/STATE/*.md(N) .gemini/RULES/*.md(N) .gemini/COMMANDS/*.md(N) .gemini/SKILLS/*.md(N))
+    # the entry points, the spec and every state, rule, command and skill file; globs are anchored
+    # to the checkout so the result does not depend on the caller's working directory
+    local -a files=("${root}"/{AGENTS.md,CLAUDE.md,.gemini/instructions.md,docs/governance/vde-spec.md} "${root}"/.gemini/{STATE,RULES,COMMANDS,SKILLS}/*.md(N))
+    files=("${files[@]#${root}/}")
     local tops='bin|lib|tests|docs|plans|scripts|data|templates|configs|\.gemini|\.github'
     # build artifacts the rules name before they exist (each is in .gitignore)
     local -a generated=(tests/behave-results.json)
@@ -247,7 +250,9 @@ test_no_dead_paths_in_instruction_files() {
             # path must exist, so a misspelled path that happens to match an ignore glob is still caught
             (( ${generated[(Ie)${rel}]} )) && continue
             (( ++n ))
-            if [[ ! -e "${root}/${rel}" ]]; then
+            # the path must be TRACKED, not merely present in this working copy: a clean clone has no
+            # untracked files
+            if [[ -z "$(git -C "${root}" ls-files -- "${rel}")" ]]; then
                 (( ++bad )); msg+="${f}: ${token} | "
             fi
         done < <(grep -oE "\`(\./)?(${tops})/[A-Za-z0-9_./-]*[A-Za-z0-9_]\`" "${root}/${f}" | tr -d '`')
