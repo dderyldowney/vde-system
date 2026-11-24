@@ -45,6 +45,8 @@ Thumbs.db
 *.log
 .locks/
 .docker-state/
+# Scratch work (see .gemini/RULES/scratch.md)
+/.scratch/
 
 # Python cache files
 __pycache__
