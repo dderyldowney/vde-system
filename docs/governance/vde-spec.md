@@ -94,6 +94,12 @@ Automated orchestration ensures absolute traceability:
 - **Bridge Integrity**: `socat` proxying for SSH agent forwarding. The bridge is "Hardened Conditional"—it only exports `SSH_AUTH_SOCK` if the variable is empty, protecting protocol-native forwarding.
 - **Static Guards**: Pre-commit hooks verify shebang purity and secret scanning.
 
+### 6.1 Design principle: free mixing
+
+- **Free mixing**: Every Spoke on `vde-net` may use every other language and service Spoke freely, with no setup. A student assembles the set of languages and services needed to solve the problem at hand, and student code in any Spoke reaches any service (for example Postgres or Redis) directly.
+- **The trust boundary is `vde-net`.** Security work hardens the boundary (published ports bind to loopback, host-name checks, an access token on a student-facing interface) and each service's own privileges (for example running unprivileged). It never adds a gate between Spokes.
+- **The test for any change**: can student code in any Spoke still reach any service with no setup? If not, the change is wrong, however it is justified.
+
 ## 7. Phase Milestones (Expansion & Hardening)
 
 - **Phase 29 (Infrastructure Hardening)**: [CERTIFIED]

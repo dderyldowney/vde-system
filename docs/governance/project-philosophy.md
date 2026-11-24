@@ -5,6 +5,8 @@
 
 > *"This is the Way."*
 
+The product these principles govern has one design principle of its own, **free mixing**: every Spoke on `vde-net` may use every other language and service Spoke freely, with no setup. It is set out in `docs/governance/vde-spec.md` section 6.1, and no governance decision may break it.
+
 ---
 
 ## Who This Document Is For
