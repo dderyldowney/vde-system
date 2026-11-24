@@ -51,8 +51,10 @@ file_has() {
 check "the rule file exists" '[[ -f "${REPO}/${RULE}" ]]' "missing ${RULE}"
 check "the rule carries the Forge header comment" 'file_has "${RULE}" "<!-- @forge (Governance Sentinel) -->"' "no @forge header"
 check "the rule names the scratch root" 'file_has "${RULE}" ".scratch/"' "no .scratch/"
-check "the rule names the scratch HOME location" 'file_has "${RULE}" ".scratch/h"' "no .scratch/h"
-check "the rule names the scratch projects location" 'file_has "${RULE}" ".scratch/p"' "no .scratch/p"
+check "the rule names the per-run scratch HOME location" 'file_has "${RULE}" ".scratch/<run>/h"' "no .scratch/<run>/h"
+check "the rule names the per-run scratch projects location" 'file_has "${RULE}" ".scratch/<run>/p"' "no .scratch/<run>/p"
+check "a run deletes only its own directory" 'file_has "${RULE}" "only its own"' "no own-directory clause"
+check "the rule names no failing component" '[[ -f "${REPO}/${RULE}" ]] && ! grep -qiE "ssh agent|agent socket" "${REPO}/${RULE}"' "the rule names a component and its failure"
 check "the rule forbids /tmp and tool scratch areas" 'file_has "${RULE}" "/tmp"' "/tmp not named"
 check "the rule states the unix socket path limit" 'file_has "${RULE}" "104"' "limit 104 not stated"
 check "the rule protects the real HOME, ssh and projects" 'file_has "${RULE}" "~/.ssh" && file_has "${RULE}" "~/.zshrc"' "real-user paths not named"
@@ -66,8 +68,21 @@ check "the rule routes private security items away from .scratch/ in the layout"
 
 # --- the ignore entry --------------------------------------------------------------------
 check ".gitignore has the exact /.scratch/ entry" 'grep -qxF "/.scratch/" "${REPO}/.gitignore"' "no /.scratch/ line"
-check "git really ignores a file under .scratch/" 'git -C "${REPO}" check-ignore -q .scratch/h/.ssh/probe' "check-ignore says not ignored"
-check "git does not ignore a look-alike outside it" '! git -C "${REPO}" check-ignore -q lib/.scratch-notes' "over-broad ignore"
+# The next two checks run in an isolated temporary repository that carries only this repo's
+# .gitignore, with global and system Git config and excludes switched off, so a user's own
+# excludes can neither hide nor create a result.
+mkdir -p "${REPO}/.scratch"
+typeset ISO; ISO="$(mktemp -d "${REPO}/.scratch/ignore-check.XXXXXX")"
+trap 'rm -rf -- "${ISO}"' EXIT
+cp "${REPO}/.gitignore" "${ISO}/.gitignore"
+git -C "${ISO}" init -q
+iso_ignored() { GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null git -C "${ISO}" -c core.excludesFile=/dev/null check-ignore -q "$1"; }
+check "git ignores a file under .scratch/<run>/" 'iso_ignored .scratch/run1/h/.ssh/probe' "check-ignore says not ignored"
+check "git does not ignore a look-alike outside it" '! iso_ignored lib/.scratch-notes' "over-broad ignore"
+
+# --- the entry points name the rule ---------------------------------------------------------
+check "AGENTS.md names the scratch rule" 'file_has "AGENTS.md" ".gemini/RULES/scratch.md"' "AGENTS.md does not reference the rule"
+check ".gemini/instructions.md names the scratch rule" 'file_has ".gemini/instructions.md" ".gemini/RULES/scratch.md"' "instructions.md does not reference the rule"
 
 print -P "\nTests passed: ${TESTS_PASSED}  failed: ${TESTS_FAILED}"
 (( TESTS_FAILED == 0 ))
