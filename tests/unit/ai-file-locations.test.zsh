@@ -229,7 +229,48 @@ test_reading_blocks_are_identical() {
     fi
 }
 
+test_no_dead_paths_in_instruction_files() {
+    test_start "14: every repository path an instruction file names is TRACKED (entry points, spec, state, rules, commands, skills)"
+    # Instruction files must name only paths that exist. Only tokens that start with a real
+    # top-level directory are checked, so patterns (<alias>, *), remote refs (origin/develop),
+    # branch names and container paths (/vde/...) are never mistaken for repository files.
+    local root="${VDE_ROOT_DIR}" f token rel bad=0 n=0 msg="" base
+    # the entry points, the spec and every state, rule, command and skill file; globs are anchored
+    # to the checkout so the result does not depend on the caller's working directory
+    local -a files=("${root}"/{AGENTS.md,CLAUDE.md,.gemini/instructions.md,docs/governance/vde-spec.md} "${root}"/.gemini/{STATE,RULES,COMMANDS,SKILLS}/*.md(N))
+    files=("${files[@]#${root}/}")
+    local tops='bin|lib|tests|docs|plans|scripts|data|templates|configs|\.gemini|\.github'
+    # build artifacts the rules name before they exist (each is in .gitignore)
+    local -a generated=(tests/behave-results.json)
+    for f in "${files[@]}"; do
+        while IFS= read -r token; do
+            [[ -n "${token}" ]] || continue
+            rel="${token#./}"
+            # a named build artifact is legitimately absent until it is generated; every other
+            # path must exist, so a misspelled path that happens to match an ignore glob is still caught
+            (( ${generated[(Ie)${rel}]} )) && continue
+            (( ++n ))
+            # the path must be TRACKED, not merely present in this working copy: a clean clone has no
+            # untracked files
+            if [[ -z "$(git -C "${root}" ls-files -- "${rel}")" ]]; then
+                (( ++bad )); msg+="${f}: ${token} | "
+            fi
+        done < <(grep -oE "\`(\./)?(${tops})/[A-Za-z0-9_./-]*[A-Za-z0-9_]\`" "${root}/${f}" | tr -d '`')
+        # a bare feature-file name (no directory) must name a tracked feature file
+        while IFS= read -r token; do
+            [[ -n "${token}" ]] || continue
+            (( ++n ))
+            if ! git -C "${root}" ls-files -- "tests/features/**/${token}" "tests/features/${token}" | grep -q .; then
+                (( ++bad )); msg+="${f}: ${token} | "
+            fi
+        done < <(grep -oE '`[A-Za-z0-9_-]+\.feature`' "${root}/${f}" | tr -d '`')
+    done
+    (( n > 0 )) || { test_fail "found paths to check" "extracted none: the extraction itself is broken"; return; }
+    (( bad == 0 )) && test_pass "all ${n} named paths resolve" || test_fail "named paths resolve" "${bad} dead: ${msg}"
+}
+
 test_files_moved
+test_no_dead_paths_in_instruction_files
 test_directory_pointers_hold_files
 test_reading_blocks_are_identical
 test_no_dangling_agent_pointers
