@@ -54,8 +54,12 @@ fi
 
 # --- the fixture --------------------------------------------------------------------
 typeset fix out rc
-fix="$(mktemp -d)" || exit 1
+typeset gate_scratch="$(vde_test_env_dir)"
+[[ -n "${gate_scratch}" ]] || exit 1
+fix="$(mktemp -d "${gate_scratch}/gate-fix.XXXXXX")" || exit 1
 trap 'rm -rf "${fix}"' EXIT
+test_start "the fixture lives under the test scratch area"
+if [[ "${fix}" == "${gate_scratch}"/* ]]; then test_pass "fixture under ${gate_scratch}"; else test_fail "fixture location" "fix=${fix}"; fi
 mkdir -p "${fix}/githooks" "${fix}/lib" "${fix}/bin" "${fix}/tests/features/core-infrastructure" "${fix}/.stubs"
 cp "${HOOK}" "${fix}/githooks/"
 cp "${VDE_ROOT_DIR}/lib/vde-test-env" "${VDE_ROOT_DIR}/lib/vde-pol-stamp" "${fix}/lib/"
@@ -65,11 +69,14 @@ print -r -- '#!/usr/bin/env zsh
 exit 0' > "${fix}/bin/vde-enforce-uap.zsh"
 print -r -- '#!/usr/bin/env zsh
 print x >> "${0:A:h:h}/.suite-runs"
+print -r -- "${HOME}" > "${0:A:h:h}/.suite-home"
 print -r -- "GIT_DIR=${GIT_DIR-unset} GIT_WORK_TREE=${GIT_WORK_TREE-unset} GIT_INDEX_FILE=${GIT_INDEX_FILE-unset} GIT_COMMON_DIR=${GIT_COMMON_DIR-unset} GIT_PREFIX=${GIT_PREFIX-unset} GIT_OBJECT_DIRECTORY=${GIT_OBJECT_DIRECTORY-unset} GIT_NAMESPACE=${GIT_NAMESPACE-unset} GIT_CONFIG_PARAMETERS=${GIT_CONFIG_PARAMETERS-unset}" > "${0:A:h:h}/.suite-env"
+if [[ "$(cat "${0:A:h:h}/.suite-rc" 2>/dev/null)" == start ]]; then exit 127; fi
 if [[ "$(cat "${0:A:h:h}/.suite-rc" 2>/dev/null)" == fail ]]; then print "✗ widget-check.test.zsh failed (exit code: 1)"; exit 1; fi
 print "✓ all suites passed"; exit 0' > "${fix}/tests/run-sovereign-tests.zsh"
 # python3 stands in for the Proof of Life: it counts its runs.
 print -r -- '#!/usr/bin/env zsh
+if [[ "$1" == -c ]]; then [[ -f "'"${fix}"'/.pol-nobehave" ]] && exit 1; exit 0; fi
 print x >> "'"${fix}"'/.pol-runs"
 [[ "$(cat "'"${fix}"'/.pol-rc" 2>/dev/null)" == fail ]] && exit 1
 exit 0' > "${fix}/.stubs/python3"
@@ -80,7 +87,10 @@ print -r -- '/.suite-runs
 /.pol-runs
 /.suite-rc
 /.pol-rc
-/.stubs/' > .gitignore
+/.stubs/
+/.suite-home
+/.pol-nobehave
+/callerhome/' > .gitignore
 print one > f && git add -A && git commit -qm one
 
 count() { [[ -f "${fix}/$1" ]] && wc -l < "${fix}/$1" | tr -d ' ' || print 0; }
@@ -145,7 +155,8 @@ if (( rc == 0 )) && [[ "$(count .suite-runs)" == 4 && "$(count .pol-runs)" == 3 
 # is not skipped by the stamp.
 print three > f && git commit -qam three
 rm -f "${fix}/.suite-env"
-out="$(PATH="${fix}/.stubs:${PATH}" GIT_DIR="${fix}/.git" GIT_WORK_TREE="${fix}" GIT_INDEX_FILE="${fix}/.git/index" GIT_COMMON_DIR="${fix}/.git" GIT_PREFIX="sub/" GIT_OBJECT_DIRECTORY="${fix}/.git/objects" GIT_NAMESPACE=ns GIT_CONFIG_PARAMETERS="'core.bare=true'" zsh githooks/proof-of-life-hook.zsh < /dev/null 2>&1)"; rc=$?
+mkdir -p "${fix}/callerhome"
+out="$(HOME="${fix}/callerhome" PATH="${fix}/.stubs:${PATH}" GIT_DIR="${fix}/.git" GIT_WORK_TREE="${fix}" GIT_INDEX_FILE="${fix}/.git/index" GIT_COMMON_DIR="${fix}/.git" GIT_PREFIX="sub/" GIT_OBJECT_DIRECTORY="${fix}/.git/objects" GIT_NAMESPACE=ns GIT_CONFIG_PARAMETERS="'core.bare=true'" zsh githooks/proof-of-life-hook.zsh < /dev/null 2>&1)"; rc=$?
 test_start "the Sovereign suite runs with the repository-selecting git variables removed"
 typeset seen="$(cat "${fix}/.suite-env" 2>/dev/null)"
 if [[ "${seen}" == "GIT_DIR=unset GIT_WORK_TREE=unset GIT_INDEX_FILE=unset GIT_COMMON_DIR=unset GIT_PREFIX=unset GIT_OBJECT_DIRECTORY=unset GIT_NAMESPACE=unset GIT_CONFIG_PARAMETERS=unset" ]]; then
@@ -153,6 +164,38 @@ if [[ "${seen}" == "GIT_DIR=unset GIT_WORK_TREE=unset GIT_INDEX_FILE=unset GIT_C
 else
     test_fail "git environment" "the suite saw: ${seen:-nothing (the suite did not run: rc=${rc} ${out:0:120})}"
 fi
+
+# --- the suite runs with a scratch HOME, never the caller's or one inside the repository ---
+test_start "the Sovereign suite runs with a scratch HOME, not the caller's or one inside the repository"
+typeset seen_home="$(cat "${fix}/.suite-home" 2>/dev/null)"
+if [[ -n "${seen_home}" && "${seen_home}" != "${fix}/callerhome" && "${seen_home}" != "${fix}"* ]]; then
+    test_pass "the suite saw HOME=${seen_home}"
+else
+    test_fail "scratch HOME" "the suite saw: ${seen_home:-nothing}"
+fi
+
+# --- a runner that cannot start, and a missing behave, are "could not run" -------------
+print four > f && git commit -qam four
+print start > .suite-rc
+run_hook
+test_start "a runner that cannot start is reported as could not run, not as a test or contract failure"
+if (( rc != 0 )) && [[ "${out}" == *"could not run"* && "${out}" != *"Mandate L Violation"* && "${out}" != *widget-check* ]]; then
+    test_pass "reported as could not run (exit ${rc})"
+else
+    test_fail "runner cannot start" "rc=${rc} ${out:0:200}"
+fi
+print pass > .suite-rc
+
+print five > f && git commit -qam five
+touch "${fix}/.pol-nobehave"
+run_hook
+test_start "behave unavailable is reported as could not run, not as a Proof of Life failure"
+if (( rc != 0 )) && [[ "${out}" == *"could not run"* && "${out}" != *"Mandate L Violation"* ]]; then
+    test_pass "reported as could not run (exit ${rc})"
+else
+    test_fail "behave unavailable" "rc=${rc} ${out:0:200}"
+fi
+rm -f "${fix}/.pol-nobehave"
 
 echo "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"
 (( TESTS_PASSED > 0 && TESTS_FAILED == 0 ))
