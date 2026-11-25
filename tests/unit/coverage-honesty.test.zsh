@@ -262,7 +262,7 @@ check "exclusion naming a missing file: no test ran" "! ran_any '${R6C}'" "marke
 #-------------------------------------------------------------------------------
 # Case 7: static checks against the real repository
 typeset REAL_ENTRIES="" ENTRY_COUNT=0 ENTRY_NAMES="" BLANK_REASONS=0
-typeset WANT_NAMES=$'integration/jupyterlab-spoke.test.zsh\nintegration/tech-stack-empirical.test.zsh\nunit/git-fixture-isolation.test.zsh'
+typeset WANT_NAMES=$'integration/jupyterlab-spoke.test.zsh\nintegration/spoke-smoke-matrix.test.zsh\nintegration/tech-stack-empirical.test.zsh\nunit/git-fixture-isolation.test.zsh'
 if [[ -f "${REAL_EXCL}" ]]; then
     REAL_ENTRIES=$(grep -Ev '^[[:space:]]*(#|$)' "${REAL_EXCL}")
 fi
@@ -275,10 +275,10 @@ while IFS= read -r line; do
 done <<< "${REAL_ENTRIES}"
 
 check "static: tests/ci-coverage-exclusions.txt exists" "[[ -f '${REAL_EXCL}' ]]" "missing: ${REAL_EXCL}"
-check "static: exactly three non-comment entries" "[[ \${ENTRY_COUNT} == 3 ]]" "count=${ENTRY_COUNT}"
-check "static: the entries are the jupyterlab, tech-stack and git-fixture tests" "[[ \"\${ENTRY_NAMES}\" == \"\${WANT_NAMES}\" ]]" "names=${ENTRY_NAMES}"
+check "static: exactly four non-comment entries" "[[ \${ENTRY_COUNT} == 4 ]]" "count=${ENTRY_COUNT}"
+check "static: the entries are the jupyterlab, spoke-smoke-matrix, tech-stack and git-fixture tests" "[[ \"\${ENTRY_NAMES}\" == \"\${WANT_NAMES}\" ]]" "names=${ENTRY_NAMES}"
 check "static: every entry has a non-empty reason" "[[ \${BLANK_REASONS} == 0 ]]" "entries without a reason: ${BLANK_REASONS}"
-check "static: all three named test files exist" "[[ -f '${REPO}/tests/integration/jupyterlab-spoke.test.zsh' && -f '${REPO}/tests/integration/tech-stack-empirical.test.zsh' && -f '${REPO}/tests/unit/git-fixture-isolation.test.zsh' ]]" "a named test file is missing"
+check "static: all four named test files exist" "[[ -f '${REPO}/tests/integration/jupyterlab-spoke.test.zsh' && -f '${REPO}/tests/integration/spoke-smoke-matrix.test.zsh' && -f '${REPO}/tests/integration/tech-stack-empirical.test.zsh' && -f '${REPO}/tests/unit/git-fixture-isolation.test.zsh' ]]" "a named test file is missing"
 
 #-------------------------------------------------------------------------------
 # Case 8: a failed merge is reported honestly

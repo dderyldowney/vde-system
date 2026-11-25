@@ -396,6 +396,19 @@ tests/
 - Constants
   - All constants defined
 
+#### spoke-smoke-matrix.test.zsh
+**Starts one Spoke from each category, three at a time (python, postgres, redis, then python, nginx, js):**
+
+- Stops only the Spokes it started; a Spoke already running is left running
+- Checks SSH login as devuser, the SSH agent, and each Spoke's own tool or service; for the language Spokes (python, js) a file written in the workspace must appear at the mount's path on the host
+- Checks DNS and TCP from python to the other Spokes, and that a Node server in js answers a client in python
+- A Spoke that does not become ready is given about two minutes
+- Needs Docker and the Spoke images; run by hand before a release and after any change to templates, images or the entrypoint (the CI coverage job skips it, see `tests/ci-coverage-exclusions.txt`)
+
+```zsh
+zsh tests/integration/spoke-smoke-matrix.test.zsh
+```
+
 ### Bug Fix Validation Tests
 
 #### bug-fix-validation.test.sh
