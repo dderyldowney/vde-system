@@ -35,10 +35,14 @@ cd "${PROJECT_ROOT}" || exit 1
 source "${PROJECT_ROOT}/lib/vde-constants" >/dev/null 2>&1
 source "${PROJECT_ROOT}/lib/vm-common" >/dev/null 2>&1
 zmodload zsh/zselect
+# EPOCHSECONDS: the absolute deadline in wait_port is measured in wall-clock seconds.
+zmodload zsh/datetime
 
 typeset TESTS_PASSED=0
 typeset TESTS_FAILED=0
 typeset RUN_TAG="$$"
+# The timeout command that bounds every probe; resolved at the start of main (timeout, else gtimeout).
+typeset TIMEOUT_CMD=""
 if [[ -t 1 ]]; then
   typeset GREEN='\033[0;32m' RED='\033[0;31m' YELLOW='\033[0;33m' RESET='\033[0m'
 else
@@ -91,7 +95,7 @@ svc_port_of() { local p; p="$(get_vm_info svc_ports "vde-${1}" 2>/dev/null)"; pr
 # timeout so a stalled probe cannot hang the run); prints its output, returns its status.
 in_spoke() {
   local name="${1}"; shift
-  timeout 45 ssh -n "${SSH_OPTS[@]}" -p "$(ssh_port_of "${name}")" devuser@127.0.0.1 "$@" 2>&1
+  "${TIMEOUT_CMD}" 45 ssh -n "${SSH_OPTS[@]}" -p "$(ssh_port_of "${name}")" devuser@127.0.0.1 "$@" 2>&1
 }
 
 # check <label> <status> <output> <pattern>: pass only on status 0 AND a non-empty match.
@@ -113,29 +117,54 @@ typeset -a STARTED=()
 typeset NODE_SRV_FILE=""
 
 # cleanup_node: remove the Node server and its files (also in a Spoke this run did not start).
+# The remote status is the rm's status (a kill of an already-exited server is harmless). On failure
+# NODE_SRV_FILE is kept so the EXIT trap retries, and the failure counts as a FAIL.
 cleanup_node() {
   [[ -n "${NODE_SRV_FILE}" ]] || return 0
-  in_spoke js "kill \$(cat ${NODE_SRV_FILE}.pid) 2>/dev/null; rm -f ${NODE_SRV_FILE} ${NODE_SRV_FILE}.pid; true" >/dev/null
-  NODE_SRV_FILE=""
+  if in_spoke js "kill \$(cat ${NODE_SRV_FILE}.pid) 2>/dev/null; rm -f ${NODE_SRV_FILE} ${NODE_SRV_FILE}.pid" >/dev/null; then
+    NODE_SRV_FILE=""
+    return 0
+  fi
+  print -r -- "[WARN] the Node server's files in vde-js could not be removed; kept for a retry at exit: ${NODE_SRV_FILE}"
+  test_fail "cleanup: remove the Node server in vde-js" "${NODE_SRV_FILE} kept for a retry"
+  return 1
 }
 
 # cleanup: remove the Node server, then stop only the Spokes this run started. A Spoke
 # that cannot be stopped is reported and stays tracked, never silently forgotten.
 cleanup() {
-  cleanup_node
-  (( ${#STARTED} )) || return 0
+  local -i rc=0
+  cleanup_node || rc=1
+  (( ${#STARTED} )) || return "${rc}"
   local s
   local -a failed=()
   for s in "${STARTED[@]}"; do
     "${PROJECT_ROOT}/bin/vde" stop "${s}" >/dev/null 2>&1 || failed+=("${s}")
   done
   STARTED=("${failed[@]}")
-  (( ${#failed} == 0 )) && return 0
+  (( ${#failed} == 0 )) && return "${rc}"
   test_fail "cleanup: stop the Spokes this run started" "could not stop: ${failed}"
   return 1
 }
+
+# exit_cleanup: the EXIT trap. Retries cleanup. If any owned Spoke is still running, the scratch
+# Projects dir must survive (a Spoke has it mounted), so vde_test_env_leave is taken off the exit
+# list instead of called, and the dir is named in a line. When everything stopped, leave runs as before.
+exit_cleanup() {
+  local dir
+  local -i rc=0
+  cleanup || rc=1
+  if (( ${#STARTED[@]} )); then
+    dir="$(vde_test_env_dir 2>/dev/null)"
+    print -r -- "[PRESERVED] could not stop these Spokes (still running): ${STARTED[*]}. Scratch Projects dir kept at ${dir:-(none)}; stop those Spokes, then remove that dir."
+    zshexit_functions=("${(@)zshexit_functions:#vde_test_env_leave}")
+  fi
+  # A failure that only shows up in this retry must still fail the run: exit 1 sets the final status.
+  (( rc == 0 )) || exit 1
+  return 0
+}
 # An interrupt or termination stops what this run started and ends the run.
-trap cleanup EXIT
+trap exit_cleanup EXIT
 trap 'cleanup; exit 130' INT
 trap 'cleanup; exit 143' TERM
 
@@ -159,11 +188,17 @@ wait_ready() {
   return 1
 }
 
-# wait_port <from-spoke> <host> <port>: poll a TCP connect from a Spoke (about 10 s).
+# wait_port <from-spoke> <host> <port>: poll a TCP connect from a Spoke until an absolute deadline
+# (10 s from the call). Each probe is bounded by the time left (at most 45 s, at least 1 s), so a
+# stalled connect cannot push the wait past its documented total.
 wait_port() {
-  local from="${1}" host="${2}" port="${3}" i
-  for (( i = 0; i < 40; i++ )); do
-    in_spoke "${from}" "zmodload zsh/net/tcp && ztcp ${host} ${port}" >/dev/null && return 0
+  local from="${1}" host="${2}" port="${3}" probe
+  local -i deadline=$(( EPOCHSECONDS + 10 )) left
+  while (( EPOCHSECONDS < deadline )); do
+    left=$(( deadline - EPOCHSECONDS ))
+    probe=$(( left < 45 ? left : 45 ))
+    (( probe < 1 )) && probe=1
+    "${TIMEOUT_CMD}" "${probe}" ssh -n "${SSH_OPTS[@]}" -p "$(ssh_port_of "${from}")" devuser@127.0.0.1 "zmodload zsh/net/tcp && ztcp ${host} ${port}" >/dev/null 2>&1 && return 0
     zselect -t 25
   done
   return 1
@@ -224,13 +259,13 @@ check_node() {
   node_dir=/tmp
   workspace_src js >/dev/null && node_dir=/home/devuser/workspace
   node_js='const fs=require("fs"),http=require("http");
-const f="'"${node_dir}"'/.smoke-node."+process.pid;
+const f="'"${node_dir}"'/.smoke-node.'"${RUN_TAG}"'";
 fs.writeFileSync(f,"ok");const r=fs.readFileSync(f,"utf8");fs.unlinkSync(f);
 const s=http.createServer((q,res)=>res.end("hello-from-node")).listen(0,()=>{
  http.get("http://127.0.0.1:"+s.address().port,x=>{let d="";x.on("data",c=>d+=c);
  x.on("end",()=>{console.log("fs-"+r+" http-"+d);s.close()})})})'
   node_file="/tmp/vde-smoke-node.${RUN_TAG}.js"
-  out="$(print -r -- "${node_js}" | timeout 45 ssh "${SSH_OPTS[@]}" -p "$(ssh_port_of js)" devuser@127.0.0.1 "cat > ${node_file} && node ${node_file}; r=\$?; rm -f ${node_file} ${node_dir}/.smoke-node.*(N); exit \$r" 2>&1)"; rc=$?
+  out="$(print -r -- "${node_js}" | "${TIMEOUT_CMD}" 45 ssh "${SSH_OPTS[@]}" -p "$(ssh_port_of js)" devuser@127.0.0.1 "cat > ${node_file} && node ${node_file}; r=\$?; rm -f ${node_file} ${node_dir}/.smoke-node.${RUN_TAG}; exit \$r" 2>&1)"; rc=$?
   check "js: Node fs round trip and HTTP server answer themselves" ${rc} "${out}" '^fs-ok http-hello-from-node$'
 
   # A per-run port and a per-run response, so a stale listener cannot satisfy the check,
@@ -240,12 +275,12 @@ const s=http.createServer((q,res)=>res.end("hello-from-node")).listen(0,()=>{
   srv_file="/tmp/vde-smoke-srv.${RUN_TAG}.js"
   srv_js='require("http").createServer((q,r)=>r.end("'"${srv_body}"'")).listen('"${srv_port}"')'
   NODE_SRV_FILE="${srv_file}"
-  print -r -- "${srv_js}" | timeout 45 ssh "${SSH_OPTS[@]}" -p "$(ssh_port_of js)" devuser@127.0.0.1 "cat > ${srv_file}; node ${srv_file} >/dev/null 2>&1 </dev/null & echo \$! > ${srv_file}.pid" >/dev/null 2>&1
+  print -r -- "${srv_js}" | "${TIMEOUT_CMD}" 45 ssh "${SSH_OPTS[@]}" -p "$(ssh_port_of js)" devuser@127.0.0.1 "cat > ${srv_file}; node ${srv_file} >/dev/null 2>&1 </dev/null & echo \$! > ${srv_file}.pid" >/dev/null 2>&1
   out="$(in_spoke js "kill -0 \$(cat ${srv_file}.pid)")"; rc=$?
   if (( rc != 0 )); then
     out="the Node server did not start (port ${srv_port} may be in use)"; rc=1
   elif wait_port "${src}" vde-js "${srv_port}"; then
-    out="$(print -r -- 'import urllib.request as u; print("cross-" + u.urlopen("http://vde-js:'"${srv_port}"'", timeout=8).read().decode())' | timeout 45 ssh "${SSH_OPTS[@]}" -p "$(ssh_port_of "${src}")" devuser@127.0.0.1 'python3 -' 2>&1)"; rc=$?
+    out="$(print -r -- 'import urllib.request as u; print("cross-" + u.urlopen("http://vde-js:'"${srv_port}"'", timeout=8).read().decode())' | "${TIMEOUT_CMD}" 45 ssh "${SSH_OPTS[@]}" -p "$(ssh_port_of "${src}")" devuser@127.0.0.1 'python3 -' 2>&1)"; rc=$?
   else
     out="port ${srv_port} on vde-js never answered"; rc=1
   fi
@@ -309,7 +344,7 @@ run_batch() {
   # Spoke -> Spoke from python: DNS on the real SSH port, then TCP to each service port.
   for t in "${spokes[@]}"; do
     [[ "${t}" == "python" ]] && continue
-    out="$(timeout 45 "${PROJECT_ROOT}/bin/vde" dns-check python "${t}" "$(ssh_port_of "${t}")" 2>&1)"; rc=$?
+    out="$("${TIMEOUT_CMD}" 45 "${PROJECT_ROOT}/bin/vde" dns-check python "${t}" "$(ssh_port_of "${t}")" 2>&1)"; rc=$?
     check "python -> ${t}: DNS and bridge" ${rc} "${out}" 'Certification: PASS'
     port="$(svc_port_of "${t}")"
     if [[ -n "${port}" ]]; then
@@ -327,6 +362,16 @@ run_batch() {
 }
 
 main() {
+  # Resolve the timeout command before any probe (macOS ships neither; brew install coreutils gives gtimeout).
+  if command -v timeout >/dev/null 2>&1; then
+    TIMEOUT_CMD=timeout
+  elif command -v gtimeout >/dev/null 2>&1; then
+    TIMEOUT_CMD=gtimeout
+  else
+    print -r -- "[FAIL] neither timeout nor gtimeout is installed; the matrix needs one to bound its probes (macOS: brew install coreutils)"
+    exit 1
+  fi
+
   # Preflight: refuse to pass on an environment that cannot run the matrix.
   test_start "preflight: Docker daemon, VDE SSH identity and the vde CLI are available"
   if ! docker info >/dev/null 2>&1; then
