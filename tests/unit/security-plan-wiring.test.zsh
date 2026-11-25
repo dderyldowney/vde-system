@@ -168,6 +168,20 @@ test_process_lifecycle() {
     expect_has "uses the advisory's temporary private fork" "${PROCESS}" 'temporary private fork'
     expect_has "says how the Strike Protocol runs in a private fork" "${PROCESS}" '**The Strike Protocol in a private fork.**'
     expect_has "fixes merge to public branches only in the release-day sequence" "${PROCESS}" '**Release-day sequence for a private fork.**'
+    expect_has "a combined gate precedes the release chain" "${PROCESS}" '**Combined gate before the release chain.**'
+    expect_has "the combined gate names the full Sovereign suite" "${PROCESS}" 'tests/run-sovereign-tests.zsh'
+    expect_has "the combined gate names the Spoke smoke matrix" "${PROCESS}" 'tests/integration/spoke-smoke-matrix.test.zsh'
+    expect_has "the combined gate stops the sequence on a failure" "${PROCESS}" 'nothing is rolled to `stable` until the gate is green'
+    expect_has "the combined gate runs on a local candidate tree that is never pushed" "${PROCESS}" 'which is never pushed'
+    expect_has "the merge order comes from a release plan the User approves before release day" "${PROCESS}" 'a list of the fork pull requests in merge order, with any shared commits noted, that the User approves before release day'
+    expect_has "a Vulnerability failure is fixed in the private fork, not on public develop" "${PROCESS}" 'is fixed in that advisory'"'"'s temporary private fork'
+    expect_has "each fork merge is approved after the gate, naming the tested head sha" "${PROCESS}" 'names the head sha the gate tested'
+    expect_has "each promotion pull request needs its own written approval" "${PROCESS}" 'needs its own written approval, as does the roll from `stable` to `main`'
+    # The gate's two named tests must exist, or the gate cannot run as written.
+    local gate_file
+    for gate_file in tests/run-sovereign-tests.zsh tests/integration/spoke-smoke-matrix.test.zsh; do
+        if tracked "${gate_file}"; then test_pass "the combined gate's ${gate_file} is tracked"; else test_fail "the combined gate's ${gate_file}" "is not tracked or is empty"; fi
+    done
     expect_has "reserves each item number in the private ledger first" "${PROCESS}" '**Reserve the item number first.**'
     expect_has "checks for a duplicate before drafting an advisory" "${PROCESS}" '**Check for a duplicate first.**'
     expect_has "closes the draft advisory on Hardening or Not an issue" "${PROCESS}" '**Close the draft on Hardening or Not an issue.**'
