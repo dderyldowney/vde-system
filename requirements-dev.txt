@@ -4,5 +4,5 @@ cucumber-expressions==20.2.0
 cucumber-tag-expressions==11.2.0
 parse==1.22.4
 parse_type==0.6.6
-PyYAML==6.0.3
+PyYAML==6.0.4
 six==1.17.0
