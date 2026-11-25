@@ -173,10 +173,19 @@ test_process_lifecycle() {
     expect_has "the combined gate names the Spoke smoke matrix" "${PROCESS}" 'tests/integration/spoke-smoke-matrix.test.zsh'
     expect_has "the combined gate stops the sequence on a failure" "${PROCESS}" 'nothing is rolled to `stable` until the gate is green'
     expect_has "the combined gate runs on a local candidate tree that is never pushed" "${PROCESS}" 'which is never pushed'
-    expect_has "the merge order comes from a release plan the User approves before release day" "${PROCESS}" 'a list of the fork pull requests in merge order, with any shared commits noted, that the User approves before release day'
+    expect_has "the combined gate pins the develop base sha" "${PROCESS}" 'pins the `develop` base sha'
+    expect_has "the combined gate names match-head-commit for the fork merges" "${PROCESS}" 'match-head-commit'
+    expect_has "the combined gate's candidate tree is identical to the candidate tree" "${PROCESS}" 'identical to the candidate tree'
+    expect_has "the combined gate holds every roll to stable until it passes" "${PROCESS}" 'before anything is rolled to `stable`'
+    expect_has "the merge order comes from a release plan the User approves before release day" "${PROCESS}" 'a list of the fork pull requests in merge order, with any shared commits noted, and it pins the `develop` base sha and each fork head sha the gate tests; the User approves it before release day'
     expect_has "a Vulnerability failure is fixed in the private fork, not on public develop" "${PROCESS}" 'is fixed in that advisory'"'"'s temporary private fork'
     expect_has "each fork merge is approved after the gate, naming the tested head sha" "${PROCESS}" 'names the head sha the gate tested'
     expect_has "each promotion pull request needs its own written approval" "${PROCESS}" 'needs its own written approval, as does the roll from `stable` to `main`'
+    # Section 5 (Patch Release) must not mention the combined gate: the gate is pinned in Section 4 only.
+    local sec5
+    sec5="$(sed -n '/^## 5\./,/^## 6\./p' "${VDE_ROOT_DIR}/${PROCESS}")"
+    [[ "${sec5:l}" != *"combined gate"* ]] && test_pass "Section 5 does not mention the combined gate" \
+        || test_fail "Section 5 does not mention the combined gate" "Section 5 still names the combined gate"
     # The gate's two named tests must exist, or the gate cannot run as written.
     local gate_file
     for gate_file in tests/run-sovereign-tests.zsh tests/integration/spoke-smoke-matrix.test.zsh; do
