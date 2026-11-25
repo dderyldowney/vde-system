@@ -351,6 +351,11 @@ cp -- "${REAL_HOOK}" "${R11}/githooks/proof-of-life-hook.zsh"
 print -r -- '#!/usr/bin/env zsh' > "${R11}/bin/vde-enforce-uap.zsh"
 print -r -- 'exit 0' >> "${R11}/bin/vde-enforce-uap.zsh"
 chmod +x -- "${R11}/bin/vde-enforce-uap.zsh"
+# The gate runs the Sovereign suite before the Proof of Life (Signet #769): a stub that passes keeps this case about the scratch base.
+mkdir -p -- "${R11}/tests"
+print -r -- '#!/usr/bin/env zsh' > "${R11}/tests/run-sovereign-tests.zsh"
+print -r -- 'exit 0' >> "${R11}/tests/run-sovereign-tests.zsh"
+chmod +x -- "${R11}/tests/run-sovereign-tests.zsh"
 cat > "${SCRATCH}/hook-stubs/python3" <<'PY3'
 #!/usr/bin/env zsh
 typeset _p="${VDE_PROJECTS_DIR-UNSET}"
