@@ -1,13 +1,29 @@
 #!/usr/bin/env zsh
 # @forge (Governance Sentinel)
-# githooks/proof-of-life-hook.zsh - Enforces Mandate L (Proof of Life)
+# githooks/proof-of-life-hook.zsh - Enforces Mandate L (Proof of Life), commit by commit (Signet #770)
 # Part of the Pre-Strike Sentinel
+#
+# The orchestrator. It works out which commits a push carries (oldest first), certifies each one
+# through lib/vde-gate-commits (the commit's tree is checked in a throwaway worktree and stamped per
+# tree), and the checks themselves run inside githooks/gate-tree.zsh. Every pushed ref's tip (the
+# commit each ref points to after the push, peeled through annotated tags) gets the full tier, and so
+# does the newest commit of the list; every other commit gets the fast tier. A manual run (no ref
+# lines on stdin) certifies HEAD in full and refuses a dirty tracked worktree. An interrupt (INT or
+# TERM) removes the throwaway worktrees and blocks the push.
 typeset _ZSH_PURE=${(%):-%x}
-set -e
 
 # Determine VDE root directory
-typeset VDE_ROOT_DIR=$(git rev-parse --show-toplevel)
+typeset VDE_ROOT_DIR
+VDE_ROOT_DIR="$(git rev-parse --show-toplevel)" || { echo "[ERROR] not inside a git repository"; exit 1; }
 export VDE_ROOT_DIR
+
+# lib/vde-gate-commits defines _VDE_GATE_SCRUB: the variables that select a repository for git. Every
+# git call that targets the gate's own repository with -C runs with these unset, so a caller's
+# environment cannot redirect it. It is sourced first because the prune below already uses it.
+source "${VDE_ROOT_DIR}/lib/vde-gate-commits" || { echo "[ERROR] cannot load lib/vde-gate-commits"; exit 1; }
+
+# Clear any worktree registration left behind by an earlier run that was killed.
+env "${_VDE_GATE_SCRUB[@]}" git -C "${VDE_ROOT_DIR}" worktree prune >/dev/null 2>&1
 
 # The gate runs against its own scratch Projects base, never the caller's.
 source "${VDE_ROOT_DIR}/lib/vde-test-env" || { echo "[ERROR] cannot load lib/vde-test-env"; exit 1; }
@@ -16,100 +32,113 @@ vde_test_env_enter || { echo "[ERROR] cannot create a scratch Projects base"; ex
 # Source core libraries
 [[ -f "${VDE_ROOT_DIR}/lib/vde-shell-compat" ]] && source "${VDE_ROOT_DIR}/lib/vde-shell-compat"
 [[ -f "${VDE_ROOT_DIR}/lib/vde-log" ]] && source "${VDE_ROOT_DIR}/lib/vde-log"
-source "${VDE_ROOT_DIR}/lib/vde-pol-stamp"
+source "${VDE_ROOT_DIR}/lib/vde-pol-stamp" || { echo "[ERROR] cannot load lib/vde-pol-stamp"; vde_test_env_leave; exit 1; }
 
 # Colors
 typeset RED='\033[0;31m'
 typeset GREEN='\033[0;32m'
 typeset RESET='\033[0m'
 
-typeset _SENTINEL=${(U):-"sentinel active"}
-echo "[${_SENTINEL}] Running Sovereign Audit (Rule A)..."
-# The push gate refreshes origin/develop (one best-effort, non-prompting fetch) so the shrink-only baseline check is judged against the real base, not a stale cached ref (Signet #646).
-if ! VDE_SHIB_REFRESH_BASE=1 zsh "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" --quiet; then
-    echo -e "${RED}[ERROR] Sovereign Audit Failed. Push blocked.${RESET}"
+# An interrupt removes the scratch area (and with it the throwaway worktrees), prunes their
+# registrations, and blocks the push. These replace the defaults that vde_test_env_enter sets.
+_vde_hook_interrupted() {
     vde_test_env_leave
-    exit 1
-fi
-
-echo "[${_SENTINEL}] Running Proof of Life (Mandate L) Validation..."
-# ZSH-native shibboleth (Rule 1)
-typeset _SENTINEL=${(U):-"sentinel active"}
-echo "[${_SENTINEL}] Feature: tests/features/core-infrastructure/proof-of-life-the-contract.feature"
-
-# Reuse (Signet #602): skip only when this exact tree already passed Proof of Life
-# and the tracked worktree is clean. Anything weaker runs the full contract.
-# The hook receives "<local ref> <local sha> <remote ref> <remote sha>" lines on
-# stdin when run by git; every outgoing tree must be the stamped one.
-typeset -a _pushed_shas=()
-typeset _lref _lsha _rref _rsha
-if [[ ! -t 0 ]]; then
-    while read -r _lref _lsha _rref _rsha; do
-        [[ -z "${_lsha//0/}" ]] || _pushed_shas+=("${_lsha}")
-    done
-fi
-if vde_pol_push_covered HEAD "${_pushed_shas[@]}"; then
-    echo -e "${GREEN}✓ Proof of Life already certified for this exact tree (stamp matched, worktree clean). Skipping rerun.${RESET}"
-    vde_test_env_leave
-    exit 0
-fi
-
-# The gate's two proofs run under ONE stamp (Signet #769): the Sovereign suite certifies the
-# patchset (the code's own tests), the Proof of Life certifies the VDE core lifecycle. A stamp
-# therefore means both passed for this exact clean tree. The suite runs first (cheaper, fails fast);
-# a failing suite blocks the push, names the failing suite (the runner prints it) and the Proof of
-# Life never starts. Return 3 = the suite failed or is missing, 2 = the Proof of Life failed, 4 = the gate could not start a runner
-# (no scratch directory, the suite runner could not be started, or behave is unavailable), anything else = the gate itself could not run.
-_gate_proofs() {
-    if [[ ! -f "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" ]]; then
-        echo -e "${RED}[ERROR] tests/run-sovereign-tests.zsh is missing. Push blocked.${RESET}"
-        return 3
-    fi
-    echo "[${_SENTINEL}] Running the Sovereign suite (tests/run-sovereign-tests.zsh)..."
-    # The suite runs under a throwaway HOME inside the gate's scratch directory, never the caller's HOME.
-    typeset _gate_scratch="$(vde_test_env_dir)"
-    if [[ -z "${_gate_scratch}" ]]; then
-        echo -e "${RED}[ERROR] no scratch directory for the suite. The gate could not run.${RESET}"
-        return 4
-    fi
-    typeset _gate_home="${_gate_scratch}/home"
-    mkdir -p "${_gate_home}"
-    # Git exports GIT_DIR (in a linked worktree, the worktree's git directory) and other repository-selecting
-    # variables into a hook. The suites build their own throwaway git repositories, so with those variables
-    # set their git commands land in the REAL repository (Signet #656). Run the suite without them.
-    typeset -i _suite_rc=0
-    env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR -u GIT_PREFIX -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES -u GIT_NAMESPACE -u GIT_CONFIG_COUNT -u GIT_CONFIG_PARAMETERS -u GIT_TEMPLATE_DIR HOME="${_gate_home}" zsh "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" || _suite_rc=$?
-    if (( _suite_rc == 126 || _suite_rc == 127 )); then
-        echo -e "${RED}[ERROR] The Sovereign suite runner could not be started (status ${_suite_rc}). The gate could not run. Push blocked.${RESET}"
-        return 4
-    fi
-    if (( _suite_rc != 0 )); then
-        echo -e "${RED}[ERROR] Sovereign suite failed. Push blocked.${RESET}"
-        echo -e "  The failing suite is named above. Run 'zsh tests/run-sovereign-tests.zsh' for details."
-        return 3
-    fi
-    echo "[${_SENTINEL}] Running Proof of Life (Mandate L) Validation..."
-    if ! python3 -c 'import behave' >/dev/null 2>&1; then
-        echo -e "${RED}[ERROR] python3 with behave is unavailable. The gate could not run. Push blocked.${RESET}"
-        return 4
-    fi
-    # We use the full path to ensure it runs correctly from any directory
-    python3 -m behave "${VDE_ROOT_DIR}/tests/features/core-infrastructure/proof-of-life-the-contract.feature" --quiet --no-summary || return 2
+    env "${_VDE_GATE_SCRUB[@]}" git -C "${VDE_ROOT_DIR}" worktree prune >/dev/null 2>&1
+    echo -e "${RED}[ERROR] The gate was interrupted. Push blocked.${RESET}"
+    exit "$1"
 }
-typeset -i _gate_rc=0
-if vde_pol_run_and_stamp _gate_proofs; then
-    echo -e "${GREEN}✓ Proof of Life Certified.${RESET}"
-    vde_test_env_leave
-    exit 0
-else
-    _gate_rc=$?
-    if (( _gate_rc == 2 )); then
-        echo -e "${RED}[ERROR] Mandate L Violation: Proof of Life Contract Failed.${RESET}"
-        echo -e "  The core VM lifecycle is broken. Push blocked."
-        echo -e "  Run 'python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature' for details."
-    elif (( _gate_rc != 3 )); then
-        echo -e "${RED}[ERROR] The pre-push gate could not run (status ${_gate_rc}). Push blocked.${RESET}"
-    fi
-    vde_test_env_leave
-    exit 1
+TRAPINT() { emulate -L zsh; _vde_hook_interrupted 130; }
+TRAPTERM() { emulate -L zsh; _vde_hook_interrupted 143; }
+
+echo "[SENTINEL ACTIVE] Gate: per-commit Proof of Life (Mandate L)"
+
+# The hook receives "<local ref> <local sha> <remote ref> <remote sha>" lines on stdin when git runs it.
+# Read them once: an interactive run (terminal stdin) or a run with no ref lines at all is a manual run.
+typeset _ref_lines=""
+if [[ ! -t 0 ]]; then
+    _ref_lines="$(cat)"
 fi
+typeset -i _manual=0
+[[ -z "${_ref_lines//[[:space:]]/}" ]] && _manual=1
+
+typeset -a _commits=()
+typeset -A _tips=()
+typeset _range_out="" _peeled _lref _lsha _rref _rsha
+if (( _manual )); then
+    # Certifying HEAD says nothing about uncommitted edits, so the tracked worktree must be clean.
+    vde_pol_clean_tree >/dev/null || {
+        echo -e "${RED}[ERROR] The tracked worktree has uncommitted changes. A manual run certifies HEAD only; commit or stash them first. Push blocked.${RESET}"
+        vde_test_env_leave
+        exit 1
+    }
+    _commits=("$(git rev-parse --verify HEAD)")
+    _tips[${_commits[1]}]=1
+else
+    # Every pushed ref's tip, peeled to its commit. A line that does not peel to a commit (a tree or
+    # blob ref, or a deletion) names no tip.
+    while read -r _lref _lsha _rref _rsha || [[ -n "${_lref}" ]]; do
+        [[ -n "${_lsha}" && -n "${_lsha//0/}" ]] || continue
+        _peeled="$(git rev-parse --verify --quiet "${_lsha}^{commit}")" || continue
+        [[ -n "${_peeled}" ]] && _tips[${_peeled}]=1
+    done <<< "${_ref_lines}"
+
+    _range_out="$(print -r -- "${_ref_lines}" | vde_gate_range_commits "${1:-}")" || {
+        echo -e "${RED}[ERROR] Could not list the commits being pushed. Push blocked.${RESET}"
+        vde_test_env_leave
+        exit 1
+    }
+    [[ -n "${_range_out}" ]] && _commits=("${(@f)_range_out}")
+    if (( ${#_commits} == 0 )); then
+        echo "nothing to certify (the push carries no new commits)"
+        vde_test_env_leave
+        exit 0
+    fi
+fi
+
+typeset -i _total=${#_commits}
+typeset -a _tiers=()
+typeset -i _full_count=0 _i
+typeset _c
+for (( _i = 1; _i <= _total; _i++ )); do
+    _c="${_commits[_i]}"
+    # The newest commit is always a tip (belt and braces); any other commit that is a pushed tip too.
+    if (( _i == _total )) || (( ${+_tips[${_c}]} )); then
+        _tiers[_i]=full
+        (( _full_count += 1 ))
+    else
+        _tiers[_i]=fast
+    fi
+done
+
+typeset -i _earlier=$(( _total - _full_count ))
+typeset _tip="${_commits[_total]}"
+if (( _full_count == 1 )); then
+    echo "${_earlier} earlier commit(s): fast check; tip ${_tip[1,7]}: full certification"
+else
+    echo "${_earlier} earlier commit(s): fast check; ${_full_count} tip(s) full certification"
+fi
+
+# Oldest first. Each commit is certified on its own tree; the first failure stops the push.
+typeset -i _reused=0
+typeset _tier
+for (( _i = 1; _i <= _total; _i++ )); do
+    _c="${_commits[_i]}"
+    _tier="${_tiers[_i]}"
+    if ! vde_gate_certify_commit "${VDE_ROOT_DIR}" "${_c}" "${_tier}"; then
+        vde_test_env_leave
+        exit 1
+    fi
+    # A reuse is a commit that vde_gate_certify_commit found already certified (it sets VDE_GATE_LAST_REUSED to 1).
+    if (( ${VDE_GATE_LAST_REUSED:-0} == 1 )); then
+        (( _reused += 1 ))
+    fi
+done
+
+echo -e "${GREEN}✓ Proof of Life Certified.${RESET}"
+if (( _full_count == 1 )); then
+    echo "${_total} commit(s) checked (${_reused} reused), tip fully certified"
+else
+    echo "${_total} commit(s) checked (${_reused} reused), all tips fully certified"
+fi
+vde_test_env_leave
+exit 0

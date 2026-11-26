@@ -18,7 +18,7 @@ typeset REPO="${0:A:h:h:h}"
 typeset HELPER="${REPO}/lib/vde-test-env"
 typeset REAL_RUNNER="${REPO}/tests/run-sovereign-tests.zsh"
 typeset REAL_COV="${REPO}/bin/coverage.zsh"
-typeset REAL_HOOK="${REPO}/githooks/proof-of-life-hook.zsh"
+typeset REAL_GATE_TREE="${REPO}/githooks/gate-tree.zsh"
 typeset REAL_ENV_PY="${REPO}/tests/features/environment.py"
 
 typeset TESTS_PASSED=0
@@ -343,11 +343,11 @@ typeset R10_PFILE="${SCRATCH}/probe-coverage.out"
 read_probe "${R10_PFILE}"
 entry_checks "coverage"
 
-# B11: the proof-of-life pre-push hook, with a stub python3 that records the value and exits 0
-make_fixture hook
+# B11: the per-tree gate script githooks/gate-tree.zsh (Signet #770, the pre-push orchestrator's worker), with a stub python3 that records the value and exits 0
+make_fixture gate-tree
 R11="${FX_ROOT}"
 mkdir -p -- "${R11}/githooks" "${R11}/bin" "${SCRATCH}/hook-stubs"
-cp -- "${REAL_HOOK}" "${R11}/githooks/proof-of-life-hook.zsh"
+cp -- "${REAL_GATE_TREE}" "${R11}/githooks/gate-tree.zsh"
 print -r -- '#!/usr/bin/env zsh' > "${R11}/bin/vde-enforce-uap.zsh"
 print -r -- 'exit 0' >> "${R11}/bin/vde-enforce-uap.zsh"
 chmod +x -- "${R11}/bin/vde-enforce-uap.zsh"
@@ -367,10 +367,12 @@ exit 0
 PY3
 chmod +x -- "${SCRATCH}/hook-stubs/python3"
 ( cd "${R11}" && timeout 120 env -u GIT_DIR -u GIT_INDEX_FILE -u GIT_WORK_TREE git -C "${R11}" init -q >/dev/null 2>&1 )
-typeset R11_PFILE="${SCRATCH}/probe-hook.out"
-( cd "${R11}" && timeout 120 env HOME="${HOME}" TMPDIR="${TMPDIR}" PATH="${SCRATCH}/hook-stubs:${PATH}" \
+# gate-tree.zsh reads the tree through git rev-parse --show-toplevel, so the fixture needs one commit (throwaway identity).
+( cd "${R11}" && timeout 120 env -u GIT_DIR -u GIT_INDEX_FILE -u GIT_WORK_TREE git -C "${R11}" -c user.name=gate-tree-fixture -c user.email=fixture@example.invalid commit -q --allow-empty -m "fixture" >/dev/null 2>&1 )
+typeset R11_PFILE="${SCRATCH}/probe-gate-tree.out"
+( cd "${R11}" && timeout 120 env -u GIT_DIR -u GIT_INDEX_FILE -u GIT_WORK_TREE HOME="${HOME}" TMPDIR="${TMPDIR}" PATH="${SCRATCH}/hook-stubs:${PATH}" \
     VDE_PROJECTS_DIR="${SENT}" PROBE_FILE="${R11_PFILE}" \
-    zsh "${R11}/githooks/proof-of-life-hook.zsh" </dev/null >/dev/null 2>&1 )
+    zsh "${R11}/githooks/gate-tree.zsh" full </dev/null >/dev/null 2>&1 )
 read_probe "${R11_PFILE}"
 entry_checks "hook"
 

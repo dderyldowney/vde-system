@@ -1,0 +1,143 @@
+#!/usr/bin/env zsh
+# @forge (Governance Sentinel)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+
+# lib/vde-gate-commits - per-commit gate certification (Signet #770, two tiers)
+#
+# A push certifies every commit of its range, oldest first. Each commit's TREE is checked in a
+# throwaway detached worktree under the scratch area (lib/vde-test-env), so the real working tree
+# is never touched. A fresh stamp (lib/vde-pol-stamp) is reused instead of a rerun: a fast result is
+# reused only for the same commit; a full result for the tree satisfies any commit with that tree.
+#
+# The caller sources lib/vde-test-env and lib/vde-pol-stamp first; this file sources nothing itself.
+#   vde_gate_range_commits <remote>                 reads ref lines on stdin, prints commits oldest first
+#   vde_gate_certify_commit <gate_root> <commit> <tier>   certifies one commit at tier fast|full
+#
+# After every vde_gate_certify_commit call, the global integer VDE_GATE_LAST_REUSED holds 1 when the
+# call returned because a fresh stamp already satisfied the request (the "already certified" path),
+# and 0 on every other path (a fresh gate run, a failure, or a bad tier).
+
+typeset -gi VDE_GATE_LAST_REUSED=0
+
+typeset -ga _VDE_GATE_VARS=(
+    GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX
+    GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_NAMESPACE
+    GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS GIT_TEMPLATE_DIR
+)
+
+typeset -ga _VDE_GATE_SCRUB=()
+typeset _vde_gate_v
+for _vde_gate_v in "${_VDE_GATE_VARS[@]}"; do
+    _VDE_GATE_SCRUB+=(-u "${_vde_gate_v}")
+done
+unset _vde_gate_v
+
+# _vde_gate_is_zero <sha>: succeeds for an all-zero object name (a deleted ref or a new branch).
+_vde_gate_is_zero() {
+    [[ -n "$1" && -z "${1//0/}" ]]
+}
+
+# vde_gate_range_commits <remote>: prints the unique commit shas to certify, oldest first.
+# Ref lines are "<lref> <lsha> <rref> <rsha>". A delete contributes nothing; a new branch (or an
+# rsha this repository does not hold) takes the commits not on any remote-tracking ref of <remote>.
+vde_gate_range_commits() {
+    local remote="$1" lref lsha rref rsha sha
+    local -a commits seen
+    local listed
+    while read -r lref lsha rref rsha || [[ -n "${lref}" ]]; do
+        [[ -n "${lsha}" ]] || continue
+        _vde_gate_is_zero "${lsha}" && continue
+        if _vde_gate_is_zero "${rsha}" || ! git cat-file -e "${rsha}^{commit}" 2>/dev/null; then
+            if [[ -n "${remote}" ]] && git config --get "remote.${remote}.url" >/dev/null 2>&1; then
+                listed="$(git rev-list --topo-order --reverse "${lsha}" --not "--remotes=${remote}")" || return 1
+            else
+                listed="$(git rev-list --topo-order --reverse "${lsha}" --not --remotes)" || return 1
+            fi
+        else
+            listed="$(git rev-list --topo-order --reverse "${rsha}..${lsha}")" || return 1
+        fi
+        for sha in ${(f)listed}; do
+            [[ -n "${sha}" ]] || continue
+            (( ${seen[(Ie)${sha}]} == 0 )) || continue
+            seen+=("${sha}")
+            commits+=("${sha}")
+        done
+    done
+    (( ${#commits} == 0 )) || print -r -- "${(F)commits}"
+    return 0
+}
+
+# vde_gate_step_name <status>: the step named in a failure line for gate-tree.zsh's exit status.
+vde_gate_step_name() {
+    case "$1" in
+        1) print -r -- "the Sovereign Audit" ;;
+        3) print -r -- "the Sovereign suite" ;;
+        2) print -r -- "the Proof of Life" ;;
+        5) print -r -- "the Gospel Audit" ;;
+        4) print -r -- "the gate could not run" ;;
+        *) print -r -- "the gate could not run (status $1)" ;;
+    esac
+}
+
+# vde_gate_certify_commit <gate_root> <commit> <tier>: certifies one commit's tree at tier fast|full.
+# A fresh stamp for the tree (at this tier or stronger) is reused. Otherwise the tree is checked in a
+# throwaway worktree by githooks/gate-tree.zsh; the stamp is written only on a pass with a clean checkout.
+vde_gate_certify_commit() {
+    local gate_root="$1" commit="$2" tier="$3"
+    local tree short subject base wt_dir wt rc=0 clean step full
+    VDE_GATE_LAST_REUSED=0
+    [[ "${tier}" == fast || "${tier}" == full ]] || { print -u2 "[ERROR] vde_gate_certify_commit: tier must be fast or full"; return 1; }
+
+    full="$(git rev-parse --verify --quiet "${commit}^{commit}")" || full=""
+    [[ -n "${full}" ]] || { print -r -u2 -- "[ERROR] vde_gate_certify_commit: commit ${commit} does not resolve"; return 1; }
+    commit="${full}"
+
+    tree="$(git rev-parse --verify --quiet "${commit}^{tree}")" || return 1
+    short="${commit[1,7]}"
+    subject="$(git log -1 --format=%s "${commit}")" || return 1
+
+    if vde_stamp_valid "${tree}" "${tier}" "${commit}"; then
+        VDE_GATE_LAST_REUSED=1
+        print -r -- "already certified (tree ${tree[1,7]}, ${tier} stamp)"
+        return 0
+    fi
+
+    base="$(vde_test_env_dir)" || { print -r -u2 -- "[ERROR] Commit ${short} \"${subject}\" failed the ${tier} check: the gate could not run (no scratch area). Push blocked."; return 1; }
+    wt_dir="$(mktemp -d "${base}/gate-wt.XXXXXX")" || { print -r -u2 -- "[ERROR] Commit ${short} \"${subject}\" failed the ${tier} check: the gate could not run (no throwaway directory). Push blocked."; return 1; }
+    [[ -n "${wt_dir}" ]] || return 1
+    wt="${wt_dir}/tree"
+
+    if ! env "${_VDE_GATE_SCRUB[@]}" git -C "${gate_root}" worktree add -q --detach "${wt}" "${commit}"; then
+        rm -rf -- "${wt_dir}" || true
+        print -r -u2 -- "[ERROR] Commit ${short} \"${subject}\" failed the ${tier} check: the gate could not run (no throwaway checkout). Push blocked."
+        return 1
+    fi
+
+    rc=0
+    ( cd "${wt}" && env "${_VDE_GATE_SCRUB[@]}" zsh "${gate_root}/githooks/gate-tree.zsh" "${tier}" ) || rc=$?
+
+    if (( rc == 0 )); then
+        clean="$( cd "${wt}" && unset -- "${_VDE_GATE_VARS[@]}" && vde_pol_clean_tree )" || clean=""
+        if [[ "${clean}" != "${tree}" ]]; then
+            rc=1
+            step="left its tree dirty"
+        fi
+    else
+        step="$(vde_gate_step_name "${rc}")"
+    fi
+
+    env "${_VDE_GATE_SCRUB[@]}" git -C "${gate_root}" worktree remove --force "${wt}" >/dev/null 2>&1 || true
+    env "${_VDE_GATE_SCRUB[@]}" git -C "${gate_root}" worktree prune >/dev/null 2>&1 || true
+    rm -rf -- "${wt_dir}" || true
+
+    if (( rc != 0 )); then
+        print -r -u2 -- "[ERROR] Commit ${short} \"${subject}\" failed the ${tier} check: ${step}. Push blocked."
+        return 1
+    fi
+
+    vde_stamp_write "${tree}" "${tier}" "${commit}" \
+        || print -r -u2 -- "[WARN] Commit ${short} passed but its stamp could not be written; the next push reruns it."
+    print -r -- "  commit ${short} passed the ${tier} check"
+    return 0
+}

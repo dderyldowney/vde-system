@@ -1806,12 +1806,12 @@ test_case68_when_history_cannot_be_deepened_the_check_stays_strict() {
 }
 
 test_case50_the_push_gate_turns_the_refresh_on() {
-    test_start "50: githooks/proof-of-life-hook.zsh runs the audit with VDE_SHIB_REFRESH_BASE=1 (an ACTIVE line, not a comment)"
+    test_start "50: githooks/gate-tree.zsh runs the audit with VDE_SHIB_REFRESH_BASE=1 (an ACTIVE line, not a comment)"
     local active
-    active="$(awk '!/^[[:space:]]*#/' "${VDE_ROOT_DIR}/githooks/proof-of-life-hook.zsh")"
+    active="$(awk '!/^[[:space:]]*#/' "${VDE_ROOT_DIR}/githooks/gate-tree.zsh")"
     print -r -- "${active}" | grep -qE 'VDE_SHIB_REFRESH_BASE=1[[:space:]]+zsh[[:space:]].*vde-enforce-uap' \
-        && test_pass "the pre-push hook runs the audit with the base-ref refresh on" \
-        || test_fail "the pre-push hook runs the audit with the base-ref refresh on" "no active line sets VDE_SHIB_REFRESH_BASE=1 on the enforcer call"
+        && test_pass "the pre-push gate runs the audit with the base-ref refresh on" \
+        || test_fail "the pre-push gate runs the audit with the base-ref refresh on" "no active line in githooks/gate-tree.zsh sets VDE_SHIB_REFRESH_BASE=1 on the enforcer call"
 }
 
 test_case51_the_docs_state_the_base_ref_prerequisite() {
