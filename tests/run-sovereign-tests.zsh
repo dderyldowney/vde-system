@@ -79,11 +79,73 @@ if [[ "${1:-}" == --list ]]; then
     exit 0
 fi
 
+# --- Timing (Signet #774): every run is timed, always ----------------------------------------
+# Each suite is announced with a wall-clock time and reports its duration; a SUITE TIMING table
+# (slowest first) is printed before the summary. The "containers" column is the number of
+# containers CREATED while the suite ran, read from `docker events` for the suite's time window
+# (it is "n/a" when docker is missing or the query fails, and never changes the exit code).
+# VDE_TEST_TIMING_FILE, when set, also receives one "<seconds> <containers> <suite>" line per row.
+zmodload zsh/datetime
+typeset -a TIMING_ROWS=()
+
+# _vde_fmt1 <number>: one decimal place with a DOT, whatever locale the caller has set. LC_ALL overrides
+# LC_NUMERIC, so both are pinned, and only for this one printf: the suites and the docker call run in the
+# caller's own locale.
+_vde_fmt1() {
+    local LC_ALL=C LC_NUMERIC=C
+    printf '%.1f' "$1"
+}
+
+# _vde_container_creates <t0> <t1>: prints the container-create count for the window, or n/a.
+_vde_container_creates() {
+    local out secs="${VDE_DOCKER_EVENTS_TIMEOUT:-10}"
+    local -a ids bound
+    command -v docker >/dev/null 2>&1 || { print -r -- "n/a"; return 0; }
+    # A hung docker daemon must not stall the run (and with it the push gate): the query is bounded.
+    [[ "${secs}" == <-> ]] || secs=10
+    if command -v timeout >/dev/null 2>&1; then bound=( timeout "${secs}" )
+    elif command -v gtimeout >/dev/null 2>&1; then bound=( gtimeout "${secs}" ); fi
+    out="$("${bound[@]}" docker events --filter type=container --filter event=create --since "$1" --until "$2" --format '{{.Actor.ID}}' </dev/null 2>/dev/null)" || { print -r -- "n/a"; return 0; }
+    # An explicit array: ${#${(f)out}} of ONE line would be that line's length, not 1.
+    ids=( ${(f)out} )
+    print -r -- "${#ids}"
+}
+
+# _vde_record_timing <name> <t0> <t1>: stores one timing row ("<seconds>|<name>|<containers>").
+_vde_record_timing() {
+    local secs containers
+    secs="$(_vde_fmt1 $(( $3 - $2 )))"
+    containers="$(_vde_container_creates "$2" "$3")"
+    TIMING_ROWS+=( "${secs}|${1}|${containers}" )
+}
+
+# _vde_print_timing: the SUITE TIMING table, slowest first, then the optional machine-readable file.
+_vde_print_timing() {
+    local row secs name containers total=0
+    local -a sorted
+    sorted=( "${(@f)$(printf '%s\n' "${TIMING_ROWS[@]}" | LC_ALL=C sort -t'|' -k1,1 -rn)}" )
+    echo -e "\n${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${BLUE}${BOLD}  SUITE TIMING${RESET}"
+    echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    printf '%-60s %8s %s\n' "suite" "seconds" "containers"
+    for row in "${sorted[@]}"; do
+        [[ -n "${row}" ]] || continue
+        secs="${row%%|*}"; name="${${row#*|}%%|*}"; containers="${row##*|}"
+        printf '%-60s %7ss %s\n' "${name}" "${secs}" "${containers}"
+        total="$(_vde_fmt1 $(( total + secs )))"
+        [[ -n "${VDE_TEST_TIMING_FILE:-}" ]] && print -r -- "${secs} ${containers} ${name}" >> "${VDE_TEST_TIMING_FILE}"
+    done
+    echo "Total suite time: ${total}s (${#TIMING_ROWS} suites)"
+}
+[[ -n "${VDE_TEST_TIMING_FILE:-}" ]] && : > "${VDE_TEST_TIMING_FILE}"
+
 # Mandatory Sovereign Audit (Rule A)
 echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo -e "${BLUE}${BOLD}  VDE SOVEREIGN AUDIT (Rule A)${RESET}"
 echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+typeset -F AUDIT_T0=${EPOCHREALTIME}
 "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" || exit 1
+_vde_record_timing "sovereign-audit" "${AUDIT_T0}" "${EPOCHREALTIME}"
 
 # Initialize test counters
 TOTAL_PASSED=0
@@ -94,18 +156,24 @@ FAILED_TESTS=()
 run_test_file() {
     local test_file="${1}"
     local test_name=$(basename "${test_file}")
-    
-    echo -e "\n${YELLOW}${BOLD}➤ Running: ${test_name}${RESET}"
-    
+    local -F t0 t1
+    local dur
+
+    echo -e "\n${YELLOW}${BOLD}➤ Running: ${test_name} [$(strftime '%H:%M:%S' ${EPOCHSECONDS})]${RESET}"
+
     # Execute the test and capture exit code
+    t0=${EPOCHREALTIME}
     zsh "${test_file}"
     local rc=$?
-    
+    t1=${EPOCHREALTIME}
+    _vde_record_timing "${test_name}" "${t0}" "${t1}"
+    dur="$(_vde_fmt1 $(( t1 - t0 )))s"
+
     if [[ ${rc} -eq 0 ]]; then
-        echo -e "${GREEN}✓ ${test_name} passed${RESET}"
+        echo -e "${GREEN}✓ ${test_name} passed (${dur})${RESET}"
         ((TOTAL_PASSED++))
     else
-        echo -e "${RED}✗ ${test_name} failed (exit code: ${rc})${RESET}"
+        echo -e "${RED}✗ ${test_name} failed (exit code: ${rc}) (${dur})${RESET}"
         ((TOTAL_FAILED++))
         FAILED_TESTS+=("${test_name}")
     fi
@@ -179,8 +247,10 @@ if command -v grep &>/dev/null; then
 fi
 
 # =============================================================================
-# FINAL SUMMARY
+# SUITE TIMING + FINAL SUMMARY
 # =============================================================================
+_vde_print_timing
+
 echo -e "\n${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo -e "${BLUE}${BOLD}  VDE TEST SUMMARY${RESET}"
 echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
