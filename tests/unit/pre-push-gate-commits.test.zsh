@@ -931,10 +931,10 @@ gt_reset
 gt_run full
 [[ "$(gt_timing_labels)" == "Sovereign Audit"$'\n'"Sovereign suite"$'\n'"Proof of Life"$'\n'"Gospel Audit"$'\n'"full tier" ]]; verdict "four step lines in order, then the full tier line" $? "labels were [$(gt_timing_labels)]: ${GATE_OUT[1,300]}"
 
-test_start "gate-tree fast timing: the audit, Gospel and unit suites steps and the fast tier line print finished-in lines"
+test_start "gate-tree fast timing: the audit, Gospel, each changed suite, the unit suites aggregate and the fast tier line print finished-in lines"
 gt_reset
 gt_run fast
-[[ "$(gt_timing_labels)" == "Sovereign Audit"$'\n'"Gospel Audit"$'\n'"unit suites"$'\n'"fast tier" ]]; verdict "three step lines in order, then the fast tier line" $? "labels were [$(gt_timing_labels)]: ${GATE_OUT[1,300]}"
+[[ "$(gt_timing_labels)" == "Sovereign Audit"$'\n'"Gospel Audit"$'\n'"unit suite a.test.zsh"$'\n'"unit suites"$'\n'"fast tier" ]]; verdict "the audit, Gospel, the changed suite's own line, the aggregate, then the fast tier line" $? "labels were [$(gt_timing_labels)]: ${GATE_OUT[1,300]}"
 
 test_start "gate-tree full timing: a failing suite still prints its finished-in line and the full tier line, and exits 3"
 gt_reset
@@ -1008,6 +1008,40 @@ else
     [[ -f "${GSTATE}/env.log" ]] && D4_ENV="$(<"${GSTATE}/env.log")"
     D4_ENV_BAD="$(print -r -- "${D4_ENV}" | grep -a -v -E '=unset$')"
     [[ -n "${D4_ENV}" && -z "${D4_ENV_BAD}" ]]; verdict "every recorded step saw LC_ALL unset" $? "env log [${D4_ENV[1,300]}], not matching: [${D4_ENV_BAD[1,300]}]"
+    gt_reset
+fi
+
+# --- D5: the fast tier prints a finished-in line for each changed unit suite (Signet #774, F8) -----
+# A commit that changes two runnable suites: each suite gets its own line, in run order, before the
+# aggregate "unit suites" line. A failing changed suite still prints its own line, and the tier exits 3.
+print -r -- "# two a" >> "${GT}/tests/unit/a.test.zsh"
+put_stub "${GT}/tests/unit/b.test.zsh" "${STEP_STUB}" b.test.zsh
+print -r -- "# two b" >> "${GT}/tests/unit/b.test.zsh"
+git -C "${GT}" add tests/unit/a.test.zsh tests/unit/b.test.zsh && git -C "${GT}" commit -qm "x7 change a and b"
+
+test_start "gate-tree fast timing: a commit that changes two unit suites prints a finished-in line for each suite, in run order, before the aggregate"
+gt_reset
+gt_run fast
+[[ "$(gt_timing_labels)" == "Sovereign Audit"$'\n'"Gospel Audit"$'\n'"unit suite a.test.zsh"$'\n'"unit suite b.test.zsh"$'\n'"unit suites"$'\n'"fast tier" ]]; verdict "a line per changed suite, then the aggregate, then the fast tier line" $? "labels were [$(gt_timing_labels)]: ${GATE_OUT[1,300]}"
+(( GATE_RC == 0 )); verdict "passes with rc 0" $? "rc ${GATE_RC}: ${GATE_OUT[1,300]}"
+
+test_start "gate-tree fast timing: a failing changed suite still prints its own finished-in line, and the tier exits 3"
+gt_reset
+print -r -- 1 > "${GSTATE}/b.test.zsh.rc"
+gt_run fast
+(( GATE_RC == 3 )) && [[ "$(gt_timing_labels)" == "Sovereign Audit"$'\n'"Gospel Audit"$'\n'"unit suite a.test.zsh"$'\n'"unit suite b.test.zsh"$'\n'"unit suites"$'\n'"fast tier" ]]; verdict "exit 3, with a line for each suite, the aggregate and the tier line" $? "rc ${GATE_RC}, labels [$(gt_timing_labels)]: ${GATE_OUT[1,300]}"
+gt_reset
+
+# D4_PROBE (above) decides whether the decimal-comma locale is usable on this host.
+if [[ "${D4_PROBE}" != "1,5" ]]; then
+    print -r -- "[SKIP] F8: no decimal-comma locale (en_DK.utf8) on this host; the per-suite dot check is not run"
+else
+    test_start "gate-tree fast timing under LC_ALL=en_DK.utf8: each per-suite finished-in line has a dot and no comma"
+    gt_reset
+    GATE_OUT="$(cd "${GT}" && env "${_VDE_GATE_SCRUB[@]}" LC_ALL=${D4_LOCALE} PATH="${GT_STUBS}:${PATH}" HOME="${GT_BASE}/callerhome" zsh githooks/gate-tree.zsh fast 2>&1)"; GATE_RC=$?
+    typeset F8_LINES="$(print -r -- "${GATE_OUT}" | grep -a '^\[gate\] unit suite ')"
+    typeset F8_BAD="$(print -r -- "${F8_LINES}" | grep -a -v -E 'unit suite [a-z.]+ finished in [0-9]+\.[0-9]s$')"
+    [[ "$(print -r -- "${F8_LINES}" | grep -a -c .)" == 2 && -z "${F8_BAD}" && -z "$(print -r -- "${F8_LINES}" | grep -a ',')" ]]; verdict "two per-suite lines, each with a dot and no comma" $? "lines: ${F8_LINES[1,400]}"
     gt_reset
 fi
 

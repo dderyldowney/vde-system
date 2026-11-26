@@ -20,27 +20,23 @@ typeset _ZSH_PURE=${(%):-%x}
 
 # Timing (Signet #774): every run is timed. Each step announces itself with a wall-clock time and, when it
 # ends (pass or fail), prints "[gate] <step> finished in <n>.<d>s"; the tier ends with
-# "[gate] <tier> tier finished in <n>.<d>s".
+# "[gate] <tier> tier finished in <n>.<d>s". Durations are differences of vde_test_now (a float, monotonic
+# where /proc/uptime exists); the wall-clock time of day comes from EPOCHSECONDS.
 zmodload zsh/datetime
 
 # _gate_ts: the wall-clock time, HH:MM:SS.
 _gate_ts() { strftime '%H:%M:%S' ${EPOCHSECONDS}; }
 
-# _gate_fmt1 <number>: one decimal place with a DOT, whatever locale the caller has set. LC_ALL overrides
-# LC_NUMERIC, so both are pinned, and only for this one printf: the steps run in the caller's own locale.
-_gate_fmt1() {
-    local LC_ALL=C LC_NUMERIC=C
-    printf '%.1f' "$1"
-}
-
 # _gate_timed <label> <command...>: runs a step, prints how long it took, returns the step's status.
 _gate_timed() {
     local label="$1"
-    local -F t0=${EPOCHREALTIME}
+    local -F t0 t1
     local -i rc=0
+    t0=$(vde_test_now)
     shift
     "$@" || rc=$?
-    print -r -- "[gate] ${label} finished in $(_gate_fmt1 $(( EPOCHREALTIME - t0 )))s"
+    t1=$(vde_test_now)
+    print -r -- "[gate] ${label} finished in $(vde_test_fmt1 $(( t1 - t0 )))s"
     return ${rc}
 }
 
@@ -233,7 +229,7 @@ _gate_fast_suites() {
     done
     echo "fast check: ${#_to_run} changed unit suite(s)"
     for _s in "${_to_run[@]}"; do
-        _gate_run_suite "${_s}" || return $?
+        _gate_timed "unit suite ${_s}" _gate_run_suite "${_s}" || return $?
     done
     return 0
 }
@@ -253,8 +249,10 @@ main() {
 }
 
 typeset -i _gate_rc=0
-typeset -F _gate_t0=${EPOCHREALTIME}
+typeset -F _gate_t0 _gate_t1
+_gate_t0=$(vde_test_now)
 main "$@" || _gate_rc=$?
-print -r -- "[gate] ${_TIER} tier finished in $(_gate_fmt1 $(( EPOCHREALTIME - _gate_t0 )))s"
+_gate_t1=$(vde_test_now)
+print -r -- "[gate] ${_TIER} tier finished in $(vde_test_fmt1 $(( _gate_t1 - _gate_t0 )))s"
 vde_test_env_leave
 exit ${_gate_rc}

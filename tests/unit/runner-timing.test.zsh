@@ -63,11 +63,13 @@ new_fixture() {  # new_fixture NAME -> SCRATCH/NAME: the REAL runner and lib, st
     print -l -- '#!/usr/bin/env zsh' \
         'print -l -- "${LC_ALL-unset}" "${LC_NUMERIC-unset}" > "${0:A:h:h:h}/suite-a-locale-seen.txt"' \
         'exit 0' > "${f}/tests/unit/a.test.zsh"
-    print -l -- '#!/usr/bin/env zsh' 'zmodload zsh/zselect' \
+    print -l -- '#!/usr/bin/env zsh' 'zmodload zsh/zselect zsh/datetime' \
         'if command -v docker >/dev/null 2>&1; then' \
         '    docker create --name b-one busybox >/dev/null 2>&1' \
         '    docker create --name b-two busybox >/dev/null 2>&1' \
         'fi' \
+        'typeset -i bx=0' \
+        'while (( bx++ < ${B_EXTRA:-0} )); do print -r -- "${EPOCHREALTIME}" >> "${DOCKER_EVENTS}"; done' \
         'zselect -t 100' \
         'exit 0' > "${f}/tests/unit/b.test.zsh"
     print -l -- '#!/usr/bin/env zsh' 'exit 1' > "${f}/tests/unit/c.test.zsh"
@@ -112,6 +114,39 @@ build_nodocker_path() {  # build_nodocker_path DIR -> DIR holds symlinks to ever
             ln -s "${x}" "$1/${x:t}"
         done
     done
+}
+
+build_path_without_timeouts() {  # build_path_without_timeouts DIR -> DIR holds symlinks to every command on PATH except docker, timeout and gtimeout
+    local d x
+    mkdir -p "$1" || return 1
+    for d in ${(s.:.)PATH}; do
+        [[ -d "${d}" ]] || continue
+        for x in "${d}"/*(N); do
+            [[ "${x:t}" == docker || "${x:t}" == timeout || "${x:t}" == gtimeout || -e "$1/${x:t}" ]] && continue
+            ln -s "${x}" "$1/${x:t}"
+        done
+    done
+}
+
+slow_suite() {  # slow_suite FILE: a passing suite that takes about 0.5s, so two runners started together overlap
+    print -l -- '#!/usr/bin/env zsh' 'zmodload zsh/zselect' 'zselect -t 50' 'exit 0' > "$1" && chmod +x "$1"
+}
+
+hang_docker_stub() {  # hang_docker_stub FIXTURE: stubs/docker whose events subcommand holds for about 8s (80 x 0.1s); create still records
+    print -l -- '#!/usr/bin/env zsh' \
+        'zmodload zsh/datetime zsh/zselect' \
+        'print -r -- "$*" >> "${DOCKER_LOG}"' \
+        'case "$1" in' \
+        '    create)' \
+        '        print -r -- "${EPOCHREALTIME}" >> "${DOCKER_EVENTS}"' \
+        '        exit 0 ;;' \
+        '    events)' \
+        '        typeset -i k' \
+        '        for (( k = 0; k < 80; k++ )); do zselect -t 10; done' \
+        '        exit 0 ;;' \
+        'esac' \
+        'exit 0' > "$1/stubs/docker" || return 1
+    chmod +x "$1/stubs/docker"
 }
 
 run_in() {  # run_in FIXTURE PATHVALUE [NAME=value ...] -> OUT (colour codes removed) and RC (the runner's exit status)
@@ -213,11 +248,19 @@ else
     test_fail "1b one row for the audit and each of a, b, c, integration (5 rows)" "rows: ${ROW_NAMES[*]} missing:${missing}"
 fi
 
-test_start "1c rows are sorted slowest first: b (the one-second suite) is the first row"
-if [[ "${ROW_NAMES[1]:-}" == b.test.zsh ]]; then
-    test_pass "1c the first row is b.test.zsh"
+test_start "1c rows are sorted slowest first: each row's seconds is at least the next row's; b.test.zsh takes at least 0.9s"
+typeset sorted_bad='' prev_s='' cur_s='' bsecs_1c=''
+typeset -i ri
+for (( ri = 1; ri < ${#ROW_NAMES}; ri++ )); do
+    prev_s="$(secs_of "$(row_of "${ROW_NAMES[ri]}")")"
+    cur_s="$(secs_of "$(row_of "${ROW_NAMES[ri+1]}")")"
+    [[ -n "${prev_s}" && -n "${cur_s}" ]] && (( prev_s >= cur_s )) || sorted_bad+=" ${ROW_NAMES[ri]}>${ROW_NAMES[ri+1]}"
+done
+bsecs_1c="$(secs_of "$(row_of b.test.zsh)")"
+if [[ -z "${sorted_bad}" && -n "${bsecs_1c}" ]] && (( bsecs_1c >= 0.9 )); then
+    test_pass "1c rows are in descending order of seconds; b=${bsecs_1c}s"
 else
-    test_fail "1c the first row is b.test.zsh" "rows: ${ROW_NAMES[*]}"
+    test_fail "1c rows sorted by descending seconds, and b.test.zsh at least 0.9s" "out of order:${sorted_bad:- none} b=${bsecs_1c:-none} rows: ${ROW_NAMES[*]}"
 fi
 
 test_start "1d each row shows its wall time in seconds with one decimal; b took at least 0.9s"
@@ -524,6 +567,251 @@ else
         test_pass "5f a.test.zsh saw LC_ALL=en_DK.utf8 (the caller's value)"
     else
         test_fail "5f a.test.zsh sees the caller's LC_ALL (en_DK.utf8)" "first line: ${SEEN5[1]:-none}"
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Case 6: the containers query is one-shot, bounded, capped; failures and the timing file behave; static pins hold
+# ---------------------------------------------------------------------------
+
+typeset GATE_SRC="${ROOT}/githooks/gate-tree.zsh" LIB_SRC="${ROOT}/lib/vde-test-env"
+
+test_start "6a with no timeout or gtimeout on PATH the runner never calls docker events, and every containers column is n/a"
+new_fixture no-timeout || exit 1
+typeset FIX_NT="${SCRATCH}/no-timeout" NOTO="${SCRATCH}/path-without-timeouts"
+build_path_without_timeouts "${NOTO}" || exit 1
+typeset nt_tools=''
+PATH="${NOTO}" command -v timeout >/dev/null 2>&1 && nt_tools+=' timeout'
+PATH="${NOTO}" command -v gtimeout >/dev/null 2>&1 && nt_tools+=' gtimeout'
+run_in "${FIX_NT}" "${FIX_NT}/stubs:${NOTO}"
+timing_section
+row_names
+typeset -a NT_LOG=()
+typeset -i nt_events=0
+typeset nt_line
+[[ -f "${FIX_NT}/docker.log" ]] && NT_LOG=( "${(@f)$(<"${FIX_NT}/docker.log")}" )
+for nt_line in "${NT_LOG[@]}"; do
+    [[ "${nt_line}" == events* ]] && nt_events+=1
+done
+typeset na6=''
+for w in "${ROW_NAMES[@]}"; do
+    got="$(containers_of "$(row_of "${w}")")"
+    [[ "${got}" == 'n/a' ]] || na6+=" ${w}=${got:-none}"
+done
+if [[ -z "${nt_tools}" ]] && (( nt_events == 0 )) && [[ -z "${na6}" ]] && (( ${#ROW_NAMES} == 5 )); then
+    test_pass "6a no timeout on PATH: docker events never called, every row n/a"
+else
+    test_fail "6a no timeout on PATH: no docker events call, every row n/a" "timeout tools on PATH:${nt_tools:- none} events calls: ${nt_events} not n/a:${na6} rows: ${ROW_NAMES[*]}"
+fi
+
+test_start "6b VDE_DOCKER_EVENTS_TIMEOUT=0 falls back to 10: the runner calls timeout with 10 before docker events"
+new_fixture timeout-zero || exit 1
+typeset FIX_TZ="${SCRATCH}/timeout-zero"
+run_in "${FIX_TZ}" "${TDIR}:${FIX_TZ}/stubs:${PATH}" VDE_DOCKER_EVENTS_TIMEOUT=0 TIMEOUT_LOG="${FIX_TZ}/timeout.log"
+typeset TZLOG=''
+[[ -f "${FIX_TZ}/timeout.log" ]] && TZLOG="$(<"${FIX_TZ}/timeout.log")"
+if [[ "${TZLOG}" =~ '(^|[[:space:]])10[[:space:]]' && "${TZLOG}" == *'docker events'* ]]; then
+    test_pass "6b timeout was called with 10 before docker events"
+else
+    test_fail "6b VDE_DOCKER_EVENTS_TIMEOUT=0 calls timeout with 10" "log: ${TZLOG[1,300]//$'\n'/ | }"
+fi
+
+test_start "6c a hanging docker events with VDE_DOCKER_EVENTS_TIMEOUT=1 is queried ONCE: exactly one events call, every row n/a, run well under 12s"
+new_fixture events-once || exit 1
+typeset FIX_EO="${SCRATCH}/events-once"
+hang_docker_stub "${FIX_EO}" || exit 1
+typeset -F EO_START="${EPOCHREALTIME}" EO_END=0 EO_WALL=0
+run_in "${FIX_EO}" "${FIX_EO}/stubs:${PATH}" VDE_DOCKER_EVENTS_TIMEOUT=1
+EO_END="${EPOCHREALTIME}"
+EO_WALL=$(( EO_END - EO_START ))
+timing_section
+row_names
+typeset -a EO_LOG=()
+typeset -i eo_events=0
+typeset eo_line
+[[ -f "${FIX_EO}/docker.log" ]] && EO_LOG=( "${(@f)$(<"${FIX_EO}/docker.log")}" )
+for eo_line in "${EO_LOG[@]}"; do
+    [[ "${eo_line}" == events* ]] && eo_events+=1
+done
+na6=''
+for w in "${ROW_NAMES[@]}"; do
+    got="$(containers_of "$(row_of "${w}")")"
+    [[ "${got}" == 'n/a' ]] || na6+=" ${w}=${got:-none}"
+done
+if (( eo_events == 1 )) && (( EO_WALL < 12 )) && [[ -z "${na6}" && "${RC}" == 1 ]] && (( ${#ROW_NAMES} == 5 )); then
+    test_pass "6c one events call in the run, wall ${EO_WALL}s, every row n/a, rc=1"
+else
+    test_fail "6c one docker events call per run, every row n/a, run under 12s" "events calls: ${eo_events} wall=${EO_WALL}s rc=${RC} rows: ${ROW_NAMES[*]} not n/a:${na6}"
+fi
+
+test_start "6d a window with 256 creates shows 256+; a window with 255 shows 255"
+new_fixture cap-256 || exit 1
+typeset FIX_C2="${SCRATCH}/cap-256"
+run_in "${FIX_C2}" "${FIX_C2}/stubs:${PATH}" B_EXTRA=254
+timing_section
+row_names
+typeset got256="$(containers_of "$(row_of b.test.zsh)")"
+new_fixture cap-255 || exit 1
+typeset FIX_C3="${SCRATCH}/cap-255"
+run_in "${FIX_C3}" "${FIX_C3}/stubs:${PATH}" B_EXTRA=253
+timing_section
+row_names
+typeset got255="$(containers_of "$(row_of b.test.zsh)")"
+if [[ "${got256}" == '256+' && "${got255}" == 255 ]]; then
+    test_pass "6d 256 creates show 256+, 255 creates show 255"
+else
+    test_fail "6d cap: 256 creates show 256+ and 255 creates show 255" "256 window: ${got256:-none} 255 window: ${got255:-none}"
+fi
+
+test_start "6e a failing Sovereign Audit: the table prints with only a sovereign-audit row, the timing file gets that row, the runner exits non-zero"
+new_fixture audit-fails || exit 1
+typeset FIX_AF="${SCRATCH}/audit-fails"
+print -l -- '#!/usr/bin/env zsh' 'exit 1' > "${FIX_AF}/bin/vde-enforce-uap.zsh" || exit 1
+chmod +x "${FIX_AF}/bin/vde-enforce-uap.zsh"
+run_in "${FIX_AF}" "${FIX_AF}/stubs:${PATH}" VDE_TEST_TIMING_FILE="${FIX_AF}/timing.txt"
+timing_section
+row_names
+typeset af_file=''
+[[ -f "${FIX_AF}/timing.txt" ]] && af_file="$(<"${FIX_AF}/timing.txt")"
+if [[ "${RC}" != 0 && "${OUT}" == *'SUITE TIMING'* && "${OUT}" != *'Running: a.test.zsh'* ]] \
+    && (( ${#ROW_NAMES} == 1 )) && [[ "${ROW_NAMES[1]:-}" == sovereign-audit && "${af_file}" == *sovereign-audit* ]]; then
+    test_pass "6e audit failure: rc=${RC}, SUITE TIMING with a sovereign-audit row only, file has the row"
+else
+    test_fail "6e failing audit: non-zero rc, SUITE TIMING with only a sovereign-audit row, file has it" "rc=${RC} rows: ${ROW_NAMES[*]} file: ${af_file[1,200]//$'\n'/ | }"
+fi
+
+test_start "6f a VDE_TEST_TIMING_FILE in a directory that does not exist: exit 2 naming the path, and no suite runs"
+new_fixture bad-path || exit 1
+typeset FIX_BP="${SCRATCH}/bad-path" BADT="${SCRATCH}/no-such-dir/t.txt"
+run_in "${FIX_BP}" "${FIX_BP}/stubs:${PATH}" VDE_TEST_TIMING_FILE="${BADT}"
+if [[ "${RC}" == 2 && "${OUT}" == *"${BADT}"* && "${OUT}" != *'Running:'* && ! -e "${FIX_BP}/suite-a-locale-seen.txt" ]]; then
+    test_pass "6f rc=2, error names the path, no suite ran"
+else
+    test_fail "6f unwritable timing path: rc 2, error naming the path, no suite run" "rc=${RC} suite a ran: $([[ -e "${FIX_BP}/suite-a-locale-seen.txt" ]] && echo yes || echo no) out: ${OUT[1,300]//$'\n'/ | }"
+fi
+
+test_start "6g two runners with the same VDE_TEST_TIMING_FILE, started together: the file holds exactly one run's rows, and no temp file is left"
+CONC_DIR="${SCRATCH}/concurrent"
+mkdir -p "${CONC_DIR}" || exit 1
+typeset TF_CONC="${CONC_DIR}/timing.txt"
+new_fixture conc-a || exit 1
+typeset FIX_CA="${SCRATCH}/conc-a"
+rm -f "${FIX_CA}/tests/unit/"*.test.zsh
+slow_suite "${FIX_CA}/tests/unit/fa-one.test.zsh" && slow_suite "${FIX_CA}/tests/unit/fa-two.test.zsh" || exit 1
+new_fixture conc-b || exit 1
+typeset FIX_CB="${SCRATCH}/conc-b"
+rm -f "${FIX_CB}/tests/unit/"*.test.zsh
+slow_suite "${FIX_CB}/tests/unit/fb-one.test.zsh" && slow_suite "${FIX_CB}/tests/unit/fb-two.test.zsh" || exit 1
+( run_in "${FIX_CA}" "${FIX_CA}/stubs:${PATH}" VDE_TEST_TIMING_FILE="${TF_CONC}" ) &
+( run_in "${FIX_CB}" "${FIX_CB}/stubs:${PATH}" VDE_TEST_TIMING_FILE="${TF_CONC}" ) &
+wait
+typeset -a CONC_ROWS=() CONC_LEFT=()
+typeset -i conc_a=0 conc_b=0
+typeset conc_line
+typeset -a cw
+[[ -f "${TF_CONC}" ]] && CONC_ROWS=( "${(@f)$(<"${TF_CONC}")}" )
+for conc_line in "${CONC_ROWS[@]}"; do
+    cw=( ${(z)conc_line} )
+    [[ "${cw[3]:-}" == fa-* ]] && conc_a+=1
+    [[ "${cw[3]:-}" == fb-* ]] && conc_b+=1
+done
+CONC_LEFT=( "${CONC_DIR}"/*(DN) )
+if (( ${#CONC_ROWS} == 4 )) && (( (conc_a == 2 && conc_b == 0) || (conc_a == 0 && conc_b == 2) )) \
+    && (( ${#CONC_LEFT} == 1 )) && [[ "${CONC_LEFT[1]:-}" == "${TF_CONC}" ]]; then
+    test_pass "6g one run's 4 rows (a=${conc_a} b=${conc_b}), no leftover files"
+else
+    test_fail "6g concurrent runners: exactly one run's rows and no temp files" "rows: ${#CONC_ROWS} fa-: ${conc_a} fb-: ${conc_b} dir: ${CONC_LEFT[*]:t}"
+fi
+
+test_start "6h durations come from vde_test_now (runner and gate-tree): no EPOCHREALTIME subtraction, no \$SECONDS for a duration, no comment calls \$SECONDS monotonic; lib defines vde_test_now"
+typeset f7_bad='' static_f code_lines
+for static_f in "${RUNNER_SRC}" "${GATE_SRC}"; do
+    grep -qE 'EPOCHREALTIME *-|- *EPOCHREALTIME' "${static_f}" && f7_bad+=" ${static_f:t}:subtracts-EPOCHREALTIME"
+    grep -qE 'vde_test_now' "${static_f}" || f7_bad+=" ${static_f:t}:no-vde_test_now-call"
+    code_lines="$(grep -vE '^[[:space:]]*#' "${static_f}")"
+    print -r -- "${code_lines}" | grep -qE '\$\{?SECONDS|typeset -F SECONDS' && f7_bad+=" ${static_f:t}:SECONDS-for-duration"
+    grep -qiE '#.*SECONDS.*monoton|#.*monoton.*SECONDS' "${static_f}" && f7_bad+=" ${static_f:t}:comment-calls-SECONDS-monotonic"
+done
+grep -qE '^vde_test_now\(\)|^function vde_test_now' "${LIB_SRC}" || f7_bad+=" lib:no-vde_test_now-definition"
+if [[ -z "${f7_bad}" ]]; then
+    test_pass "6h durations use vde_test_now; no EPOCHREALTIME subtraction, no SECONDS for a duration"
+else
+    test_fail "6h durations from vde_test_now, never from EPOCHREALTIME subtraction or SECONDS" "${f7_bad}"
+fi
+
+test_start "6i no printf '%.1f' in the runner or gate-tree; lib/vde-test-env defines vde_test_fmt1, and both files call it"
+typeset f12_bad=''
+for static_f in "${RUNNER_SRC}" "${GATE_SRC}"; do
+    grep -qF "printf '%.1f'" "${static_f}" && f12_bad+=" ${static_f:t}:has-printf-%.1f"
+    grep -qE 'vde_test_fmt1 ' "${static_f}" || f12_bad+=" ${static_f:t}:no-vde_test_fmt1-call"
+done
+grep -qE '^vde_test_fmt1\(\)|^function vde_test_fmt1' "${LIB_SRC}" || f12_bad+=" lib:no-vde_test_fmt1-definition"
+if [[ -z "${f12_bad}" ]]; then
+    test_pass "6i one shared formatter: no printf '%.1f' in the two files, defined in lib, called by both"
+else
+    test_fail "6i one shared formatter (vde_test_fmt1) in lib/vde-test-env, no printf '%.1f' in the runner or gate-tree" "${f12_bad}"
+fi
+
+if ! command -v cc >/dev/null 2>&1; then
+    print -r -- "[SKIP] 6j: no C compiler; cannot simulate a wall-clock jump"
+else
+    test_start "6j behavioural: with CLOCK_REALTIME and gettimeofday jumped +3600s mid-run (LD_PRELOAD shim), every row and the Total stay under 10s, b takes at least 0.9s, and the runner exits 0"
+    typeset SHIM_DIR="${SCRATCH}/clk-shim" SHIM_SO cc_out=''
+    mkdir -p "${SHIM_DIR}" || exit 1
+    SHIM_SO="${SHIM_DIR}/jump.so"
+    cat > "${SHIM_DIR}/jump.c" <<'EOF'
+#define _GNU_SOURCE
+#include <dlfcn.h>
+#include <time.h>
+#include <sys/time.h>
+/* After the first call, every wall-clock read (CLOCK_REALTIME, gettimeofday, time) is shifted +3600 s. CLOCK_MONOTONIC is left alone. */
+static int calls = 0;
+int clock_gettime(clockid_t id, struct timespec *ts) {
+    int (*real)(clockid_t, struct timespec *) = dlsym(RTLD_NEXT, "clock_gettime");
+    int r = real(id, ts);
+    if (id == CLOCK_REALTIME && ++calls > 3) ts->tv_sec += 3600;
+    return r;
+}
+int gettimeofday(struct timeval *tv, void *tz) {
+    int (*real)(struct timeval *, void *) = dlsym(RTLD_NEXT, "gettimeofday");
+    int r = real(tv, tz);
+    if (tv && ++calls > 3) tv->tv_sec += 3600;
+    return r;
+}
+EOF
+    if ! cc_out="$(cc -shared -fPIC -o "${SHIM_SO}" "${SHIM_DIR}/jump.c" -ldl 2>&1)"; then
+        test_fail "6j compile the wall-clock shim" "cc: ${cc_out[1,300]//$'\n'/ | }"
+    else
+        # Canary: prove the shim really moves the wall clock in a process started the way the runner starts its
+        # children (env -i, LD_PRELOAD). Without this the check below could pass vacuously if the shim stopped working.
+        typeset canary_jump
+        canary_jump="$(env -i HOME="${SCRATCH}" PATH="${PATH}" LD_PRELOAD="${SHIM_SO}" zsh -c 'zmodload zsh/datetime; typeset -F a=${EPOCHREALTIME}; typeset -F b=${EPOCHREALTIME}; typeset -F c=${EPOCHREALTIME}; typeset -F d=${EPOCHREALTIME}; print -r -- $(( d - a ))' 2>&1)"
+        if [[ "${canary_jump}" =~ '^[0-9]+(\.[0-9]+)?$' ]] && (( canary_jump > 3000 )); then
+            test_pass "6j canary: the shim jumps the wall clock (${canary_jump}s) in an env -i child"
+        else
+            test_fail "6j canary: the shim must jump the wall clock in an env -i child" "measured: [${canary_jump}]"
+        fi
+        new_fixture clk-jump || exit 1
+        typeset FIX_J="${SCRATCH}/clk-jump"
+        rm -f "${FIX_J}/tests/unit/"*.test.zsh
+        print -l -- '#!/usr/bin/env zsh' 'zmodload zsh/zselect' 'zselect -t 100' 'exit 0' > "${FIX_J}/tests/unit/b.test.zsh" \
+            && chmod +x "${FIX_J}/tests/unit/b.test.zsh" || exit 1
+        run_in "${FIX_J}" "${FIX_J}/stubs:${PATH}" LD_PRELOAD="${SHIM_SO}"
+        timing_section
+        row_names
+        typeset j_bad='' j_secs j_row j_total='' j_b=''
+        for j_row in "${ROW_NAMES[@]}"; do
+            j_secs="$(secs_of "$(row_of "${j_row}")")"
+            [[ -n "${j_secs}" ]] && (( j_secs < 10 )) || j_bad+=" ${j_row}=${j_secs:-none}"
+        done
+        [[ "${TOTAL_LINE}" =~ 'Total suite time: ([0-9]+\.[0-9])s' ]] && j_total="${match[1]}"
+        j_b="$(secs_of "$(row_of b.test.zsh)")"
+        if [[ -z "${j_bad}" ]] && (( ${#ROW_NAMES} == 3 )) && [[ -n "${j_total}" ]] && (( j_total < 10 )) \
+            && [[ -n "${j_b}" ]] && (( j_b >= 0.9 )) && [[ "${RC}" == 0 ]]; then
+            test_pass "6j under the +3600s jump: rows under 10s (b=${j_b}s), total ${j_total}s, rc=0"
+        else
+            test_fail "6j under the +3600s jump: every row and the total under 10s, b at least 0.9s, rc=0" "rows: ${ROW_NAMES[*]} over-10s:${j_bad} total: ${j_total:-none} b: ${j_b:-none} rc=${RC} out: ${OUT[1,300]//$'\n'/ | }"
+        fi
     fi
 fi
 
