@@ -20,6 +20,8 @@ fi
 # into the ENCLOSING repository. The ones that inject config or hooks are dropped too.
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_NAMESPACE GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS GIT_TEMPLATE_DIR
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+# An inherited stamp TTL would change every expiry check: each check starts from the default (1800 s).
+unset VDE_POL_STAMP_TTL
 
 typeset TESTS_PASSED=0
 typeset TESTS_FAILED=0
@@ -890,6 +892,31 @@ touch "${GSTATE}/nobehave"
 gt_run full
 (( GATE_RC == 4 )); verdict "exit 4 when behave is unavailable" $? "rc ${GATE_RC}: ${GATE_OUT[1,300]}"
 gt_steps_is "audit then suite, no behave" "audit"$'\n'"suite"
+
+# --- D2: a scratch HOME that cannot be created stops the gate with exit 4 before any step runs ---
+# A stub mkdir fails for any path ending in /home and runs the real mkdir for every other call.
+typeset GT_MKDIR_STUBS="${GT_BASE}/mkdir-stub"
+typeset REAL_MKDIR="$(whence -p mkdir)"
+mkdir -p "${GT_MKDIR_STUBS}"
+{
+    print -rl -- '#!/usr/bin/env zsh' \
+        'typeset _ZSH_PURE=${(%):-%x}' \
+        'for a in "$@"; do [[ "$a" == */home ]] && exit 1; done'
+    print -r -- "exec ${REAL_MKDIR} \"\$@\""
+} > "${GT_MKDIR_STUBS}/mkdir"
+chmod +x "${GT_MKDIR_STUBS}/mkdir"
+
+typeset MKDIR_OUT="" MKDIR_RC=0
+for tier in fast full; do
+    gt_reset
+    MKDIR_OUT="$(cd "${GT}" && PATH="${GT_MKDIR_STUBS}:${GT_STUBS}:${PATH}" HOME="${GT_BASE}/callerhome" zsh githooks/gate-tree.zsh "${tier}" 2>&1)"; MKDIR_RC=$?
+    test_start "gate-tree ${tier}: a scratch HOME that cannot be created exits 4, says could not run, naming the scratch HOME"
+    (( MKDIR_RC == 4 )) && [[ "${MKDIR_OUT}" == *"could not run"* ]] && [[ "${MKDIR_OUT}" == *"scratch HOME"* ]]
+    verdict "exit 4 with 'could not run' naming the scratch HOME" $? "rc ${MKDIR_RC}: ${MKDIR_OUT[1,300]}"
+    test_start "gate-tree ${tier}: a scratch HOME that cannot be created runs no audit, suite or behave step"
+    [[ -z "$(gt_steps)" ]]; verdict "the steps log is empty" $? "steps were [$(gt_steps)]"
+done
+gt_reset
 
 # --- E: the scratch-base library comes from the pushing tree, never from the commit under test -----
 # gate-tree.zsh runs inside the commit's throwaway checkout, so VDE_ROOT_DIR names the commit under test.

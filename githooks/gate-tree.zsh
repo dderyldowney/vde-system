@@ -52,7 +52,11 @@ if [[ -z "${_GATE_SCRATCH}" ]]; then
     exit 4
 fi
 typeset _GATE_HOME="${_GATE_SCRATCH}/home"
-mkdir -p "${_GATE_HOME}"
+mkdir -p "${_GATE_HOME}" || {
+    echo -e "${RED}[ERROR] cannot create the scratch HOME ${_GATE_HOME}. The gate could not run.${RESET}"
+    vde_test_env_leave
+    exit 4
+}
 
 # _gate_scrubbed <command...>: runs a command under the scratch HOME. Git exports GIT_DIR and other
 # repository-selecting variables into a hook; the suites build their own throwaway repositories, so with
@@ -208,8 +212,8 @@ _gate_fast_suites() {
     return 0
 }
 
-# _gate_main: the steps of the chosen tier, stopping at the first failure. Returns that step's exit code.
-_gate_main() {
+# main: the steps of the chosen tier, stopping at the first failure. Returns that step's exit code.
+main() {
     _gate_audit || return $?
     if [[ "${_TIER}" == full ]]; then
         _gate_full_suite || return $?
@@ -223,6 +227,6 @@ _gate_main() {
 }
 
 typeset -i _gate_rc=0
-_gate_main || _gate_rc=$?
+main "$@" || _gate_rc=$?
 vde_test_env_leave
 exit ${_gate_rc}
