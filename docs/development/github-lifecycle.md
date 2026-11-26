@@ -78,12 +78,15 @@ The VDE uses two distinct validation gates to ensure both technical and structur
 
 ## 6. The Pre-Push Gate
 
-The `pre-push` git hook automatically executes the **Proof of Life** (`tests/features/core-infrastructure/proof-of-life-the-contract.feature`). This hook:
+The `pre-push` git hook automatically runs the **Sovereign suite** and then the **Proof of Life** (`tests/features/core-infrastructure/proof-of-life-the-contract.feature`). This hook:
 1.  Trips the **Heavy Governance Gate** (`vde-enforce-uap.zsh`).
 2.  Ensures the **Unyielding Tetrad** is active.
-3.  Verifies the absolute VM lifecycle.
+3.  Runs the Sovereign suite (`tests/run-sovereign-tests.zsh`): the code's own unit tests. A failing suite blocks the push and is named in the output; the Proof of Life does not start.
+4.  Verifies the absolute VM lifecycle.
 
-**Stamp reuse (Signet #602)**: step 3 is skipped only when this exact code already passed it. A passing run records `HEAD`'s git tree hash and the pass time in the git dir (`vde-pol-stamp`, local and never pushed), but only if the tracked worktree was clean and the tree hash identical before and after the run. The hook skips the rerun only when `HEAD`'s tree hash matches the stamp the tracked worktree and index are clean (assume-unchanged and skip-worktree files count as unclean), every outgoing ref has that same tree, and the pass is under 30 minutes old (`VDE_POL_STAMP_TTL`, seconds, default 1800). The stamp targets back-to-back runs: verify, then push what you verified. Any new commit, any edit, an older stamp, a failed run, or an interrupted run means the full Proof of Life runs again. The Sovereign Audit runs every time. To certify ahead of a push, run `zsh githooks/proof-of-life-hook.zsh`. Untracked files are outside the pushed tree and do not affect the stamp.
+On GitHub the same tests run again in CI as part of the pull request; in an advisory's temporary private fork CI does not run, so this local run is the only one.
+
+**Stamp reuse (Signet #602, Signet #769)**: steps 3 and 4 (the Sovereign suite and the Proof of Life) are skipped only when this exact code already passed both, and one stamp covers both. A passing run records `HEAD`'s git tree hash and the pass time in the git dir (`vde-pol-stamp`, local and never pushed), but only if the tracked worktree was clean and the tree hash identical before and after the run. The hook skips the rerun only when `HEAD`'s tree hash matches the stamp the tracked worktree and index are clean (assume-unchanged and skip-worktree files count as unclean), every outgoing ref has that same tree, and the pass is under 30 minutes old (`VDE_POL_STAMP_TTL`, seconds, default 1800). The stamp targets back-to-back runs: verify, then push what you verified. Any new commit, any edit, an older stamp, a failed run, or an interrupted run means the full Proof of Life runs again. The Sovereign Audit runs every time. To certify ahead of a push, run `zsh githooks/proof-of-life-hook.zsh`. Untracked files are outside the pushed tree and do not affect the stamp.
 
 Code is strictly forbidden from leaving the Forge unless both Gates are Green.
 

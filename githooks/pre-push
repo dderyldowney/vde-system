@@ -18,7 +18,7 @@ export VDE_ROOT_DIR
 if [[ -f "${VDE_ROOT_DIR}/githooks/proof-of-life-hook.zsh" ]]; then
     if ! zsh -e "${VDE_ROOT_DIR}/githooks/proof-of-life-hook.zsh"; then
         echo -e "\033[0;31m[ERROR] Pre-Push Blockade (Heartbeat):\033[0m"
-        echo -e "  Proof of Life validation failed. Code is not permitted to leave the Forge."
+        echo -e "  The pre-push gate failed (Sovereign suite or Proof of Life; the output above names which). Code is not permitted to leave the Forge."
         exit 1
     fi
 fi

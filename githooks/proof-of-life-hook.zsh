@@ -54,16 +54,62 @@ if vde_pol_push_covered HEAD "${_pushed_shas[@]}"; then
     exit 0
 fi
 
-# Run the absolute lifecycle test
-# We use the full path to ensure it runs correctly from any directory
-if vde_pol_run_and_stamp python3 -m behave "${VDE_ROOT_DIR}/tests/features/core-infrastructure/proof-of-life-the-contract.feature" --quiet --no-summary; then
+# The gate's two proofs run under ONE stamp (Signet #769): the Sovereign suite certifies the
+# patchset (the code's own tests), the Proof of Life certifies the VDE core lifecycle. A stamp
+# therefore means both passed for this exact clean tree. The suite runs first (cheaper, fails fast);
+# a failing suite blocks the push, names the failing suite (the runner prints it) and the Proof of
+# Life never starts. Return 3 = the suite failed or is missing, 2 = the Proof of Life failed, 4 = the gate could not start a runner
+# (no scratch directory, the suite runner could not be started, or behave is unavailable), anything else = the gate itself could not run.
+_gate_proofs() {
+    if [[ ! -f "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" ]]; then
+        echo -e "${RED}[ERROR] tests/run-sovereign-tests.zsh is missing. Push blocked.${RESET}"
+        return 3
+    fi
+    echo "[${_SENTINEL}] Running the Sovereign suite (tests/run-sovereign-tests.zsh)..."
+    # The suite runs under a throwaway HOME inside the gate's scratch directory, never the caller's HOME.
+    typeset _gate_scratch="$(vde_test_env_dir)"
+    if [[ -z "${_gate_scratch}" ]]; then
+        echo -e "${RED}[ERROR] no scratch directory for the suite. The gate could not run.${RESET}"
+        return 4
+    fi
+    typeset _gate_home="${_gate_scratch}/home"
+    mkdir -p "${_gate_home}"
+    # Git exports GIT_DIR (in a linked worktree, the worktree's git directory) and other repository-selecting
+    # variables into a hook. The suites build their own throwaway git repositories, so with those variables
+    # set their git commands land in the REAL repository (Signet #656). Run the suite without them.
+    typeset -i _suite_rc=0
+    env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR -u GIT_PREFIX -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES -u GIT_NAMESPACE -u GIT_CONFIG_COUNT -u GIT_CONFIG_PARAMETERS -u GIT_TEMPLATE_DIR HOME="${_gate_home}" zsh "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" || _suite_rc=$?
+    if (( _suite_rc == 126 || _suite_rc == 127 )); then
+        echo -e "${RED}[ERROR] The Sovereign suite runner could not be started (status ${_suite_rc}). The gate could not run. Push blocked.${RESET}"
+        return 4
+    fi
+    if (( _suite_rc != 0 )); then
+        echo -e "${RED}[ERROR] Sovereign suite failed. Push blocked.${RESET}"
+        echo -e "  The failing suite is named above. Run 'zsh tests/run-sovereign-tests.zsh' for details."
+        return 3
+    fi
+    echo "[${_SENTINEL}] Running Proof of Life (Mandate L) Validation..."
+    if ! python3 -c 'import behave' >/dev/null 2>&1; then
+        echo -e "${RED}[ERROR] python3 with behave is unavailable. The gate could not run. Push blocked.${RESET}"
+        return 4
+    fi
+    # We use the full path to ensure it runs correctly from any directory
+    python3 -m behave "${VDE_ROOT_DIR}/tests/features/core-infrastructure/proof-of-life-the-contract.feature" --quiet --no-summary || return 2
+}
+typeset -i _gate_rc=0
+if vde_pol_run_and_stamp _gate_proofs; then
     echo -e "${GREEN}✓ Proof of Life Certified.${RESET}"
     vde_test_env_leave
     exit 0
 else
-    echo -e "${RED}[ERROR] Mandate L Violation: Proof of Life Contract Failed.${RESET}"
-    echo -e "  The core VM lifecycle is broken. Push blocked."
-    echo -e "  Run 'python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature' for details."
+    _gate_rc=$?
+    if (( _gate_rc == 2 )); then
+        echo -e "${RED}[ERROR] Mandate L Violation: Proof of Life Contract Failed.${RESET}"
+        echo -e "  The core VM lifecycle is broken. Push blocked."
+        echo -e "  Run 'python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature' for details."
+    elif (( _gate_rc != 3 )); then
+        echo -e "${RED}[ERROR] The pre-push gate could not run (status ${_gate_rc}). Push blocked.${RESET}"
+    fi
     vde_test_env_leave
     exit 1
 fi
