@@ -220,9 +220,14 @@ workspace_src() {
   return 0
 }
 
-# check_workspace <name>: language Spokes only.
-#  - started by this run: a file written in the workspace must appear at the mount's host
-#    path, and only when that path is inside the scratch Projects base;
+# check_workspace <name>: language Spokes only. It never skips a mount it can see (workspace_src
+# only decides whether the host write may happen, not whether the workspace is checked):
+#  - started by this run, host path inside the scratch base: a file written in the workspace must
+#    appear at the mount's host path;
+#  - started by this run, host path outside the scratch base (or no scratch base): a FAIL. This run
+#    set the scratch base, so a Spoke it started must mount under it; a mount anywhere else means
+#    the Spoke ignored the base (it could be pointing at the real Projects directory), and a
+#    "writable" check would pass for exactly that case. Nothing is written to the mount;
 #  - already running: the workspace must be writable, checked without writing anything.
 check_workspace() {
   local n="${1}" out rc host_src sr marker
@@ -233,7 +238,7 @@ check_workspace() {
   fi
   host_src="$(workspace_src "${n}")"; sr=$?
   if (( sr == 1 )); then
-    test_skip "${n}: a workspace write reaching the host mount (the mount source is outside the scratch Projects base; nothing is written there)"
+    check "${n}: a Spoke started by this run mounts its workspace under the scratch Projects base" 0 "the mount source ${host_src:-(none)} is outside the scratch Projects base; nothing was written to it" '^under-scratch$'
     return 0
   elif (( sr == 2 )); then
     check "${n}: a workspace write reaches the host mount" 0 "no workspace mount on the container" '^on-host$'
