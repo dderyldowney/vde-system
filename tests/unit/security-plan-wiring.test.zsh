@@ -177,6 +177,8 @@ test_process_lifecycle() {
     expect_has "the combined gate names match-head-commit for the fork merges" "${PROCESS}" 'match-head-commit'
     expect_has "the combined gate's candidate tree is identical to the candidate tree" "${PROCESS}" 'identical to the candidate tree'
     expect_has "the combined gate holds every roll to stable until it passes" "${PROCESS}" 'before anything is rolled to `stable`'
+    expect_has "the combined gate reruns the full gate on a repaired tree" "${PROCESS}" 'the full gate is then run again on the repaired tree'
+    expect_has "the combined gate gives each promotion approval after the gate is green" "${PROCESS}" 'each approval is given after the gate is green'
     expect_has "the merge order comes from a release plan the User approves before release day" "${PROCESS}" 'a list of the fork pull requests in merge order, with any shared commits noted, and it pins the `develop` base sha and each fork head sha the gate tests; the User approves it before release day'
     expect_has "a Vulnerability failure is fixed in the private fork, not on public develop" "${PROCESS}" 'is fixed in that advisory'"'"'s temporary private fork'
     expect_has "each fork merge is approved after the gate, naming the tested head sha" "${PROCESS}" 'names the head sha the gate tested'
