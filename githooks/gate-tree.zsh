@@ -18,6 +18,28 @@
 # Exit codes: 0 pass, 1 audit, 3 suite, 2 Proof of Life, 5 Gospel, 4 could not run.
 typeset _ZSH_PURE=${(%):-%x}
 
+# Timing (Signet #774): every run is timed. Each step announces itself with a wall-clock time and, when it
+# ends (pass or fail), prints "[gate] <step> finished in <n>.<d>s"; the tier ends with
+# "[gate] <tier> tier finished in <n>.<d>s". Durations are differences of vde_test_now (a float, monotonic
+# where /proc/uptime exists); the wall-clock time of day comes from EPOCHSECONDS.
+zmodload zsh/datetime
+
+# _gate_ts: the wall-clock time, HH:MM:SS.
+_gate_ts() { strftime '%H:%M:%S' ${EPOCHSECONDS}; }
+
+# _gate_timed <label> <command...>: runs a step, prints how long it took, returns the step's status.
+_gate_timed() {
+    local label="$1"
+    local -F t0 t1
+    local -i rc=0
+    t0=$(vde_test_now)
+    shift
+    "$@" || rc=$?
+    t1=$(vde_test_now)
+    print -r -- "[gate] ${label} finished in $(vde_test_fmt1 $(( t1 - t0 )))s"
+    return ${rc}
+}
+
 typeset RED='\033[0;31m'
 typeset GREEN='\033[0;32m'
 typeset RESET='\033[0m'
@@ -68,7 +90,7 @@ _gate_scrubbed() {
 
 # _gate_audit: the Sovereign Audit (Rule A). 1 = failed, 4 = could not run.
 _gate_audit() {
-    echo "[${_SENTINEL}] Running Sovereign Audit (Rule A)..."
+    echo "[${_SENTINEL}] [$(_gate_ts)] Running Sovereign Audit (Rule A)..."
     if [[ ! -f "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" ]]; then
         echo -e "${RED}[ERROR] bin/vde-enforce-uap.zsh is missing. The gate could not run. Push blocked.${RESET}"
         return 4
@@ -91,7 +113,7 @@ _gate_audit() {
 # _gate_gospel: the Gospel Audit (Phase 32). Skipped when the audit script does not exist. 5 = failed.
 _gate_gospel() {
     [[ -f "${VDE_ROOT_DIR}/bin/vde-gospel-audit.zsh" ]] || return 0
-    echo "[${_SENTINEL}] Running Gospel Audit (Phase 32)..."
+    echo "[${_SENTINEL}] [$(_gate_ts)] Running Gospel Audit (Phase 32)..."
     if ! zsh -e "${VDE_ROOT_DIR}/bin/vde-gospel-audit.zsh" --quiet; then
         echo -e "${RED}[ERROR] Pre-Push Blockade (Gospel Drift):${RESET}"
         echo -e "  The Gospel has drifted from the physical implementation."
@@ -107,7 +129,7 @@ _gate_full_suite() {
         echo -e "${RED}[ERROR] tests/run-sovereign-tests.zsh is missing. Push blocked.${RESET}"
         return 3
     fi
-    echo "[${_SENTINEL}] Running the Sovereign suite (tests/run-sovereign-tests.zsh)..."
+    echo "[${_SENTINEL}] [$(_gate_ts)] Running the Sovereign suite (tests/run-sovereign-tests.zsh)..."
     typeset -i _rc=0
     _gate_scrubbed zsh "${VDE_ROOT_DIR}/tests/run-sovereign-tests.zsh" || _rc=$?
     if (( _rc == 126 || _rc == 127 )); then
@@ -124,7 +146,7 @@ _gate_full_suite() {
 
 # _gate_behave: the Proof of Life (Mandate L). 4 = behave unavailable, 2 = the contract failed.
 _gate_behave() {
-    echo "[${_SENTINEL}] Running Proof of Life (Mandate L) Validation..."
+    echo "[${_SENTINEL}] [$(_gate_ts)] Running Proof of Life (Mandate L) Validation..."
     echo "[${_SENTINEL}] Feature: tests/features/core-infrastructure/proof-of-life-the-contract.feature"
     if ! python3 -c 'import behave' >/dev/null 2>&1; then
         echo -e "${RED}[ERROR] python3 with behave is unavailable. The gate could not run. Push blocked.${RESET}"
@@ -169,7 +191,7 @@ _gate_runnable_suites() {
 # _gate_run_suite <name>: runs one unit suite. 3 = failed (named), 4 = could not start.
 _gate_run_suite() {
     typeset -i _rc=0
-    echo "[${_SENTINEL}] Running unit suite ${1}..."
+    echo "[${_SENTINEL}] [$(_gate_ts)] Running unit suite ${1}..."
     _gate_scrubbed zsh "${VDE_ROOT_DIR}/tests/unit/${1}" || _rc=$?
     if (( _rc == 126 || _rc == 127 )); then
         echo -e "${RED}[ERROR] Unit suite ${1} could not be started (status ${_rc}). The gate could not run. Push blocked.${RESET}"
@@ -207,26 +229,30 @@ _gate_fast_suites() {
     done
     echo "fast check: ${#_to_run} changed unit suite(s)"
     for _s in "${_to_run[@]}"; do
-        _gate_run_suite "${_s}" || return $?
+        _gate_timed "unit suite ${_s}" _gate_run_suite "${_s}" || return $?
     done
     return 0
 }
 
 # main: the steps of the chosen tier, stopping at the first failure. Returns that step's exit code.
 main() {
-    _gate_audit || return $?
+    _gate_timed "Sovereign Audit" _gate_audit || return $?
     if [[ "${_TIER}" == full ]]; then
-        _gate_full_suite || return $?
-        _gate_behave || return $?
-        _gate_gospel || return $?
+        _gate_timed "Sovereign suite" _gate_full_suite || return $?
+        _gate_timed "Proof of Life" _gate_behave || return $?
+        _gate_timed "Gospel Audit" _gate_gospel || return $?
     else
-        _gate_gospel || return $?
-        _gate_fast_suites || return $?
+        _gate_timed "Gospel Audit" _gate_gospel || return $?
+        _gate_timed "unit suites" _gate_fast_suites || return $?
     fi
     return 0
 }
 
 typeset -i _gate_rc=0
+typeset -F _gate_t0 _gate_t1
+_gate_t0=$(vde_test_now)
 main "$@" || _gate_rc=$?
+_gate_t1=$(vde_test_now)
+print -r -- "[gate] ${_TIER} tier finished in $(vde_test_fmt1 $(( _gate_t1 - _gate_t0 )))s"
 vde_test_env_leave
 exit ${_gate_rc}

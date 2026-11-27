@@ -109,5 +109,22 @@ vde_test_env_dir() {
     return 1
 }
 
+# vde_test_fmt1 <number>: one decimal place with a DOT, whatever locale the caller has set. LC_ALL overrides LC_NUMERIC, so both are pinned, and only for this one printf (the suites and steps run in the caller's own locale).
+vde_test_fmt1() {
+    local LC_ALL=C LC_NUMERIC=C
+    printf '%.1f' "$1"
+}
+
+# vde_test_now: prints elapsed seconds as a float from a MONOTONIC clock, for measuring durations. $SECONDS and $EPOCHREALTIME both follow the wall clock in zsh 5.9 (measured: a +3600 s wall-clock step moved both by 3601 s), so a step during a run would corrupt a duration. On Linux /proc/uptime is immune to wall-clock steps (0.01 s resolution) and zsh reads it without forking. Where /proc/uptime is not readable (for example macOS) the function falls back to the wall clock; a clock step can then skew a duration (documented limitation).
+vde_test_now() {
+    local up _rest
+    if [[ -r /proc/uptime ]] && read -r up _rest < /proc/uptime && [[ -n "${up}" ]]; then
+        print -r -- "${up}"
+    else
+        zmodload zsh/datetime 2>/dev/null
+        print -r -- "${EPOCHREALTIME}"
+    fi
+}
+
 # Register leave once per shell. zshexit_functions runs at shell exit; a suite's own EXIT trap is untouched.
 # (Registration happens in enter, so sourcing alone changes nothing.)

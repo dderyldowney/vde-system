@@ -79,11 +79,129 @@ if [[ "${1:-}" == --list ]]; then
     exit 0
 fi
 
+# --- Timing (Signet #774): every run is timed, always ----------------------------------------
+# Each suite is announced with a wall-clock time and reports its duration; a SUITE TIMING table
+# (slowest first) is printed before the summary. The "containers" column is the number of
+# containers CREATED while the suite ran, read from `docker events` for the suite's time window
+# (it is "n/a" when docker is missing or the query fails, and never changes the exit code).
+# VDE_TEST_TIMING_FILE, when set, also receives one "<seconds> <containers> <suite>" line per row.
+zmodload zsh/datetime
+# Durations come from vde_test_now (lib/vde-test-env): monotonic where /proc/uptime exists, a wall-clock fallback
+# otherwise. EPOCHREALTIME is kept only for the wall-clock time of day and for the docker events window, and is
+# never subtracted.
+typeset -a TIMING_ROWS=()
+typeset -a TIMING_SORTED=()
+typeset -F TIMING_TOTAL=0
+# Set once the events query has timed out or failed: no later query is made in this run (F2).
+typeset -i DOCKER_EVENTS_BROKEN=0
+# The containers column of the last _vde_container_creates call. A global, because a command substitution
+# would run the call in a subshell and lose DOCKER_EVENTS_BROKEN.
+typeset VDE_CONTAINERS_RESULT=''
+
+# _vde_container_creates <t0> <t1>: sets VDE_CONTAINERS_RESULT to the container-create count for the epoch window,
+# or to n/a. The events history is bounded: the real daemon returns at most 256 events for a window (measured:
+# 300 creates in a window returned 256), so a count of 256 or more is shown as 256+.
+_vde_container_creates() {
+    local out secs="${VDE_DOCKER_EVENTS_TIMEOUT:-10}"
+    local -a ids bound
+    VDE_CONTAINERS_RESULT="n/a"
+    if (( DOCKER_EVENTS_BROKEN )); then return 0; fi
+    command -v docker >/dev/null 2>&1 || return 0
+    # A hung docker daemon must not stall the run (and with it the push gate): the query is always bounded,
+    # and without timeout or gtimeout on PATH it is not made at all.
+    if command -v timeout >/dev/null 2>&1; then bound=( timeout )
+    elif command -v gtimeout >/dev/null 2>&1; then bound=( gtimeout )
+    else return 0
+    fi
+    [[ "${secs}" == <-> ]] && (( secs > 0 )) || secs=10
+    out="$("${bound[@]}" "${secs}" docker events --filter type=container --filter event=create --since "$1" --until "$2" --format '{{.Actor.ID}}' </dev/null 2>/dev/null)" || { DOCKER_EVENTS_BROKEN=1; return 0; }
+    # An explicit array: ${#${(f)out}} of ONE line would be that line's length, not 1.
+    ids=( ${(f)out} )
+    if (( ${#ids} >= 256 )); then VDE_CONTAINERS_RESULT="256+"; else VDE_CONTAINERS_RESULT="${#ids}"; fi
+}
+
+# _vde_record_timing <name> <elapsed-seconds> <epoch-t0> <epoch-t1>: stores one timing row
+# ("<seconds>|<name>|<containers>"). The duration is the vde_test_now difference; the epoch window is for docker only.
+_vde_record_timing() {
+    local secs
+    secs="$(vde_test_fmt1 "$2")"
+    _vde_container_creates "$3" "$4"
+    TIMING_ROWS+=( "${secs}|${1}|${VDE_CONTAINERS_RESULT}" )
+    (( TIMING_TOTAL += $2 ))
+}
+
+# _vde_sort_timing_rows: TIMING_SORTED holds the rows slowest first.
+_vde_sort_timing_rows() {
+    TIMING_SORTED=()
+    (( ${#TIMING_ROWS} )) || return 0
+    TIMING_SORTED=( "${(@f)$(printf '%s\n' "${TIMING_ROWS[@]}" | LC_ALL=C sort -t'|' -k1,1 -rn)}" )
+}
+
+# _vde_write_timing_file: when VDE_TEST_TIMING_FILE is set, one "<seconds> <containers> <suite>" line per row, in
+# table order. The rows go to a temp file in the same directory, moved onto the path in one step (F5), so two
+# runs sharing the path leave exactly one complete run's rows. A failed write or move prints an error, returns 1.
+_vde_write_timing_file() {
+    local tf="${VDE_TEST_TIMING_FILE:-}" tmp row secs name containers content=''
+    [[ -n "${tf}" ]] || return 0
+    _vde_sort_timing_rows
+    for row in "${TIMING_SORTED[@]}"; do
+        [[ -n "${row}" ]] || continue
+        secs="${row%%|*}"; name="${${row#*|}%%|*}"; containers="${row##*|}"
+        content+="${secs} ${containers} ${name}"$'\n'
+    done
+    if ! tmp="$(mktemp "${tf:h}/.${tf:t}.XXXXXX" 2>/dev/null)"; then
+        print -u2 -r -- "ERROR: cannot write VDE_TEST_TIMING_FILE: ${tf}"
+        return 1
+    fi
+    if ! { print -rn -- "${content}" >| "${tmp}" && mv -f -- "${tmp}" "${tf}"; }; then
+        rm -f -- "${tmp}"
+        print -u2 -r -- "ERROR: cannot write VDE_TEST_TIMING_FILE: ${tf}"
+        return 1
+    fi
+    return 0
+}
+
+# _vde_print_timing: the SUITE TIMING table, slowest first, then the optional machine-readable file.
+_vde_print_timing() {
+    local row secs name containers
+    _vde_sort_timing_rows
+    echo -e "\n${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${BLUE}${BOLD}  SUITE TIMING${RESET}"
+    echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    printf '%-60s %8s %s\n' "suite" "seconds" "containers"
+    for row in "${TIMING_SORTED[@]}"; do
+        [[ -n "${row}" ]] || continue
+        secs="${row%%|*}"; name="${${row#*|}%%|*}"; containers="${row##*|}"
+        printf '%-60s %7ss %s\n' "${name}" "${secs}" "${containers}"
+    done
+    echo "Total suite time: $(vde_test_fmt1 "${TIMING_TOTAL}")s (${#TIMING_ROWS} suites)"
+}
+
+# VDE_TEST_TIMING_FILE must be writable before anything runs (F4): a path that cannot take a file exits 2.
+if [[ -n "${VDE_TEST_TIMING_FILE:-}" ]]; then
+    typeset timing_probe=''
+    if ! timing_probe="$(mktemp "${VDE_TEST_TIMING_FILE:h}/.vde-timing-probe.XXXXXX" 2>/dev/null)"; then
+        print -u2 -r -- "ERROR: VDE_TEST_TIMING_FILE is not writable: ${VDE_TEST_TIMING_FILE}"
+        exit 2
+    fi
+    rm -f -- "${timing_probe}"
+fi
+
 # Mandatory Sovereign Audit (Rule A)
 echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo -e "${BLUE}${BOLD}  VDE SOVEREIGN AUDIT (Rule A)${RESET}"
 echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-"${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" || exit 1
+typeset -F AUDIT_T0=$(vde_test_now)
+typeset AUDIT_E0="${EPOCHREALTIME}"
+typeset -i audit_rc=0
+"${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" || audit_rc=$?
+typeset -F AUDIT_T1=$(vde_test_now)
+_vde_record_timing "sovereign-audit" $(( AUDIT_T1 - AUDIT_T0 )) "${AUDIT_E0}" "${EPOCHREALTIME}"
+if (( audit_rc != 0 )); then
+    _vde_print_timing
+    _vde_write_timing_file
+    exit "${audit_rc}"
+fi
 
 # Initialize test counters
 TOTAL_PASSED=0
@@ -94,18 +212,26 @@ FAILED_TESTS=()
 run_test_file() {
     local test_file="${1}"
     local test_name=$(basename "${test_file}")
-    
-    echo -e "\n${YELLOW}${BOLD}➤ Running: ${test_name}${RESET}"
-    
+    local -F t0 t1
+    local dur e0 e1
+
+    echo -e "\n${YELLOW}${BOLD}➤ Running: ${test_name} [$(strftime '%H:%M:%S' ${EPOCHSECONDS})]${RESET}"
+
     # Execute the test and capture exit code
+    t0=$(vde_test_now)
+    e0="${EPOCHREALTIME}"
     zsh "${test_file}"
     local rc=$?
-    
+    t1=$(vde_test_now)
+    e1="${EPOCHREALTIME}"
+    _vde_record_timing "${test_name}" $(( t1 - t0 )) "${e0}" "${e1}"
+    dur="$(vde_test_fmt1 $(( t1 - t0 )))s"
+
     if [[ ${rc} -eq 0 ]]; then
-        echo -e "${GREEN}✓ ${test_name} passed${RESET}"
+        echo -e "${GREEN}✓ ${test_name} passed (${dur})${RESET}"
         ((TOTAL_PASSED++))
     else
-        echo -e "${RED}✗ ${test_name} failed (exit code: ${rc})${RESET}"
+        echo -e "${RED}✗ ${test_name} failed (exit code: ${rc}) (${dur})${RESET}"
         ((TOTAL_FAILED++))
         FAILED_TESTS+=("${test_name}")
     fi
@@ -179,17 +305,22 @@ if command -v grep &>/dev/null; then
 fi
 
 # =============================================================================
-# FINAL SUMMARY
+# SUITE TIMING + FINAL SUMMARY
 # =============================================================================
+_vde_print_timing
+typeset -i timing_rc=0
+_vde_write_timing_file || timing_rc=1
+
 echo -e "\n${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo -e "${BLUE}${BOLD}  VDE TEST SUMMARY${RESET}"
 echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
-if [[ ${TOTAL_FAILED} -eq 0 ]]; then
+if [[ ${TOTAL_FAILED} -eq 0 && ${timing_rc} -eq 0 ]]; then
     echo -e "${GREEN}${BOLD}PASS: ${TOTAL_PASSED} test suites completed successfully.${RESET}"
     echo -e "\n${GREEN}The Sovereign Baseline is intact.${RESET}"
     exit 0
 else
+    (( timing_rc )) && echo -e "${RED}${BOLD}FAIL: the VDE_TEST_TIMING_FILE could not be written (see above).${RESET}"
     echo -e "${RED}${BOLD}FAIL: ${TOTAL_FAILED} test suites failed.${RESET}"
     echo -e "${YELLOW}Passed: ${TOTAL_PASSED}${RESET}"
     echo -e "\n${RED}Failed Suites:${RESET}"

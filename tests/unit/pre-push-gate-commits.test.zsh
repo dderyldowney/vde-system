@@ -660,6 +660,7 @@ typeset STEP_STUB='#!/usr/bin/env zsh
 # Stub step: logs its name to the shared steps log and exits with the code in its control file.
 typeset _ZSH_PURE=${(%):-%x}
 print -r -- "@NAME@" >> "@STATE@/steps.log"
+print -r -- "@NAME@=${LC_ALL-unset}" >> "@STATE@/env.log"
 typeset rc=0
 [[ -f "@STATE@/@NAME@.rc" ]] && rc="$(<"@STATE@/@NAME@.rc")"
 (( rc == 0 )) || print -r -- "✗ @NAME@ failed (exit code: ${rc})"
@@ -675,6 +676,7 @@ if [[ "$1" == --list ]]; then
     exit 0
 fi
 print -r -- suite >> "@STATE@/steps.log"
+print -r -- "suite=${LC_ALL-unset}" >> "@STATE@/env.log"
 typeset rc=0
 [[ -f "@STATE@/suite.rc" ]] && rc="$(<"@STATE@/suite.rc")"
 (( rc == 0 )) || print -r -- "✗ widget-check.test.zsh failed (exit code: ${rc})"
@@ -688,6 +690,7 @@ if [[ "$1" == -c ]]; then
     exit 0
 fi
 print -r -- behave >> "@STATE@/steps.log"
+print -r -- "behave=${LC_ALL-unset}" >> "@STATE@/env.log"
 typeset rc=0
 [[ -f "@STATE@/behave.rc" ]] && rc="$(<"@STATE@/behave.rc")"
 exit ${rc}'
@@ -729,6 +732,10 @@ gt_steps() {
 }
 gt_steps_is() {
     [[ "$(gt_steps)" == "$2" ]]; verdict "$1" $? "steps were [$(gt_steps)], expected [$2]"
+}
+# gt_timing_labels: the step label of each "[gate] <label> finished in <n>.<d>s" line of GATE_OUT, in order.
+gt_timing_labels() {
+    print -r -- "${GATE_OUT}" | sed -n 's/^\[gate\] \(.*\) finished in [0-9][0-9]*\.[0-9]s$/\1/p'
 }
 
 # --- the fast tier, one changed commit at a time -----------------------------------
@@ -917,6 +924,126 @@ for tier in fast full; do
     [[ -z "$(gt_steps)" ]]; verdict "the steps log is empty" $? "steps were [$(gt_steps)]"
 done
 gt_reset
+
+# --- D3: step timing (Signet #774): every step prints its elapsed time, and the tier prints its total ---
+test_start "gate-tree full timing: each step prints a finished-in line in order, and the full tier line is last"
+gt_reset
+gt_run full
+[[ "$(gt_timing_labels)" == "Sovereign Audit"$'\n'"Sovereign suite"$'\n'"Proof of Life"$'\n'"Gospel Audit"$'\n'"full tier" ]]; verdict "four step lines in order, then the full tier line" $? "labels were [$(gt_timing_labels)]: ${GATE_OUT[1,300]}"
+
+test_start "gate-tree fast timing: the audit, Gospel, each changed suite, the unit suites aggregate and the fast tier line print finished-in lines"
+gt_reset
+gt_run fast
+[[ "$(gt_timing_labels)" == "Sovereign Audit"$'\n'"Gospel Audit"$'\n'"unit suite a.test.zsh"$'\n'"unit suites"$'\n'"fast tier" ]]; verdict "the audit, Gospel, the changed suite's own line, the aggregate, then the fast tier line" $? "labels were [$(gt_timing_labels)]: ${GATE_OUT[1,300]}"
+
+test_start "gate-tree full timing: a failing suite still prints its finished-in line and the full tier line, and exits 3"
+gt_reset
+print -r -- 1 > "${GSTATE}/suite.rc"
+gt_run full
+(( GATE_RC == 3 )) && [[ "$(gt_timing_labels)" == "Sovereign Audit"$'\n'"Sovereign suite"$'\n'"full tier" ]]; verdict "exit 3, with the finished-in lines up to the failure and the tier line" $? "rc ${GATE_RC}, labels [$(gt_timing_labels)]: ${GATE_OUT[1,300]}"
+
+test_start "gate-tree timing: every step start line carries a wall-clock [HH:MM:SS]"
+gt_reset
+gt_run full
+typeset GT_RUNNING="$(print -r -- "${GATE_OUT}" | grep -a 'Running ')"
+[[ -n "${GT_RUNNING}" && -z "$(print -r -- "${GT_RUNNING}" | grep -a -v '\[[0-9][0-9]:[0-9][0-9]:[0-9][0-9]\]')" ]]; verdict "every Running line has [HH:MM:SS]" $? "lines: ${GT_RUNNING[1,300]}"
+
+test_start "gate-tree timing: a step that waits about one second reports at least 0.9s"
+typeset SLOW_STUB='#!/usr/bin/env zsh
+typeset _ZSH_PURE=${(%):-%x}
+zmodload zsh/zselect && zselect -t 100
+exit 0'
+put_stub "${GT}/bin/vde-enforce-uap.zsh" "${SLOW_STUB}" audit
+gt_reset
+gt_run full
+put_stub "${GT}/bin/vde-enforce-uap.zsh" "${STEP_STUB}" audit
+typeset GT_SLOW="$(print -r -- "${GATE_OUT}" | sed -n 's/^\[gate\] Sovereign Audit finished in \([0-9][0-9]*\.[0-9]\)s$/\1/p')"
+[[ -n "${GT_SLOW}" ]] && (( GT_SLOW >= 0.9 )); verdict "the Sovereign Audit step reports at least 0.9s" $? "reported [${GT_SLOW}]: ${GATE_OUT[1,300]}"
+gt_reset
+
+# --- D4: a decimal-comma locale cannot print commas in the timing lines (LC_ALL overrides LC_NUMERIC) ---
+typeset D4_LOCALE="en_DK.utf8"
+typeset D4_PROBE="$(LC_ALL=${D4_LOCALE} zsh -c 'printf "%.1f" 1.5' 2>/dev/null)"
+if [[ "${D4_PROBE}" != "1,5" ]]; then
+    print -r -- "[SKIP] D4: no decimal-comma locale (en_DK.utf8) on this host; install the locales package and run locale-gen"
+else
+    test_start "gate-tree full timing under LC_ALL=en_DK.utf8: every finished-in line has a dot and no comma"
+    gt_reset
+    GATE_OUT="$(cd "${GT}" && env "${_VDE_GATE_SCRUB[@]}" LC_ALL=${D4_LOCALE} PATH="${GT_STUBS}:${PATH}" HOME="${GT_BASE}/callerhome" zsh githooks/gate-tree.zsh full 2>&1)"; GATE_RC=$?
+    typeset D4_LINES="$(print -r -- "${GATE_OUT}" | grep -a 'finished in ')"
+    typeset D4_BAD="$(print -r -- "${D4_LINES}" | grep -a -v -E 'finished in [0-9]+\.[0-9]s$')"
+    [[ -n "${D4_LINES}" && -z "${D4_BAD}" && -z "$(print -r -- "${D4_LINES}" | grep -a ',')" ]]; verdict "every finished-in line has a dot and no comma" $? "lines: ${D4_LINES[1,400]}"
+
+    test_start "gate-tree full timing under LC_ALL=en_DK.utf8: the full tier finished-in line has a dot"
+    typeset D4_TIER="$(print -r -- "${GATE_OUT}" | grep -a 'full tier finished in ')"
+    [[ "${D4_TIER}" =~ 'finished in [0-9]+\.[0-9]s$' ]]; verdict "the full tier line has a dot and no comma" $? "tier line: ${D4_TIER[1,200]}"
+
+    test_start "gate-tree full timing under LC_ALL=en_DK.utf8: exit code is unchanged (0 for the passing stubs)"
+    (( GATE_RC == 0 )); verdict "exit 0" $? "rc ${GATE_RC}: ${GATE_OUT[1,300]}"
+
+    test_start "gate-tree timing under LC_ALL=en_DK.utf8: a one-second audit reports at least 0.9 with a dot"
+    put_stub "${GT}/bin/vde-enforce-uap.zsh" "${SLOW_STUB}" audit
+    gt_reset
+    GATE_OUT="$(cd "${GT}" && env "${_VDE_GATE_SCRUB[@]}" LC_ALL=${D4_LOCALE} PATH="${GT_STUBS}:${PATH}" HOME="${GT_BASE}/callerhome" zsh githooks/gate-tree.zsh full 2>&1)"; GATE_RC=$?
+    put_stub "${GT}/bin/vde-enforce-uap.zsh" "${STEP_STUB}" audit
+    typeset D4_SLOW="$(print -r -- "${GATE_OUT}" | sed -n 's/^\[gate\] Sovereign Audit finished in \([0-9][0-9]*[.,][0-9]\)s$/\1/p')"
+    [[ "${D4_SLOW}" == *.* ]] && (( ${D4_SLOW/,/.} >= 0.9 )); verdict "the audit step reports at least 0.9 with a dot" $? "reported [${D4_SLOW}]: ${GATE_OUT[1,300]}"
+    gt_reset
+
+    # gate-tree's locale pin (_gate_fmt1) covers its number formatting only: every step it runs must keep the caller's LC_ALL.
+    test_start "gate-tree full under LC_ALL=en_DK.utf8: every step (audit, suite, Proof of Life, Gospel) sees the caller's LC_ALL, never C"
+    gt_reset
+    rm -f "${GSTATE}/env.log"
+    GATE_OUT="$(cd "${GT}" && env "${_VDE_GATE_SCRUB[@]}" LC_ALL=${D4_LOCALE} PATH="${GT_STUBS}:${PATH}" HOME="${GT_BASE}/callerhome" zsh githooks/gate-tree.zsh full 2>&1)"; GATE_RC=$?
+    typeset D4_ENV=""
+    [[ -f "${GSTATE}/env.log" ]] && D4_ENV="$(<"${GSTATE}/env.log")"
+    typeset D4_ENV_BAD="$(print -r -- "${D4_ENV}" | grep -a -v -E '=en_DK\.utf8$')"
+    [[ -n "${D4_ENV}" && -z "${D4_ENV_BAD}" ]]; verdict "every recorded step saw LC_ALL=en_DK.utf8" $? "env log [${D4_ENV[1,300]}], not matching: [${D4_ENV_BAD[1,300]}]"
+
+    test_start "gate-tree full under no LC_ALL in the environment: every step sees LC_ALL unset, never C"
+    gt_reset
+    rm -f "${GSTATE}/env.log"
+    GATE_OUT="$(cd "${GT}" && env -u LC_ALL "${_VDE_GATE_SCRUB[@]}" PATH="${GT_STUBS}:${PATH}" HOME="${GT_BASE}/callerhome" zsh githooks/gate-tree.zsh full 2>&1)"; GATE_RC=$?
+    D4_ENV=""
+    [[ -f "${GSTATE}/env.log" ]] && D4_ENV="$(<"${GSTATE}/env.log")"
+    D4_ENV_BAD="$(print -r -- "${D4_ENV}" | grep -a -v -E '=unset$')"
+    [[ -n "${D4_ENV}" && -z "${D4_ENV_BAD}" ]]; verdict "every recorded step saw LC_ALL unset" $? "env log [${D4_ENV[1,300]}], not matching: [${D4_ENV_BAD[1,300]}]"
+    gt_reset
+fi
+
+# --- D5: the fast tier prints a finished-in line for each changed unit suite (Signet #774, F8) -----
+# A commit that changes two runnable suites: each suite gets its own line, in run order, before the
+# aggregate "unit suites" line. A failing changed suite still prints its own line, and the tier exits 3.
+print -r -- "# two a" >> "${GT}/tests/unit/a.test.zsh"
+put_stub "${GT}/tests/unit/b.test.zsh" "${STEP_STUB}" b.test.zsh
+print -r -- "# two b" >> "${GT}/tests/unit/b.test.zsh"
+git -C "${GT}" add tests/unit/a.test.zsh tests/unit/b.test.zsh && git -C "${GT}" commit -qm "x7 change a and b"
+
+test_start "gate-tree fast timing: a commit that changes two unit suites prints a finished-in line for each suite, in run order, before the aggregate"
+gt_reset
+gt_run fast
+[[ "$(gt_timing_labels)" == "Sovereign Audit"$'\n'"Gospel Audit"$'\n'"unit suite a.test.zsh"$'\n'"unit suite b.test.zsh"$'\n'"unit suites"$'\n'"fast tier" ]]; verdict "a line per changed suite, then the aggregate, then the fast tier line" $? "labels were [$(gt_timing_labels)]: ${GATE_OUT[1,300]}"
+(( GATE_RC == 0 )); verdict "passes with rc 0" $? "rc ${GATE_RC}: ${GATE_OUT[1,300]}"
+
+test_start "gate-tree fast timing: a failing changed suite still prints its own finished-in line, and the tier exits 3"
+gt_reset
+print -r -- 1 > "${GSTATE}/b.test.zsh.rc"
+gt_run fast
+(( GATE_RC == 3 )) && [[ "$(gt_timing_labels)" == "Sovereign Audit"$'\n'"Gospel Audit"$'\n'"unit suite a.test.zsh"$'\n'"unit suite b.test.zsh"$'\n'"unit suites"$'\n'"fast tier" ]]; verdict "exit 3, with a line for each suite, the aggregate and the tier line" $? "rc ${GATE_RC}, labels [$(gt_timing_labels)]: ${GATE_OUT[1,300]}"
+gt_reset
+
+# D4_PROBE (above) decides whether the decimal-comma locale is usable on this host.
+if [[ "${D4_PROBE}" != "1,5" ]]; then
+    print -r -- "[SKIP] F8: no decimal-comma locale (en_DK.utf8) on this host; the per-suite dot check is not run"
+else
+    test_start "gate-tree fast timing under LC_ALL=en_DK.utf8: each per-suite finished-in line has a dot and no comma"
+    gt_reset
+    GATE_OUT="$(cd "${GT}" && env "${_VDE_GATE_SCRUB[@]}" LC_ALL=${D4_LOCALE} PATH="${GT_STUBS}:${PATH}" HOME="${GT_BASE}/callerhome" zsh githooks/gate-tree.zsh fast 2>&1)"; GATE_RC=$?
+    typeset F8_LINES="$(print -r -- "${GATE_OUT}" | grep -a '^\[gate\] unit suite ')"
+    typeset F8_BAD="$(print -r -- "${F8_LINES}" | grep -a -v -E 'unit suite [a-z.]+ finished in [0-9]+\.[0-9]s$')"
+    [[ "$(print -r -- "${F8_LINES}" | grep -a -c .)" == 2 && -z "${F8_BAD}" && -z "$(print -r -- "${F8_LINES}" | grep -a ',')" ]]; verdict "two per-suite lines, each with a dot and no comma" $? "lines: ${F8_LINES[1,400]}"
+    gt_reset
+fi
 
 # --- E: the scratch-base library comes from the pushing tree, never from the commit under test -----
 # gate-tree.zsh runs inside the commit's throwaway checkout, so VDE_ROOT_DIR names the commit under test.
