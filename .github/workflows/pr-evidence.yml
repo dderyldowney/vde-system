@@ -8,6 +8,11 @@ on:
 permissions:
   contents: read
 
+# an older run of an edited body must never finish after, and overwrite, a newer one
+concurrency:
+  group: pr-evidence-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 # Enforce zsh as the default shell for all jobs and steps
 defaults:
   run:
@@ -22,9 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Install dependencies
-        shell: zsh {0}
-        run: sudo apt-get update && sudo apt-get install -y zsh && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+      # the runner has no zsh yet, and no foreign shell is allowed (Mandate C): this one step runs under python3, which is not a shell, to install zsh
+      - name: Install zsh
+        shell: python3 {0}
+        run: |
+          import subprocess
+          for cmd in (["sudo", "apt-get", "update"], ["sudo", "apt-get", "install", "-y", "zsh"]):
+              subprocess.run(cmd, check=True)
       - name: Check pull request evidence (Testing Policy)
         shell: zsh {0}
         env:
