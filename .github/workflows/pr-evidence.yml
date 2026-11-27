@@ -1,0 +1,39 @@
+# VDE ARCHITECTURAL RECORD
+# @forge (Governance Sentinel)
+name: PR Evidence
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+# Enforce zsh as the default shell for all jobs and steps
+defaults:
+  run:
+    shell: zsh {0}
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  pr-evidence:
+    name: pr-evidence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install dependencies
+        shell: zsh {0}
+        run: sudo apt-get update && sudo apt-get install -y zsh && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+      - name: Check pull request evidence (Testing Policy)
+        shell: zsh {0}
+        env:
+          # the pull request body is untrusted input: it reaches the checker only through these variables, never through the script text
+          VDE_PR_BODY: ${{ github.event.pull_request.body }}
+          VDE_PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          VDE_PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          VDE_PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          VDE_PR_BASE_REPO: ${{ github.repository }}
+        # the checker MUST stay the LAST command: zsh {0} has no errexit, so a trailing echo would hide its failure
+        run: |
+          ./bin/vde-check-pr-evidence.zsh
