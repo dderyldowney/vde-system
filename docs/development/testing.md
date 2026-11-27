@@ -3,6 +3,118 @@
 
 This document defines the absolute empirical standards for the Virtual Development Environment (VDE). All functional code MUST be verified by this suite.
 
+## Testing Policy (binding)
+
+This section is the single source of truth for how the project tests. Other documents link here and state no competing rule. The numbered sections below (1 to 7) describe the suites and how to run them; this policy states the obligations around them.
+
+### Scope and authority
+
+This policy binds every maintainer and every agent, sub-agents included. It governs every change to code, tests, the gate and the test tooling. The agent-facing obligations are in `.gemini/RULES/testing.md`, and the preamble every sub-agent prompt for code work begins with is `.gemini/RULES/testing-preamble.md`. Those files are derived summaries of this section for agents: they point here and restate no rule values, and where one of them differs from this section, this section wins.
+
+The numbers are in `tests/test-policy.conf`, which mirrors the tooling defaults: the tooling does not read the file, and `tests/unit/testing-policy-wiring.test.zsh` fails if they drift. The table under "Policy numbers" below mirrors that file. The layer that enforces each rule is shown under "Which layer enforces which rule". A rule that is marked Planned is not yet enforced by the tooling, and the pull request that changes code must not claim otherwise.
+
+### Standards followed
+
+This policy uses the vocabulary of ISO/IEC/IEEE 29119 (software testing) and of the ISTQB glossary. Test sizes (small, medium, large) follow the Google style. The test pyramid guides the mix: many small tests, fewer medium tests, and few large tests. Non-determinism is handled as described in Fowler's "Eradicating Non-Determinism in Tests". Delivery health will be reported with the DORA measures that the run history supports (lead time for changes, to which the pipeline duration contributes, and change failure rate), through the history and reporting work (#779, #784); no DORA measure is computed today. Secure development follows NIST SSDF practices PW.7 (review and analyze human-readable code) and PW.8 (test executable code). The OpenSSF Scorecard Pinned-Dependencies check is the reference for the planned pinned test environment (#780); GitHub Actions are pinned by tag today, not by commit hash.
+
+### Test sizes
+
+| Size | Resources and limits | Where it runs | Examples today | Budget |
+|------|----------------------|---------------|----------------|--------|
+| Small | No containers, no network, no fixed sleeps. Must be safe to run in parallel. | The unit suites `tests/unit/*.test.zsh`, run by `tests/run-sovereign-tests.zsh` in the continuous integration job. | `tests/unit/vde-actions.test.zsh`, `tests/unit/test-runner-coverage.test.zsh` | `UNIT_SUITE_BUDGET_SECONDS` per suite |
+| Medium | May start Spokes, never more than `MAX_RUNNING_SPOKES` at once (Rule K in `.gemini/instructions.md`). Runs serially. | Not in the continuous integration unit job, so not in the Sovereign suite runner's unit run. | `tests/integration/spoke-smoke-matrix.test.zsh` | No separate budget in the policy numbers |
+| Large | The full lifecycle of a Spoke, end to end. Runs serially. | The pre-push full certification of the pushed tip. | The Proof of Life contract, `tests/features/core-infrastructure/proof-of-life-the-contract.feature` | Counts toward `FULL_TIER_BUDGET_SECONDS` |
+
+Two small-tier suites are a known exception to the no-container rule: `vde-agent-sock.test.zsh` and `spine-git-env-isolation.test.zsh` each create one container. Moving them to the medium tier is Planned (#778).
+
+### Determinism rules
+
+- Do not use `sleep`. Wait on a condition or a timer through `zsh/zselect` (`zmodload zsh/zselect && zselect -t <hundredths>`).
+- Do not assert an exact second or a sub-second timing edge. Assert with a margin.
+- Output must not change under `LC_ALL`. Helpers pin their own formatting.
+- Small tests use their own scratch `HOME` and scratch directories. `lib/vde-test-env` provides a scratch Projects base and a scratch directory, not a scratch `HOME`. The pre-push gate runs the suites under a scratch `HOME`, and a test that touches `HOME` must set its own scratch home, never the caller's. Medium tests use a scratch Projects base for their workspaces, with one documented read exception: they may READ the caller's SSH key directory (`VDE_SSH_DIR`, default under `HOME`), as the Spoke smoke matrix shows. Spokes started by a medium test keep their own data and log directories; this exception to the no-leftover rule is tracked separately. The large Proof of Life runs with the caller's `HOME` because the real tooling it exercises needs it; the gate records this in [github-lifecycle.md](github-lifecycle.md) section 6. These are the only deliberate exceptions, and any other test that needs the caller's `HOME` or writes outside scratch must say why in the pull request.
+- Small tests use no network. Medium and large tests use only the local container runtime and what the project itself starts.
+- No test depends on or changes shared mutable host state.
+- A test leaves no process, container or file behind.
+- Randomness, when a test needs it, uses a fixed seed.
+- No test depends on the order in which other tests run.
+- Measure a duration with `vde_test_now` from `lib/vde-test-env`, which reads a clock that a wall-clock step cannot move where `/proc/uptime` is readable (otherwise it falls back to the wall clock, a documented limitation). `$SECONDS` and `EPOCHREALTIME` both follow the wall clock in zsh 5.9 (measured: a one-hour step moved both by 3601 seconds), so `$SECONDS` is not a monotonic clock and a step during a run would corrupt a duration built on either. Format a number with `vde_test_fmt1` from the same file, which prints a dot in any locale.
+
+### Flake policy
+
+A flaky test is a test that both passes and fails on the same code.
+
+The specified behaviour is this. A suite that fails is rerun once (`FLAKE_RERUN_ON_FAIL`). A suite that passes on the rerun is reported as FLAKY, never as a plain pass, and the flake is recorded. A suite that flakes `FLAKE_FAIL_THRESHOLD` times within the last `FLAKE_WINDOW_RUNS` runs fails the run until the flake is fixed or the test is quarantined. A quarantine entry needs a reason, an owner, an issue number and an expiry date. An expired or stale quarantine entry is an error.
+
+Status: Planned (#779). The rerun, the recording, the threshold and the quarantine are not yet in the tooling. Until #779 lands, a flaky test is fixed when it is found, and the pull request says so.
+
+### Timing and budgets
+
+Every run is timed. The runner prints a start time and a duration for each suite and a SUITE TIMING table. The pre-push gate prints the time of each step. The per-suite and per-step timing is step 1 of issue #774 (PR #783) and is Implemented. Each run also reports how many containers each suite created, read from the container runtime's event stream for the suite's time window (the count is daemon-wide, and a window that reaches the runtime's event-history cap shows `256+`).
+
+Budgets:
+
+- `UNIT_SUITE_BUDGET_SECONDS` applies to each unit suite.
+- `FULL_TIER_BUDGET_SECONDS` applies to the full certification of a tip.
+- Budgets only go down. This is a ratchet: a budget may be lowered, never raised to hide a slow suite.
+- A suite over its budget must be fixed, or the pull request must justify it.
+
+Measured baseline, 2026-11-26, one gate run: the full tier took 1398.0 s, made up of the audit at 7.5 s, the suite at 452.7 s, the Proof of Life at 937.7 s and the documentation audit (`bin/vde-gospel-audit.zsh`) at 0.1 s. The slowest unit suite took 129.2 s. The number of containers each suite creates is measured and printed.
+
+Status of enforcement: budgets are not yet enforced by the tooling. Planned (#779).
+
+### Coverage
+
+Today the continuous integration coverage job runs kcov over every test that is not listed in [`tests/ci-coverage-exclusions.txt`](../../tests/ci-coverage-exclusions.txt) (the list currently names four tests) and publishes the report. It does not gate on a minimum, and the CI summary only requires that the job ran.
+
+Policy: record the measured baseline from the published report, then ratchet it. The minimum may rise and must never fall. A pull request that lowers measured coverage must say why. The baseline value is recorded only when it has been measured; no value is invented.
+
+Status: Planned (#782, the umbrella issue for this policy).
+
+### Test quality and evidence
+
+Every test must be able to fail. A new or changed test is shown failing before the change (RED) and passing after it (GREEN), with the literal output in the pull request, using the evidence section of the pull request template.
+
+A rule that guards behaviour is shown to bite: a violating fixture or a mutation makes it fail. Code that carries the gate or the test tooling also carries a mutation proof (automated by #781).
+
+Fake tests are forbidden. The rule and its examples are in `.gemini/RULES/fake_tests.md`; this policy does not restate them.
+
+The full suite and the Proof of Life run at the push are the certification. Do not hand-run them first in place of the certification.
+
+An independent review must pass before a commit. The review checklist is Planned (#778).
+
+### Which layer enforces which rule
+
+| Rule | Enforced by | Status |
+|------|-------------|--------|
+| Suite discovery and exclusions with a reason | `tests/run-sovereign-tests.zsh` and `tests/unit/test-runner-coverage.test.zsh` | Implemented |
+| Test-size and determinism rule checks (a unit suite that starts a container, uses the network or sleeps is detected) | Not yet in the tooling | Planned (#778) |
+| Timing printed every run and per-step gate timing | `tests/run-sovereign-tests.zsh` and `githooks/gate-tree.zsh`; per-step timing (PR #783), Implemented once PR #783 is merged | Implemented |
+| Two-tier pre-push gate, stamps and no early release | `githooks/*`, `lib/vde-pol-stamp` and `lib/vde-gate-commits` (#770) | Implemented |
+| Policy numbers match the tooling defaults | `tests/unit/testing-policy-wiring.test.zsh` | Implemented |
+| Flake rerun, recording, threshold and quarantine; run history | Not yet in the tooling | Planned (#779) |
+| Timing budget enforcement | Not yet in the tooling | Planned (#779) |
+| Pinned test environment | Not yet in the tooling | Planned (#780) |
+| Mutation checks for the gate and the tooling | Not yet in the tooling | Planned (#781) |
+| Style (4-space indentation) conformance | Not yet in the tooling | Planned (#777) |
+| Coverage minimum ratchet | Not yet in the tooling | Planned (#782) |
+| Reviewer checklist and pull request evidence check | Not yet in the tooling | Planned (#778) |
+
+### Policy numbers
+
+The values below are the same as `tests/test-policy.conf`. The wiring test `tests/unit/testing-policy-wiring.test.zsh` fails if they differ.
+
+| Key | Value | Meaning |
+|-----|-------|---------|
+| `UNIT_SUITE_BUDGET_SECONDS` | `150` | Time budget for one unit suite. Budgets only go down. |
+| `FULL_TIER_BUDGET_SECONDS` | `1500` | Time budget for the full certification of a tip. |
+| `STAMP_TTL_SECONDS` | `1800` | How long a passed certification stamp stays valid for a push. Equals the default in `lib/vde-pol-stamp`. |
+| `DOCKER_EVENTS_TIMEOUT_SECONDS` | `10` | Timeout for watching Docker events. Equals the default in `tests/run-sovereign-tests.zsh`. |
+| `MAX_RUNNING_SPOKES` | `3` | Most Spokes that may run at once (Rule K). |
+| `FLAKE_RERUN_ON_FAIL` | `1` | Whether a failing suite is rerun once before it is reported (1 = yes, 0 = no). |
+| `FLAKE_WINDOW_RUNS` | `20` | How many recent runs are counted when judging flakes. |
+| `FLAKE_FAIL_THRESHOLD` | `3` | Flakes within the window that fail the run. |
+
 ## 1. THE SUPREME GATE: @SYSTEM-SPINE
 The System Spine tetrad is the foundational audit gate. If any pillar fails, the system triggers an immediate **Protocol Blockade**.
 
@@ -58,6 +170,8 @@ Located in `tests/features/core-infrastructure/` (22 feature files at commit `63
 
 ## 4. EXECUTION PROTOCOLS
 
+The commands below are for focused runs during work; these sections defer to the Testing Policy (binding), under which full-suite certification belongs to the pre-push gate.
+
 ### Full BDD Strike
 ```zsh
 # Execute the complete behavior suite
@@ -77,6 +191,9 @@ behave --tags @system-spine
 ```
 
 ## 5. HARDENED MANDATES
+
+These mandates defer to the Testing Policy (binding) and to the fake-test rule in `.gemini/RULES/fake_tests.md` where they differ.
+
 - **Zero Placeholder Policy**: No "pink" steps permitted. Every assertion MUST verify physical file existence, container state, or network response.
 - **Auto-Cleanup**: The `after_scenario` hook in `environment.py` ensures 100% removal of test containers (labeled `vde.test=true`).
 - **USP Compliance**: Every hydration script in `scripts/setup/` must pass the `usp-validation` suite before it is considered production Beskar.
