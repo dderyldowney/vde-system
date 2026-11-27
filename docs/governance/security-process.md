@@ -77,7 +77,7 @@ A public pull request shows its diff, its regression test and its RED and GREEN 
 Every fix, wherever it is written:
 
 - follows the Strike Protocol (Signet, feature branch, pull request, written approval before merge);
-- adds a regression test, shown failing before the fix and passing after it (literal RED and GREEN runs), which stays in the suite permanently;
+- adds a regression test, shown failing before the fix and passing after it (literal RED and GREEN runs), which stays in the suite permanently (how tests are written, sized, timed and reviewed is set out in [`docs/development/testing.md`](../development/testing.md), the Testing Policy);
 - includes a **variant analysis**: search the code base for the same pattern; each variant found joins the same advisory or gets its own;
 - keeps the Proof of Life green.
 
