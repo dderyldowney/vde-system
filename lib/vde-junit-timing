@@ -1,0 +1,94 @@
+#!/usr/bin/env zsh
+# @forge (Governance Sentinel)
+# ZSH-native shibboleth (Rule 1)
+typeset _ZSH_PURE=${(%):-%x}
+#
+# Per-scenario Proof of Life timing from behave --junit output (issue #774, step 1b).
+#
+# Usage (the caller has sourced lib/vde-test-env, which provides vde_test_fmt1):
+#   source ./lib/vde-junit-timing
+#   vde_junit_timing_report DIR [TOP]
+#
+# Reads every *.xml file in DIR, prints one table of the slowest TOP scenarios (default 10),
+# slowest first, and a header with the scenario count and the total of ALL scenarios.
+# Pure zsh: no jq, python, sed or awk. Never evaluates the XML. Always returns 0.
+
+vde_junit_timing_report() {
+    emulate -L zsh
+    setopt localoptions
+
+    local dir="${1:-}"
+    local top="${2:-10}"
+    local f text piece tag name rstat t key secs_str
+    local -i ms n=0 k idx shown=0 total_ms=0
+    local -a files parts keys names rstats mss sorted
+    local total_s total_str sec
+
+    [[ "${top}" == <-> ]] && (( top >= 1 )) || top=10
+
+    if [[ -n "${dir}" && -d "${dir}" ]]; then
+        files=("${dir}"/*.xml(N.))
+    fi
+
+    for f in "${files[@]}"; do
+        if ! text="$(<"${f}")"; then
+            continue
+        fi
+        parts=("${(@s:<testcase :)text}")
+        for (( k = 2; k <= ${#parts}; k++ )); do
+            piece="${parts[k]}"
+            tag="${piece%%>*}"
+            if [[ ! "${tag}" =~ '(^|[[:space:]])time="([^"]*)"' ]]; then
+                continue
+            fi
+            t="${match[2]}"
+            # behave writes small times in exponent notation (4.9e-05), so the exponent is accepted
+            if [[ ! "${t}" =~ '^[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?$' ]]; then
+                continue
+            fi
+            (( ms = t * 1000 + 0.5 ))
+
+            name=""
+            if [[ "${tag}" =~ '(^|[[:space:]])name="([^"]*)"' ]]; then
+                name="${match[2]}"
+            fi
+            rstat="unknown"
+            if [[ "${tag}" =~ '(^|[[:space:]])status="([^"]*)"' ]]; then
+                rstat="${match[2]}"
+            fi
+            name=${name//'&lt;'/'<'}
+            name=${name//'&gt;'/'>'}
+            name=${name//'&quot;'/'"'}
+            name=${name//'&apos;'/"'"}
+            name=${name//'&amp;'/'&'}
+
+            (( n++ ))
+            (( total_ms += ms ))
+            mss+=("${ms}")
+            names+=("${name}")
+            rstats+=("${rstat}")
+            keys+=("${(l:12::0:)ms}${(l:6::0:)n}")
+        done
+    done
+
+    if (( n == 0 )); then
+        print -r -- "PROOF OF LIFE TIMING: no scenario timings found in ${dir}"
+        return 0
+    fi
+
+    sorted=("${(@O)keys}")
+    (( shown = top < n ? top : n ))
+    (( total_s = total_ms / 1000.0 ))
+    total_str="$(vde_test_fmt1 "${total_s}")"
+
+    print -r -- "PROOF OF LIFE TIMING: ${n} scenarios, ${total_str}s in total, slowest ${shown} shown"
+    print -r -- "   seconds  status   scenario"
+    for (( k = 1; k <= shown; k++ )); do
+        key="${sorted[k]}"
+        (( idx = 10#${key[13,18]} ))
+        (( sec = mss[idx] / 1000.0 ))
+        secs_str="$(vde_test_fmt1 "${sec}")"
+        print -r -- " ${(l:9:)secs_str}  ${(r:8:)rstats[idx]} ${names[idx]}"
+    done
+    return 0
+}
