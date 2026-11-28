@@ -152,8 +152,8 @@ hang_docker_stub() {  # hang_docker_stub FIXTURE: stubs/docker whose events subc
 run_in() {  # run_in FIXTURE PATHVALUE [NAME=value ...] -> OUT (colour codes removed) and RC (the runner's exit status)
     local fix="$1" p="$2" raw
     shift 2
-    # VDE_TEST_JOBS=1 (serial): per-suite container counts exist only in serial mode; a later NAME=value argument overrides it.
-    raw="$(cd "${fix}" && timeout 120 env -i HOME="${fix}/callerhome" PATH="${p}" VDE_TEST_JOBS=1 \
+    # VDE_TEST_JOBS=1 (serial): per-suite container counts exist only in serial mode; a later NAME=value argument overrides it. VDE_FLAKE_RERUN=0 keeps the row counts exact (the rerun has its own cases in runner-flaky.test.zsh).
+    raw="$(cd "${fix}" && timeout 120 env -i HOME="${fix}/callerhome" PATH="${p}" VDE_TEST_JOBS=1 VDE_FLAKE_RERUN=0 \
         DOCKER_LOG="${fix}/docker.log" DOCKER_EVENTS="${fix}/docker.events" \
         "$@" zsh tests/run-sovereign-tests.zsh 2>&1; print -r -- "RC=$?")"
     RC="${raw##*RC=}"

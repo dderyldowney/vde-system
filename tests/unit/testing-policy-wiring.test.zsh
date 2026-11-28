@@ -435,6 +435,46 @@ test_parallel_jobs() {
     fi
 }
 
+test_flake_rerun() {
+    test_start "4c: the runner's VDE_FLAKE_RERUN_DEFAULT equals FLAKE_RERUN_ON_FAIL in the conf and in the Policy numbers table; the Flake policy states the Proof of Life is never rerun"
+    local -a occ=() rows cells=()
+    local line rn="" dv="" sentence blk
+    occ=("${(@f)$(grep -oE -- 'VDE_FLAKE_RERUN_DEFAULT=[0-9]+' "${VDE_ROOT_DIR}/${SOVEREIGN_FILE}" 2>/dev/null)}")
+    occ=("${(@)occ:#}")
+    if (( ${#occ[@]} == 1 )); then
+        rn="${occ[1]##*=}"
+        test_pass "${SOVEREIGN_FILE} declares VDE_FLAKE_RERUN_DEFAULT once (${rn})"
+    else
+        test_fail "${SOVEREIGN_FILE} declares VDE_FLAKE_RERUN_DEFAULT once" "found ${#occ[@]} declaration(s) of VDE_FLAKE_RERUN_DEFAULT=<n>"
+    fi
+    if [[ -n "${rn}" && "${rn}" == "${CONF[FLAKE_RERUN_ON_FAIL]:-}" ]]; then
+        test_pass "VDE_FLAKE_RERUN_DEFAULT equals FLAKE_RERUN_ON_FAIL in ${CONF_FILE} (${rn})"
+    else
+        test_fail "VDE_FLAKE_RERUN_DEFAULT equals FLAKE_RERUN_ON_FAIL in ${CONF_FILE}" \
+            "runner [${rn:-<absent>}], conf [${CONF[FLAKE_RERUN_ON_FAIL]:-<absent>}]"
+    fi
+    rows=("${(@f)$(block "${NUMBERS_HEADING}" "${DOC}")}")
+    for line in "${rows[@]}"; do
+        [[ "${line}" == '| `FLAKE_RERUN_ON_FAIL`'* ]] || continue
+        cells=("${(@s:|:)line}")
+        dv="$(cell_trim "${cells[3]}")"
+    done
+    if [[ -n "${rn}" && "${rn}" == "${dv}" ]]; then
+        test_pass "VDE_FLAKE_RERUN_DEFAULT equals the FLAKE_RERUN_ON_FAIL row in ${DOC} (${rn})"
+    else
+        test_fail "VDE_FLAKE_RERUN_DEFAULT equals the FLAKE_RERUN_ON_FAIL row in ${DOC}" \
+            "runner [${rn:-<absent>}], doc [${dv:-<no row>}]"
+    fi
+    sentence='The Proof of Life is never rerun, never quarantined and never reported FLAKY: a Proof of Life that fails is a defect in the core, not a flake.'
+    blk="$(block '### Flake policy' "${DOC}")"
+    if print -r -- "${blk}" | grep -qF -- "${sentence}"; then
+        test_pass "the Flake policy section in ${DOC} states the Proof of Life is never rerun, quarantined or reported FLAKY"
+    else
+        test_fail "the Flake policy section in ${DOC} states the Proof of Life is never rerun, quarantined or reported FLAKY" \
+            "the exact sentence is missing from the ### Flake policy section"
+    fi
+}
+
 test_pointers() {
     test_start "5: the agent rule and the preamble are tracked; every entry point names the policy, the rule and the preamble"
     local f
@@ -1053,6 +1093,7 @@ test_conf_keys
 test_numbers_table
 test_tooling_defaults
 test_parallel_jobs
+test_flake_rerun
 test_pointers
 test_links
 test_layers_table
