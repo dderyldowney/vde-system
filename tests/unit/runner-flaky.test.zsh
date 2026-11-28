@@ -15,6 +15,8 @@ source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 # This file runs a copy of the real runner in a stub fixture (stub audit, stub integration suite, stub docker on
 # PATH, no containers, no network). Each stub suite counts its own runs in a file under RP_STATE, so a case can see
 # exactly how many times the runner executed it. Both the serial path (VDE_TEST_JOBS=1) and the pool are covered.
+# F10 covers the rerun's HOME: the rerun gets a fresh HOME in both modes, so state the first run left in HOME cannot
+# turn a clean-state failure into a FLAKY pass.
 
 # GIT_* scrub (Signet #656): the variables that select a repository would make the fixture write into the enclosing one.
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_NAMESPACE GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS GIT_TEMPLATE_DIR
@@ -401,6 +403,64 @@ if (( decl9 == 1 && exact9 == 1 )); then
     test_pass "F9 the runner declares typeset -ri VDE_FLAKE_RERUN_DEFAULT=1 exactly once"
 else
     test_fail "F9 VDE_FLAKE_RERUN_DEFAULT=1 declared exactly once" "lines mentioning it: ${decl9}, exact declaration lines: ${exact9}"
+fi
+
+# ---------------------------------------------------------------------------
+# F10: the rerun gets a fresh HOME (serial and pool): a leftover the first run left in HOME is not seen, so it fails again
+# ---------------------------------------------------------------------------
+
+home10_findings() {  # home10_findings STATEDIR SUITE -> FWHY: the checks of a suite that failed (exit 5) on the run and again on the rerun (empty when all hold)
+    local st="$1" s="$2"
+    FWHY=''
+    run_count "${st}" "${s}"
+    (( RUNS == 2 )) || FWHY+=" runs=${RUNS}(want 2)"
+    has_line 'failed again on the rerun' || FWHY+=" no 'failed again on the rerun' line"
+    has_line 'FLAKY' && FWHY+=" a FLAKY word is in the output"
+    has_line 'FAIL: 1 test suites failed' || FWHY+=" no 'FAIL: 1 test suites failed' line"
+    [[ "${RC}" == 1 ]] || FWHY+=" rc=${RC}(want 1)"
+}
+
+test_start "F10 serial and pool: the rerun gets a fresh HOME, so a leftover from the first run is not seen: failed again, 2 runs, RC 1, no FLAKY"
+new_fixture f10s || exit 1
+typeset FIX10S="${SCRATCH}/f10s"
+write_suite "${FIX10S}/tests/unit/fl-home.test.zsh" <<'STUB' || exit 1
+#!/usr/bin/env zsh
+# runner-flaky F10 fixture: counts its runs in RP_STATE; exits 0 when HOME already holds a leftover, else leaves one and exits 5
+typeset f="${RP_STATE}/run-count.${0:t}" n=0
+[[ -f "${f}" ]] && n="$(<"${f}")"
+n=$(( n + 1 ))
+print -r -- "${n}" > "${f}"
+print -r -- "FLAKE-STUB ${0:t} run ${n}"
+if [[ -f "${HOME}/leftover" ]]; then exit 0; fi
+print -r -- leftover > "${HOME}/leftover"
+exit 5
+STUB
+run_par "${FIX10S}" VDE_TEST_JOBS=1
+typeset WHY10=''
+home10_findings "${FIX10S}/state" fl-home.test.zsh
+[[ -n "${FWHY}" ]] && WHY10+=" serial:[${FWHY# }]"
+new_fixture f10p || exit 1
+typeset FIX10P="${SCRATCH}/f10p"
+write_suite "${FIX10P}/tests/unit/fl-home.test.zsh" <<'STUB' || exit 1
+#!/usr/bin/env zsh
+# runner-flaky F10 fixture: counts its runs in RP_STATE; exits 0 when HOME already holds a leftover, else leaves one and exits 5
+typeset f="${RP_STATE}/run-count.${0:t}" n=0
+[[ -f "${f}" ]] && n="$(<"${f}")"
+n=$(( n + 1 ))
+print -r -- "${n}" > "${f}"
+print -r -- "FLAKE-STUB ${0:t} run ${n}"
+if [[ -f "${HOME}/leftover" ]]; then exit 0; fi
+print -r -- leftover > "${HOME}/leftover"
+exit 5
+STUB
+count_suite "${FIX10P}/tests/unit/ok-a.test.zsh" 0 0 || exit 1
+run_par "${FIX10P}" VDE_TEST_JOBS=3
+home10_findings "${FIX10P}/state" fl-home.test.zsh
+[[ -n "${FWHY}" ]] && WHY10+=" pool:[${FWHY# }]"
+if [[ -z "${WHY10}" ]]; then
+    test_pass "F10 serial and pool: the rerun's fresh HOME hides the leftover, failed again on the rerun, 2 runs, RC 1, no FLAKY"
+else
+    test_fail "F10 the rerun runs with a fresh HOME in both modes" "${WHY10# }"
 fi
 
 print -r -- "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"

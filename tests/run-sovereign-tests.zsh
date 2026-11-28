@@ -367,9 +367,12 @@ run_test_file() {
         # Signet #779: rerun once. The first run keeps its own timing row; the rerun gets a row of its own.
         first_rc="${rc}"
         echo -e "${YELLOW}↻ ${test_name} failed (exit code: ${first_rc}); rerunning once${RESET}"
+        # A fresh HOME, as in the pool: state the first run left behind must not turn a clean-state failure into a pass.
+        local rehome
+        rehome="$(mktemp -d "$(vde_test_env_dir)/rerunhome.XXXXXX")" || rehome="$(vde_test_env_dir)"
         t0=$(vde_test_now)
         e0="${EPOCHREALTIME}"
-        zsh "${test_file}"
+        HOME="${rehome}" zsh "${test_file}"
         rc=$?
         t1=$(vde_test_now)
         e1="${EPOCHREALTIME}"
