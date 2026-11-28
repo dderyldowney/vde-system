@@ -116,8 +116,9 @@ new_fixture() {  # new_fixture NAME -> SCRATCH/NAME: the REAL runner and lib, st
 
 run_runner() {  # run_runner FIXTURE TIMINGFILE -> OUT (colour codes removed) and RC (the runner's exit status)
     local fix="$1" timing="$2" raw
+    # VDE_TEST_JOBS=1: per-suite container counts exist only in serial mode (parallel unit suites show n/a).
     raw="$(cd "${fix}" && timeout 300 env HOME="${fix}/callerhome" DOCKER_CONFIG="${REAL_DOCKER_CONFIG}" \
-        VDE_TEST_TIMING_FILE="${timing}" zsh tests/run-sovereign-tests.zsh 2>&1)"
+        VDE_TEST_TIMING_FILE="${timing}" VDE_TEST_JOBS=1 zsh tests/run-sovereign-tests.zsh 2>&1)"
     RC=$?
     OUT="$(print -r -- "${raw}" | sed 's/\x1b\[[0-9;]*m//g')"
 }

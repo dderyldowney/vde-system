@@ -147,7 +147,16 @@ _vde_resolve_jobs() {
             print -u2 -r -- "ERROR: VDE_TEST_JOBS must be a whole number from 1 to ${VDE_MAX_TEST_JOBS}"
             exit 2
         fi
-        TEST_JOBS=$(( 10#${raw} ))
+        # Leading zeros are dropped before the length is judged, and a value of more than two digits is above the
+        # maximum without being converted: a number beyond the native integer range would wrap around and leave a
+        # job count below 1, and a pool that can start no suite never drains.
+        local digits="${raw}"
+        while [[ "${digits}" == 0?* ]]; do digits="${digits#0}"; done
+        if (( ${#digits} > 2 )); then
+            TEST_JOBS=$(( VDE_MAX_TEST_JOBS + 1 ))
+        else
+            TEST_JOBS=$(( 10#${digits} ))
+        fi
         if (( TEST_JOBS > VDE_MAX_TEST_JOBS )); then
             print -r -- "VDE_TEST_JOBS=${raw} exceeds the tested maximum ${VDE_MAX_TEST_JOBS}; using ${VDE_MAX_TEST_JOBS}"
             TEST_JOBS=${VDE_MAX_TEST_JOBS}

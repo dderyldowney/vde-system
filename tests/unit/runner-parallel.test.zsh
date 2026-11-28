@@ -557,6 +557,85 @@ else
         "both started=${p12started} runner gone=${p12gone} workers alive: ${(j: :)p12alive} scratch entries left: ${#p12left}"
 fi
 
+# ---------------------------------------------------------------------------
+# P13: VDE_TEST_JOBS beyond the native integer range is clamped like any larger number; leading zeros mean the plain number
+# ---------------------------------------------------------------------------
+
+run_par_60() {  # run_par_60 FIXTURE [NAME=value ...] -> OUT and RC, as run_par, under a 60 s hard cap (a hang exits 124)
+    setopt localoptions extendedglob
+    local fix="$1" raw
+    shift
+    raw="$(cd "${fix}" && timeout 60 env -i HOME="${fix}/callerhome" PATH="${fix}/stubs:${PATH}" \
+        TMPDIR="${fix}/tmproot" RP_STATE="${fix}/state" FIXTURE_CALLER_HOME="${fix}/callerhome" \
+        "$@" zsh tests/run-sovereign-tests.zsh 2>&1; print -r -- "RC=$?")"
+    RC="${raw##*RC=}"
+    OUT="${raw%RC=*}"
+    OUT="${OUT//$'\e'\[[0-9\;]#m/}"
+}
+
+test_start "P13 VDE_TEST_JOBS=99999999999999999999999999 is clamped to 4 and runs; leading zeros (000...3) mean 3 and run 3 at a time"
+new_fixture p13a || exit 1
+typeset FIX13A="${SCRATCH}/p13a"
+write_suite "${FIX13A}/tests/unit/p13-a.test.zsh" <<'EOF'
+#!/usr/bin/env zsh
+exit 0
+EOF
+write_suite "${FIX13A}/tests/unit/p13-b.test.zsh" <<'EOF'
+#!/usr/bin/env zsh
+exit 0
+EOF
+run_par_60 "${FIX13A}" VDE_TEST_JOBS=99999999999999999999999999
+typeset p13why=''
+if [[ "${RC}" != 0 ]] || ! has_line 'VDE_TEST_JOBS=99999999999999999999999999 exceeds the tested maximum 4; using 4' \
+    || ! has_line 'p13-a.test.zsh passed (' || ! has_line 'p13-b.test.zsh passed ('; then
+    p13why+=" huge-value rc=${RC} (124 = hung and cut off by the 60 s cap)"
+fi
+new_fixture p13b || exit 1
+typeset FIX13B="${SCRATCH}/p13b"
+typeset p13n
+for p13n in p13-c p13-d p13-e; do
+    write_suite "${FIX13B}/tests/unit/${p13n}.test.zsh" <<'EOF'
+#!/usr/bin/env zsh
+exit 0
+EOF
+done
+run_par_60 "${FIX13B}" VDE_TEST_JOBS=0000000000000000000000000003
+if [[ "${RC}" != 0 ]] || ! has_line 'Unit phase: 3 suites, 3 at a time' || ! has_line 'p13-e.test.zsh passed ('; then
+    p13why+=" leading-zeros rc=${RC} (expected Unit phase: 3 suites, 3 at a time)"
+fi
+if [[ -z "${p13why}" ]]; then
+    test_pass "P13 huge value clamped to 4 and both suites passed; leading zeros ran 3 at a time"
+else
+    test_fail "P13 huge VDE_TEST_JOBS clamps to 4 and runs; leading zeros mean 3" "${p13why# }"
+fi
+
+# ---------------------------------------------------------------------------
+# P14: a checkout path containing glob metacharacters neither hangs nor loses suites
+# ---------------------------------------------------------------------------
+
+test_start "P14 a fixture path with [ ] * ? in its name: exit 0, both suites passed, Unit phase: 2 suites"
+mkdir -p -- "${SCRATCH}/fx[a]*b?c" || exit 1
+new_fixture 'fx[a]*b?c' || exit 1
+typeset FIX14="${SCRATCH}/fx[a]*b?c"
+write_suite "${FIX14}/tests/unit/g-one.test.zsh" <<'EOF'
+#!/usr/bin/env zsh
+print -r -- 'G-ONE'
+exit 0
+EOF
+write_suite "${FIX14}/tests/unit/g-two.test.zsh" <<'EOF'
+#!/usr/bin/env zsh
+print -r -- 'G-TWO'
+exit 0
+EOF
+run_par_60 "${FIX14}" VDE_TEST_JOBS=2
+if [[ "${RC}" == 0 ]] && has_line 'g-one.test.zsh passed (' && has_line 'g-two.test.zsh passed (' \
+    && has_line 'Unit phase: 2 suites'; then
+    test_pass "P14 glob-named checkout: rc=0, both suites passed, Unit phase: 2 suites"
+else
+    test_fail "P14 glob metacharacters in the checkout path: rc=0, both suites passed, Unit phase: 2 suites" \
+        "rc=${RC} (124 = hung and cut off by the 60 s cap)"
+fi
+
 print -r -- "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"
 (( TESTS_FAILED == 0 )) || exit 1
 exit 0
