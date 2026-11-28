@@ -88,6 +88,7 @@ These scripts provide specialized maintenance, automation, and development suppo
 | `ssh-sync` | Synchronize SSH public keys to the Docker build context. |
 | `ssh-vm` | Primary bridge logic for connecting to Spoke SSH servers. |
 | `vde-check-tetrad.zsh` | Fast technical gate for verifying core dependencies. |
+| `vde-check-pr-evidence.zsh` | Pull request evidence check: fails a pull request body that lacks RED and GREEN output in a fenced block (reads VDE_PR_BODY, VDE_PR_AUTHOR, VDE_PR_HEAD_REF, VDE_PR_HEAD_REPO, VDE_PR_BASE_REPO; run by `.github/workflows/pr-evidence.yml`). |
 | `vde-security-audit.zsh` | Execute deep security and privacy audits across the Forge. |
 | `vde-matrix-audit.zsh` | Logic for exhaustive verification of the Spoke matrix. |
 | `vde-matrix-rebuild.zsh` | Logic for comprehensive re-forging of all Spoke images. |

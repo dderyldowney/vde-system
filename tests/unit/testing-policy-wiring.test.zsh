@@ -701,6 +701,314 @@ test_determinism_obligations() {
     det_check "a scratch HOME and scratch directories" "${sec}" 'Small tests use their own scratch'
 }
 
+# step_lines FILE N: the lines of FILE whose numbered list item is N (after any indentation).
+step_lines() {
+    local f="${VDE_ROOT_DIR}/$1"
+    [[ -f "${f}" ]] || return 0
+    grep -E -- "^[[:space:]]*$2\\." "${f}" 2>/dev/null
+}
+# top_block KEY FILE: the lines of the top-level KEY: block of a workflow file (from the KEY:
+# line up to the next line that starts a top-level key).
+top_block() {
+    local line re_top='^[A-Za-z_][A-Za-z0-9_-]*:'
+    local -i on=0
+    [[ -f "${VDE_ROOT_DIR}/$2" ]] || return 0
+    while IFS= read -r line || [[ -n "${line}" ]]; do
+        if [[ "${line}" == "$1:" ]]; then
+            on=1
+            continue
+        fi
+        if [[ "${line}" =~ ${re_top} ]]; then
+            on=0
+        fi
+        if (( on )); then
+            print -r -- "${line}"
+        fi
+    done < "${VDE_ROOT_DIR}/$2"
+}
+# wf_env FILE: one KEY<TAB>VALUE line per entry of every env: block of a workflow file. The
+# entries of an env: block are the lines indented deeper than the env: key.
+wf_env() {
+    setopt localoptions extendedglob
+    local line t ws key val
+    local -i ci env_ind=-1
+    [[ -f "${VDE_ROOT_DIR}/$1" ]] || return 0
+    while IFS= read -r line || [[ -n "${line}" ]]; do
+        [[ -n "${line//[[:space:]]/}" ]] || continue
+        ws="${line%%[^[:space:]]*}"
+        ci=${#ws}
+        t="${line##[[:space:]]#}"
+        if (( env_ind >= 0 && ci <= env_ind )); then
+            env_ind=-1
+        fi
+        if (( env_ind >= 0 )); then
+            key="${t%%:*}"
+            val="${t#*:}"
+            val="${val##[[:space:]]#}"
+            print -r -- "${key}"$'\t'"${val}"
+        elif [[ "${t}" == 'env:' ]]; then
+            env_ind=$ci
+        fi
+    done < "${VDE_ROOT_DIR}/$1"
+}
+# wf_runs FILE: one BLOCK<TAB>LINE line per line of every run script of a workflow file. A
+# single-line run: value is one line; a run: | or run: > block ends at the next non-blank line
+# indented no deeper than its run: key.
+wf_runs() {
+    setopt localoptions extendedglob
+    local line t ws kt rest
+    local -i ci kc rk=-1 n=0 inrun=0
+    [[ -f "${VDE_ROOT_DIR}/$1" ]] || return 0
+    while IFS= read -r line || [[ -n "${line}" ]]; do
+        ws="${line%%[^[:space:]]*}"
+        ci=${#ws}
+        t="${line##[[:space:]]#}"
+        if (( inrun )); then
+            if [[ -n "${line//[[:space:]]/}" ]] && (( ci <= rk )); then
+                inrun=0
+            else
+                print -r -- "${n}"$'\t'"${line}"
+                continue
+            fi
+        fi
+        kt="${t}"
+        kc=$ci
+        if [[ "${kt}" == '- '* ]]; then
+            kt="${kt#- }"
+            kt="${kt##[[:space:]]#}"
+            kc=$(( ci + 2 ))
+        fi
+        if [[ "${kt}" == run:* ]]; then
+            n+=1
+            rest="${kt#run:}"
+            rest="${rest##[[:space:]]#}"
+            rk=$kc
+            if [[ "${rest}" == '|'* || "${rest}" == '>'* ]]; then
+                inrun=1
+            else
+                print -r -- "${n}"$'\t'"${rest}"
+            fi
+        fi
+    done < "${VDE_ROOT_DIR}/$1"
+}
+# wf_jobs FILE: the job ids under the top-level jobs: key of a workflow file, one per line.
+wf_jobs() {
+    local line re_top='^[A-Za-z_][A-Za-z0-9_-]*:' re_job='^  ([A-Za-z0-9_-]+):[[:space:]]*$'
+    local -i injobs=0
+    [[ -f "${VDE_ROOT_DIR}/$1" ]] || return 0
+    while IFS= read -r line || [[ -n "${line}" ]]; do
+        if [[ "${line}" == 'jobs:' ]]; then
+            injobs=1
+            continue
+        fi
+        if [[ "${line}" =~ ${re_top} ]]; then
+            injobs=0
+        fi
+        if (( injobs )) && [[ "${line}" =~ ${re_job} ]]; then
+            print -r -- "${match[1]}"
+        fi
+    done < "${VDE_ROOT_DIR}/$1"
+}
+
+typeset -r REVIEWER='.gemini/SKILLS/reviewer.md'
+typeset -r PR_SCRIPT='bin/vde-check-pr-evidence.zsh'
+typeset -r PR_WF='.github/workflows/pr-evidence.yml'
+typeset -r PR_VERDICT='DRY: CLEAN | FAKE TESTS: NONE | SPEC: COMPLIANT | ZSH: COMPLIANT | TESTING: COMPLIANT'
+
+test_reviewer_step() {
+    test_start "19: (R1) the reviewer skill has a numbered step 6 for the Testing Policy, says Run all 6 review steps, and has the APPROVED verdict line with TESTING: COMPLIANT"
+    local s6 appr_ln ver_ln
+    s6="$(step_lines "${REVIEWER}" 6)"
+    if [[ -n "${s6}" ]] && line_has_all "${s6}" 'Testing Policy' 'docs/development/testing.md'; then
+        test_pass "${REVIEWER} has step 6 naming the Testing Policy and docs/development/testing.md"
+    else
+        test_fail "${REVIEWER} has step 6 naming the Testing Policy and docs/development/testing.md" "no numbered step 6 with both"
+    fi
+    expect_has "${REVIEWER} says Run all 6 review steps" "${REVIEWER}" 'Run all 6 review steps'
+    if has "${REVIEWER}" 'Run all 5 review steps'; then
+        test_fail "${REVIEWER} has no Run all 5 review steps" "the old count remains"
+    else
+        test_pass "${REVIEWER} has no Run all 5 review steps"
+    fi
+    appr_ln="$(line_of '**APPROVED:**' "${REVIEWER}")"
+    ver_ln="$(line_of "${PR_VERDICT}" "${REVIEWER}")"
+    if [[ -n "${appr_ln}" && -n "${ver_ln}" ]] && (( ver_ln > appr_ln )); then
+        test_pass "the APPROVED verdict line is [${PR_VERDICT}]"
+    else
+        test_fail "the APPROVED verdict line is [${PR_VERDICT}]" "no such line after the APPROVED heading in ${REVIEWER}"
+    fi
+}
+
+test_pr_workflow_exists() {
+    test_start "20: (W1) the pr-evidence workflow is tracked, its single job and its name are pr-evidence, and no other workflow uses that name"
+    local -a wjobs=()
+    local f base
+    local -i clash=0
+    if tracked "${PR_WF}"; then
+        test_pass "${PR_WF} is tracked and non-empty"
+    else
+        test_fail "${PR_WF} is tracked and non-empty" "not tracked, missing or empty"
+    fi
+    wjobs=("${(@f)$(wf_jobs "${PR_WF}")}")
+    wjobs=("${(@)wjobs:#}")
+    if (( ${#wjobs[@]} == 1 )) && [[ "${wjobs[1]}" == pr-evidence ]]; then
+        test_pass "${PR_WF} has exactly one job, pr-evidence"
+    else
+        test_fail "${PR_WF} has exactly one job, pr-evidence" "jobs [${wjobs[*]:-<none>}]"
+    fi
+    if grep -qxF -- '    name: pr-evidence' "${VDE_ROOT_DIR}/${PR_WF}" 2>/dev/null; then
+        test_pass "the pr-evidence job has name: pr-evidence"
+    else
+        test_fail "the pr-evidence job has name: pr-evidence" "no such line in ${PR_WF}"
+    fi
+    for f in "${VDE_ROOT_DIR}"/.github/workflows/*.(yml|yaml)(N); do
+        base="${f:t}"
+        [[ "${base}" == pr-evidence.yml ]] && continue
+        if grep -qE -- '^  pr-evidence:[[:space:]]*$|name:[[:space:]]*pr-evidence[[:space:]]*$' "${f}"; then
+            clash+=1
+            test_fail "no other workflow uses the job or step name pr-evidence" "${base} does"
+        fi
+    done
+    (( clash == 0 )) && test_pass "no other workflow uses the job or step name pr-evidence"
+}
+
+test_pr_workflow_triggers() {
+    test_start "21: (W2) the pr-evidence workflow runs on pull_request types opened, edited, synchronize and reopened"
+    local tl w
+    local -a words=()
+    tl="$(top_block on "${PR_WF}" | grep -F -- 'types:' | head -n 1)"
+    tl="${tl#*types:}"
+    tl="${tl//\[/ }"
+    tl="${tl//\]/ }"
+    tl="${tl//,/ }"
+    words=(${=tl})
+    local -i miss=0
+    for w in opened edited synchronize reopened; do
+        (( ${words[(Ie)${w}]} )) || miss+=1
+    done
+    if (( miss == 0 )) && top_block on "${PR_WF}" | grep -qE -- '^  pull_request:'; then
+        test_pass "${PR_WF} runs on pull_request types opened, edited, synchronize, reopened"
+    else
+        test_fail "${PR_WF} runs on pull_request types opened, edited, synchronize, reopened" "missing [${miss}] type(s) under pull_request"
+    fi
+}
+
+test_pr_workflow_env() {
+    test_start "22: (W3) an env block of the pr-evidence workflow feeds VDE_PR_BODY, VDE_PR_AUTHOR and VDE_PR_HEAD_REF from the pull request event"
+    local envs pair key want
+    envs="$(wf_env "${PR_WF}")"
+    for pair in 'VDE_PR_BODY|${{ github.event.pull_request.body }}' \
+        'VDE_PR_AUTHOR|${{ github.event.pull_request.user.login }}' \
+        'VDE_PR_HEAD_REF|${{ github.event.pull_request.head.ref }}'; do
+        key="${pair%%|*}"
+        want="${pair#*|}"
+        if print -r -- "${envs}" | grep -qxF -- "${key}"$'\t'"${want}"; then
+            test_pass "${PR_WF} env feeds ${key} from the pull request event"
+        else
+            test_fail "${PR_WF} env feeds ${key} from the pull request event" "no env entry [${key}] with value [${want}]"
+        fi
+    done
+}
+
+test_pr_workflow_no_expression_in_run() {
+    test_start "23: (W4) no run: block of the pr-evidence workflow contains an expression (injection safety)"
+    local runs
+    runs="$(wf_runs "${PR_WF}")"
+    if [[ -z "${runs}" ]]; then
+        test_fail "${PR_WF} has run blocks to check" "none parsed"
+    elif print -r -- "${runs}" | grep -qF -- '${{'; then
+        test_fail "no run: block of ${PR_WF} contains an expression" "a run script holds an expression marker"
+    else
+        test_pass "no run: block of ${PR_WF} contains an expression"
+    fi
+}
+
+test_pr_workflow_last_command() {
+    test_start "24: (W5) the last command of the pr-evidence run step is ./bin/vde-check-pr-evidence.zsh"
+    setopt localoptions extendedglob
+    local -A lastcmd=()
+    local row bn body t
+    local -i found=0
+    while IFS= read -r row; do
+        bn="${row%%$'\t'*}"
+        body="${row#*$'\t'}"
+        t="${body##[[:space:]]#}"
+        t="${t%%[[:space:]]#}"
+        [[ -n "${t}" ]] && lastcmd[$bn]="${t}"
+    done <<< "$(wf_runs "${PR_WF}")"
+    for bn in "${(@k)lastcmd}"; do
+        [[ "${lastcmd[$bn]}" == './bin/vde-check-pr-evidence.zsh' ]] && found=1
+    done
+    if (( found )); then
+        test_pass "the last command of a run step in ${PR_WF} is ./bin/vde-check-pr-evidence.zsh"
+    else
+        test_fail "the last command of a run step in ${PR_WF} is ./bin/vde-check-pr-evidence.zsh" "no run step ends with it"
+    fi
+}
+
+test_pr_script() {
+    test_start "25: (S1) bin/vde-check-pr-evidence.zsh is tracked and executable, has the @forge tag on line 2 and the shibboleth within 20 lines"
+    local tagline
+    if tracked "${PR_SCRIPT}"; then
+        test_pass "${PR_SCRIPT} is tracked and non-empty"
+    else
+        test_fail "${PR_SCRIPT} is tracked and non-empty" "not tracked, missing or empty"
+    fi
+    if [[ -x "${VDE_ROOT_DIR}/${PR_SCRIPT}" ]]; then
+        test_pass "${PR_SCRIPT} is executable"
+    else
+        test_fail "${PR_SCRIPT} is executable" "not executable or missing"
+    fi
+    tagline="$(head -n 2 -- "${VDE_ROOT_DIR}/${PR_SCRIPT}" 2>/dev/null | tail -n 1)"
+    if [[ "${tagline}" == *'@forge'* ]]; then
+        test_pass "${PR_SCRIPT} has the @forge tag on line 2"
+    else
+        test_fail "${PR_SCRIPT} has the @forge tag on line 2" "line 2 is [${tagline}]"
+    fi
+    if head -n 20 -- "${VDE_ROOT_DIR}/${PR_SCRIPT}" 2>/dev/null | grep -qxF -- 'typeset _ZSH_PURE=${(%):-%x}'; then
+        test_pass "${PR_SCRIPT} has the shibboleth within 20 lines"
+    else
+        test_fail "${PR_SCRIPT} has the shibboleth within 20 lines" "no such line in the first 20"
+    fi
+}
+
+test_layers_reviewer_pr_evidence() {
+    test_start "26: (L1) the layers table has a Reviewer checklist row and a Pull request evidence check row, both Implemented, and no text says either is Planned"
+    local line name st l lc
+    local -i rev_row=0 rev_impl=0 pr_row=0 pr_impl=0 hits=0 ln=0
+    for line in "${(@f)$(layer_rows)}"; do
+        name="${line%%$'\t'*}"
+        st="${line#*$'\t'}"
+        if [[ "${name}" == 'Reviewer checklist'* ]]; then
+            rev_row=1
+            [[ "${st}" == Implemented ]] && rev_impl=1
+        fi
+        if [[ "${name}" == 'Pull request evidence check'* ]]; then
+            pr_row=1
+            [[ "${st}" == Implemented ]] && pr_impl=1
+        fi
+    done
+    if (( rev_impl )); then
+        test_pass "the layers row Reviewer checklist has Status exactly Implemented"
+    else
+        test_fail "the layers row Reviewer checklist has Status exactly Implemented" "row present: ${rev_row}"
+    fi
+    if (( pr_impl )); then
+        test_pass "the layers row Pull request evidence check has Status exactly Implemented"
+    else
+        test_fail "the layers row Pull request evidence check has Status exactly Implemented" "row present: ${pr_row}"
+    fi
+    while IFS= read -r l || [[ -n "${l}" ]]; do
+        ln+=1
+        lc="${(L)l}"
+        if [[ "${lc}" == *planned* ]] && { [[ "${lc}" == *'reviewer checklist'* ]] || [[ "${lc}" == *'review checklist'* ]] || [[ "${lc}" == *'pull request evidence'* ]]; }; then
+            hits+=1
+            test_fail "no text in ${DOC} says the reviewer checklist or the pull request evidence check is Planned" "line ${ln}"
+        fi
+    done < "${VDE_ROOT_DIR}/${DOC}"
+    (( hits == 0 )) && test_pass "no text in ${DOC} says the reviewer checklist or the pull request evidence check is Planned"
+}
+
 load_conf
 test_policy_section
 test_conf_keys
@@ -720,6 +1028,14 @@ test_size_exceptions
 test_config_scope
 test_determinism_home
 test_determinism_obligations
+test_reviewer_step
+test_pr_workflow_exists
+test_pr_workflow_triggers
+test_pr_workflow_env
+test_pr_workflow_no_expression_in_run
+test_pr_workflow_last_command
+test_pr_script
+test_layers_reviewer_pr_evidence
 
 echo ""
 echo "Results: ${TESTS_PASSED} passed, ${TESTS_FAILED} failed"

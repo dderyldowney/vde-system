@@ -1,0 +1,48 @@
+# VDE ARCHITECTURAL RECORD
+# @forge (Governance Sentinel)
+name: PR Evidence
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+# an older run of an edited body must never finish after, and overwrite, a newer one
+concurrency:
+  group: pr-evidence-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+# Enforce zsh as the default shell for all jobs and steps
+defaults:
+  run:
+    shell: zsh {0}
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  pr-evidence:
+    name: pr-evidence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # the runner has no zsh yet, and no foreign shell is allowed (Mandate C): this one step runs under python3, which is not a shell, to install zsh
+      - name: Install zsh
+        shell: python3 {0}
+        run: |
+          import subprocess
+          for cmd in (["sudo", "apt-get", "update"], ["sudo", "apt-get", "install", "-y", "zsh"]):
+              subprocess.run(cmd, check=True)
+      - name: Check pull request evidence (Testing Policy)
+        shell: zsh {0}
+        env:
+          # the pull request body is untrusted input: it reaches the checker only through these variables, never through the script text
+          VDE_PR_BODY: ${{ github.event.pull_request.body }}
+          VDE_PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          VDE_PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          VDE_PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          VDE_PR_BASE_REPO: ${{ github.repository }}
+        # the checker MUST stay the LAST command: zsh {0} has no errexit, so a trailing echo would hide its failure
+        run: |
+          ./bin/vde-check-pr-evidence.zsh

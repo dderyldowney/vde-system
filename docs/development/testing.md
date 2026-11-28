@@ -73,7 +73,7 @@ Status: Planned (#782, the umbrella issue for this policy).
 
 ### Test quality and evidence
 
-Every test must be able to fail. A new or changed test is shown failing before the change (RED) and passing after it (GREEN), with the literal output in the pull request, using the evidence section of the pull request template.
+Every test must be able to fail. A new or changed test is shown failing before the change (RED) and passing after it (GREEN), with the literal output in the pull request, using the evidence section of the pull request template. The pull request evidence check (`bin/vde-check-pr-evidence.zsh`) requires the words RED and GREEN and at least one fenced block of literal output; reviewers still judge the quality of the evidence.
 
 A rule that guards behaviour is shown to bite: a violating fixture or a mutation makes it fail. Code that carries the gate or the test tooling also carries a mutation proof (automated by #781).
 
@@ -81,7 +81,7 @@ Fake tests are forbidden. The rule and its examples are in `.gemini/RULES/fake_t
 
 The full suite and the Proof of Life run at the push are the certification. Do not hand-run them first in place of the certification.
 
-An independent review must pass before a commit. The review checklist is Planned (#778).
+An independent review must pass before a commit. The review checklist is Implemented as the Testing Policy step in the reviewer skill (`.gemini/SKILLS/reviewer.md`). A reviewer applies that step; no tool checks that the review took place.
 
 ### Which layer enforces which rule
 
@@ -98,7 +98,8 @@ An independent review must pass before a commit. The review checklist is Planned
 | Mutation checks for the gate and the tooling | Not yet in the tooling | Planned (#781) |
 | Style (4-space indentation) conformance | Not yet in the tooling | Planned (#777) |
 | Coverage minimum ratchet | Not yet in the tooling | Planned (#782) |
-| Reviewer checklist and pull request evidence check | Not yet in the tooling | Planned (#778) |
+| Reviewer checklist (Testing Policy step in the reviewer skill) | `.gemini/SKILLS/reviewer.md` | Implemented |
+| Pull request evidence check (RED and GREEN output in the body) | `bin/vde-check-pr-evidence.zsh` and `.github/workflows/pr-evidence.yml` (the workflow's check is a job that runs on every pull request; making it a required check is a repository setting outside the code) | Implemented |
 
 ### Policy numbers
 
