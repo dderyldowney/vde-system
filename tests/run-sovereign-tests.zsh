@@ -79,10 +79,14 @@ _vde_history_init() {
         HISTORY_FILE="${common:A}/vde-test-history.jsonl"
     fi
     HISTORY_TREE="$(cd "${VDE_ROOT_DIR}" && git rev-parse 'HEAD^{tree}' 2>/dev/null)" || HISTORY_TREE=unknown
-    if [[ -n "$(cd "${VDE_ROOT_DIR}" && git status --porcelain --untracked-files=no 2>/dev/null)" ]]; then
+    # Dirty = any change the suites would see: tracked edits AND untracked, non-ignored files. A status that fails is
+    # not "clean": the state is unknown, so it is recorded as dirty.
+    local status_out
+    if ! status_out="$(cd "${VDE_ROOT_DIR}" && git status --porcelain 2>/dev/null)" || [[ -n "${status_out}" ]]; then
         HISTORY_DIRTY=true
     fi
-    HISTORY_RUN_ID="$(TZ=UTC strftime '%Y%m%dT%H%M%SZ' ${EPOCHSECONDS})-$$"
+    # The run id: UTC start, pid and a nonce, so a reused pid in the same second cannot merge two runs.
+    HISTORY_RUN_ID="$(TZ=UTC strftime '%Y%m%dT%H%M%SZ' ${EPOCHSECONDS})-$$-${(l:5::0:)RANDOM}"
 }
 
 # _vde_history_note <suite> <pass|fail|flaky>: appends the suite's line and clears the accumulators.
@@ -305,9 +309,16 @@ _vde_record_timing() {
     fi
     TIMING_ROWS+=( "${secs}|${1}|${VDE_CONTAINERS_RESULT}" )
     (( TIMING_TOTAL += $2 ))
-    # The history keeps one line per suite: a rerun adds its seconds to the suite's and keeps the first containers cell.
+    # The history keeps one line per suite: a rerun adds its seconds and its container creates to the suite's.
     (( HIST_SECS += $2 ))
-    [[ -n "${HIST_CONTAINERS}" ]] || HIST_CONTAINERS="${VDE_CONTAINERS_RESULT}"
+    if [[ -z "${HIST_CONTAINERS}" || "${HIST_CONTAINERS}" == n/a ]]; then
+        HIST_CONTAINERS="${VDE_CONTAINERS_RESULT}"
+    elif [[ "${HIST_CONTAINERS}" == <-> && "${VDE_CONTAINERS_RESULT}" == <-> ]]; then
+        HIST_CONTAINERS=$(( HIST_CONTAINERS + VDE_CONTAINERS_RESULT ))
+        (( HIST_CONTAINERS >= 256 )) && HIST_CONTAINERS="256+"
+    elif [[ "${VDE_CONTAINERS_RESULT}" == 256+ ]]; then
+        HIST_CONTAINERS="256+"
+    fi
 }
 
 # _vde_sort_timing_rows: TIMING_SORTED holds the rows slowest first.
@@ -638,6 +649,7 @@ echo -e "${BLUE}${BOLD}  PHASE 3: BDD Feature Verification (Metadata)${RESET}"
 echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
 # Verify all feature files follow the standard
+typeset -F BDD_T0=$(vde_test_now)
 if command -v grep &>/dev/null; then
     MISSING_TAGS=$(grep -L "@" tests/features/core-infrastructure/*.feature)
     if [[ -n "${MISSING_TAGS}" ]]; then
@@ -645,10 +657,12 @@ if command -v grep &>/dev/null; then
         echo "${MISSING_TAGS}"
         ((TOTAL_FAILED++))
         FAILED_TESTS+=("BDD-Metadata")
+        HIST_SECS=$(( $(vde_test_now) - BDD_T0 ))
         _vde_history_note "BDD-Metadata" fail
     else
         echo -e "${GREEN}✓ All core features are properly tagged.${RESET}"
         ((TOTAL_PASSED++))
+        HIST_SECS=$(( $(vde_test_now) - BDD_T0 ))
         _vde_history_note "BDD-Metadata" pass
     fi
 fi

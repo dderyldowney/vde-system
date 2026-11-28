@@ -8,7 +8,7 @@ source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 # Unit Tests: the run history of the Sovereign runner (Signet #779, step B).
 #
 # After each suite is reported, the runner appends ONE JSON line to the run history:
-#   {"v":1,"run":"<ts>-<pid>","ts":"<UTC>","tree":"<sha>","dirty":bool,"suite":"..","seconds":<n.n>,
+#   {"v":1,"run":"<ts>-<pid>-<nonce>","ts":"<UTC>","tree":"<sha>","dirty":bool,"suite":"..","seconds":<n.n>,
 #    "containers":"<str>","result":"pass|fail|flaky","flaky":bool}
 # The file is VDE_TEST_HISTORY_FILE (a path, or the word off for none). With it unset, the history is kept only when
 # the runner is the one of the git repository it sits in (the git common directory), so a fixture copy writes nothing.
@@ -32,12 +32,16 @@ source "${0:A:h:h:h}/lib/vde-test-env" && vde_test_env_enter || exit 1
 #       no vde-test-history.jsonl anywhere in that repository's .git, rc 0. Fails if the top-level guard is removed.
 #   H7  an unwritable history path (its parent is a regular file) prints the WARNING once; the run still passes (rc 0).
 #   H8  decimal-comma locale LC_ALL=en_DK.utf8 (skips loudly when the locale is missing): seconds keep a dot, lines valid.
-#   H9  default location in a real git repository: <repo>/.git/vde-test-history.jsonl, tree = HEAD^{tree}, dirty false;
-#       after a tracked-file edit the new lines are dirty true.
+#   H9  default location in a real git repository: <repo>/.git/vde-test-history.jsonl, tree = HEAD^{tree}; dirty false on the
+#       clean tree; dirty true after a tracked-file edit and after an untracked non-ignored file; dirty false again when the
+#       only untracked file is one .gitignore ignores.
 #   H10 every line matches the exact line shape; a malformed copy of a line does not (negative controls).
 #   H11 a suite whose file name holds a tab, and one whose name holds a newline (where the filesystem allows it): ONE
 #       physical line per suite, the control characters written as \u0009 / \u000a, no raw control character in the file;
 #       a raw tab in a suite name does not match the shape (negative control).
+#   H12 serial fail-then-pass suite whose first run creates 2 containers and whose rerun creates 3 (a docker stub
+#       answers the events query per --since/--until window): the history line's containers is the sum, "5", one line.
+#   H13 two runs back to back: each run's lines carry one well-formed run id, and the two runs' whole ids differ.
 
 # GIT_* scrub (Signet #656): the variables that select a repository would make the fixture write into the enclosing one.
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_PREFIX GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_NAMESPACE GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS GIT_TEMPLATE_DIR
@@ -139,7 +143,7 @@ count_has() {  # count_has TEXT -> CNT: how many lines of OUT contain TEXT liter
 # ---------------------------------------------------------------------------
 
 # The strict shape of one history line: every key, in order, with its value's form. Any other line is malformed.
-typeset -r SHAPE_RE='^\{"v":1,"run":"[0-9]{8}T[0-9]{6}Z-[0-9]+","ts":"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z","tree":"([0-9a-f]{40}|unknown)","dirty":(true|false),"suite":"([^"\\[:cntrl:]]|\\["\\]|\\u[0-9a-f]{4})+","seconds":[0-9]+\.[0-9],"containers":"[^"]+","result":"(pass|fail|flaky)","flaky":(true|false)\}$'
+typeset -r SHAPE_RE='^\{"v":1,"run":"[0-9]{8}T[0-9]{6}Z-[0-9]+-[0-9]{5}","ts":"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z","tree":"([0-9a-f]{40}|unknown)","dirty":(true|false),"suite":"([^"\\[:cntrl:]]|\\["\\]|\\u[0-9a-f]{4})+","seconds":[0-9]+\.[0-9],"containers":"[^"]+","result":"(pass|fail|flaky)","flaky":(true|false)\}$'
 typeset -r SEC_RE='^[0-9]+\.[0-9]$'
 
 hist_lines() {  # hist_lines FILE -> HL: the non-empty lines of FILE (none when it is missing)
@@ -488,14 +492,18 @@ fi
 # H9: default location in a real git repository: <repo>/.git/vde-test-history.jsonl; dirty false, then true after an edit
 # ---------------------------------------------------------------------------
 
-test_start "H9 default location in a real git repo: <repo>/.git/vde-test-history.jsonl, tree = HEAD^{tree}, dirty false; dirty true after a tracked-file edit"
+test_start "H9 default location in a real git repo: <repo>/.git/vde-test-history.jsonl; dirty false when clean, true after a tracked edit and after an untracked non-ignored file, false for an ignored untracked file"
 new_fixture h9r || exit 1
 typeset FIX9="${SCRATCH}/h9r" HIST9
 HIST9="${FIX9}/.git/vde-test-history.jsonl"
 print -r -- one > "${FIX9}/NOTES.txt" || exit 1
+# .test-tmp is the runner's own scratch directory (created in the repository root on every run); scratch-ignored.txt is
+# the untracked file that case (c) expects to stay ignored. The fixture must be clean after this commit.
+print -l -- '.test-tmp/' 'scratch-ignored.txt' > "${FIX9}/.gitignore" || exit 1
 ( cd "${FIX9}" && git init -q && git add -A && \
     git -c user.name='History Test' -c user.email='history-test@example.invalid' commit -q -m 'fixture' ) || exit 1
 typeset WHY9=''
+[[ -z "$(cd "${FIX9}" && git status --porcelain)" ]] || WHY9+=" the fixture is not clean after its first commit"
 EXP_SEQ=( sovereign-audit vm-lifecycle-integration.test.zsh BDD-Metadata )
 EXP_RES=( sovereign-audit pass vm-lifecycle-integration.test.zsh pass BDD-Metadata pass )
 run_par "${FIX9}"
@@ -508,22 +516,42 @@ for (( i9 = 1; i9 <= N9A; i9++ )); do
     jfield "${HL[i9]}" dirty
     [[ "${JV}" == false ]] || WHY9+=" run1 line ${i9} dirty=${JV}(want false)"
 done
-typeset FIRST9=''
-FIRST9="$(<"${HIST9}")"
+EXP_SEQ=()
+EXP_RES=()
+# h9_run LABEL WANT: one run of the H9 fixture; the lines it adds must all have the shape and dirty WANT (true|false)
+h9_run() {
+    local label="$1" want="$2"
+    local -i from i
+    hist_lines "${HIST9}"
+    from=${#HL}
+    run_par "${FIX9}"
+    [[ "${RC}" == 0 ]] || WHY9+=" ${label}: rc=${RC}(want 0)"
+    hist_lines "${HIST9}"
+    (( ${#HL} > from )) || WHY9+=" ${label}: no line added"
+    for (( i = from + 1; i <= ${#HL}; i++ )); do
+        [[ "${HL[i]}" =~ ${SHAPE_RE} ]] || WHY9+=" ${label} line ${i} has the wrong shape"
+        jfield "${HL[i]}" dirty
+        [[ "${JV}" == "${want}" ]] || WHY9+=" ${label} line ${i} dirty=${JV}(want ${want})"
+    done
+}
+# (a) a tracked edit: dirty true
 print -r -- two >> "${FIX9}/NOTES.txt" || exit 1
-run_par "${FIX9}"
-hist_lines "${HIST9}"
-typeset -i N9B=${#HL}
-(( N9B > N9A )) || WHY9+=" the rerun added no lines (${N9A} then ${N9B})"
-[[ "$(<"${HIST9}")" == "${FIRST9}"$'\n'* ]] || WHY9+=" the earlier lines changed"
-for (( i9 = N9A + 1; i9 <= N9B; i9++ )); do
-    jfield "${HL[i9]}" dirty
-    [[ "${JV}" == true ]] || WHY9+=" run2 line ${i9} dirty=${JV}(want true)"
-done
+h9_run "a tracked edit" true
+# revert it: the tracked files are back at the commit
+print -r -- one > "${FIX9}/NOTES.txt" || exit 1
+[[ -z "$(cd "${FIX9}" && git diff --name-only HEAD)" ]] || WHY9+=" the tracked edit was not reverted"
+# (b) an untracked, non-ignored file: dirty true (the old --untracked-files=no reported false here)
+print -r -- extra > "${FIX9}/extra-untracked.txt" || exit 1
+h9_run "an untracked, non-ignored file" true
+rm -f -- "${FIX9}/extra-untracked.txt"
+# (c) an untracked file that .gitignore ignores: git status shows nothing, so dirty false
+print -r -- ignored > "${FIX9}/scratch-ignored.txt" || exit 1
+[[ -z "$(cd "${FIX9}" && git status --porcelain)" ]] || WHY9+=" the ignored file shows in git status"
+h9_run "an untracked file that .gitignore ignores" false
 if [[ -z "${WHY9}" ]]; then
-    test_pass "H9 repo history: ${N9A} lines dirty false at the clean tree; the $(( N9B - N9A )) lines of the rerun dirty true after the edit"
+    test_pass "H9 repo history: clean tree dirty false (${N9A} lines); a tracked edit and an untracked non-ignored file dirty true; an ignored untracked file dirty false"
 else
-    test_fail "H9 the default history lives in the repository's git directory and records dirty" "${WHY9# }"
+    test_fail "H9 the default history lives in the repository's git directory and records dirty over tracked and untracked files" "${WHY9# }"
 fi
 EXP_SEQ=()
 EXP_RES=()
@@ -609,6 +637,134 @@ if [[ -z "${WHY11}" ]]; then
     test_pass "H11 ${EXP11} physical lines, one per suite; the tab and the newline written as the escapes; no raw control character; a raw tab does not match"
 else
     test_fail "H11 one physical line per suite, control characters escaped" "${WHY11# }"
+fi
+
+# ---------------------------------------------------------------------------
+# H12: a serial fail-then-pass suite: the history line's containers is the SUM of both attempts' creates (2 + 3 = 5)
+# ---------------------------------------------------------------------------
+
+test_start "H12 serial fail-then-pass suite: one history line, flaky, containers is the sum of both attempts (2 + 3 = 5)"
+new_fixture h12d || exit 1
+typeset FIX12="${SCRATCH}/h12d" HIST12
+HIST12="${FIX12}/hist.jsonl"
+# The first run creates 2 containers and fails; the rerun creates 3 and passes. Each create is recorded by the stub docker.
+write_suite "${FIX12}/tests/unit/d-docker.test.zsh" <<'STUB' || exit 1
+#!/usr/bin/env zsh
+# runner-history H12 fixture: the first run creates 2 containers and fails, the rerun creates 3 and passes
+typeset f="${RP_STATE}/run-count.${0:t}" n=0
+[[ -f "${f}" ]] && n="$(<"${f}")"
+n=$(( n + 1 ))
+print -r -- "${n}" > "${f}"
+typeset -i creates=3 k=0
+(( n == 1 )) && creates=2
+while (( k < creates )); do
+    k+=1
+    docker create --name "h12-${n}-${k}" busybox >/dev/null 2>&1
+done
+(( n == 1 )) && exit 3
+exit 0
+STUB
+# The stub docker: create records its epoch time; events answers with the creates inside its --since/--until window.
+write_suite "${FIX12}/stubs/docker" <<'STUB' || exit 1
+#!/usr/bin/env zsh
+# runner-history H12 stub docker: create records its epoch time in DOCKER_EVENTS; events lists the creates in its window
+zmodload zsh/datetime
+print -r -- "$*" >> "${DOCKER_LOG}"
+case "$1" in
+    create)
+        print -r -- "${EPOCHREALTIME}" >> "${DOCKER_EVENTS}"
+        exit 0 ;;
+    events)
+        typeset t_from=0 t_to=99999999999 k
+        typeset ts
+        for (( k = 1; k <= $#; k++ )); do
+            case "${argv[k]}" in
+                --since) t_from="${argv[k+1]}" ;;
+                --until) t_to="${argv[k+1]}" ;;
+            esac
+        done
+        if [[ -f "${DOCKER_EVENTS}" ]]; then
+            while read -r ts; do
+                (( ts >= t_from && ts <= t_to )) && print -r -- "container create ${ts}"
+            done < "${DOCKER_EVENTS}"
+        fi
+        exit 0 ;;
+esac
+exit 0
+STUB
+EXP_SEQ=( sovereign-audit d-docker.test.zsh vm-lifecycle-integration.test.zsh BDD-Metadata )
+EXP_RES=( sovereign-audit pass d-docker.test.zsh flaky vm-lifecycle-integration.test.zsh pass BDD-Metadata pass )
+run_par "${FIX12}" VDE_TEST_JOBS=1 VDE_TEST_HISTORY_FILE="${HIST12}" \
+    DOCKER_EVENTS="${FIX12}/docker.events" DOCKER_LOG="${FIX12}/docker.log"
+typeset WHY12=''
+hist_check "${HIST12}" "${FIX12}" serial
+[[ -n "${FWHY}" ]] && WHY12+=" ${FWHY}"
+[[ "${RC}" == 0 ]] || WHY12+=" rc=${RC}(want 0: the suite passed on its rerun)"
+[[ "$(<"${FIX12}/state/run-count.d-docker.test.zsh")" == 2 ]] || WHY12+=" the suite did not run exactly twice"
+# The pinned design: serial mode queries docker events once per timed window (audit, both attempts, integration)
+typeset -i EVN=0
+typeset DLL12
+while IFS= read -r DLL12; do
+    [[ "${DLL12}" == events* ]] && EVN+=1
+done < "${FIX12}/docker.log"
+(( EVN == 4 )) || WHY12+=" docker events calls=${EVN}(want 4: audit, two attempts, integration)"
+typeset -i found12=0
+typeset line12 s12
+hist_lines "${HIST12}"
+for line12 in "${HL[@]}"; do
+    jfield "${line12}" suite; s12="${JV}"
+    [[ "${s12}" == d-docker.test.zsh ]] || continue
+    found12+=1
+    jfield "${line12}" containers
+    [[ "${JV}" == 5 ]] || WHY12+=" containers=${JV}(want 5: 2 from the first run plus 3 from the rerun)"
+done
+(( found12 == 1 )) || WHY12+=" d-docker has ${found12} history lines (want 1)"
+EXP_SEQ=()
+EXP_RES=()
+if [[ -z "${WHY12}" ]]; then
+    test_pass "H12 fail-then-pass suite: one flaky line, containers 5 = 2 (first run) + 3 (rerun); 4 docker events calls in serial mode"
+else
+    test_fail "H12 the history containers is the sum of both attempts' creates" "${WHY12# }"
+fi
+
+# ---------------------------------------------------------------------------
+# H13: two runs back to back: every line of a run carries one well-formed run id; the two runs' whole ids differ
+# ---------------------------------------------------------------------------
+
+test_start "H13 two runs back to back: each run's lines carry one well-formed run id; the two runs' whole ids differ"
+new_fixture h13r || exit 1
+typeset FIX13="${SCRATCH}/h13r" HIST13
+HIST13="${FIX13}/hist.jsonl"
+typeset WHY13=''
+run_par "${FIX13}" VDE_TEST_JOBS=1 VDE_TEST_HISTORY_FILE="${HIST13}"
+[[ "${RC}" == 0 ]] || WHY13+=" run A rc=${RC}(want 0)"
+hist_lines "${HIST13}"
+typeset -i N13A=${#HL}
+run_par "${FIX13}" VDE_TEST_JOBS=1 VDE_TEST_HISTORY_FILE="${HIST13}"
+[[ "${RC}" == 0 ]] || WHY13+=" run B rc=${RC}(want 0)"
+hist_lines "${HIST13}"
+typeset -i N13B=${#HL} i13
+typeset -a ids13=()
+typeset RUNID13_RE='^[0-9]{8}T[0-9]{6}Z-[0-9]+-[0-9]{5}$'
+(( N13A > 0 && N13B > N13A )) || WHY13+=" lines ${N13A} then ${N13B}"
+for (( i13 = 1; i13 <= N13B; i13++ )); do
+    [[ "${HL[i13]}" =~ ${SHAPE_RE} ]] || WHY13+=" line ${i13} has the wrong shape"
+    jfield "${HL[i13]}" run
+    ids13+=( "${JV}" )
+done
+if (( N13A > 0 && N13B > N13A )); then
+    for (( i13 = 1; i13 <= N13B; i13++ )); do
+        if (( i13 <= N13A )); then typeset want13="${ids13[1]}"; else typeset want13="${ids13[N13A+1]}"; fi
+        [[ "${ids13[i13]}" == "${want13}" ]] || WHY13+=" line ${i13} has run ${ids13[i13]}(want ${want13})"
+    done
+    [[ "${ids13[1]}" =~ ${RUNID13_RE} ]] || WHY13+=" run A id ${ids13[1]} is not well formed"
+    [[ "${ids13[N13A+1]}" =~ ${RUNID13_RE} ]] || WHY13+=" run B id ${ids13[N13A+1]} is not well formed"
+    [[ "${ids13[1]}" != "${ids13[N13A+1]}" ]] || WHY13+=" both runs have the run id ${ids13[1]}"
+fi
+if [[ -z "${WHY13}" ]]; then
+    test_pass "H13 two back-to-back runs: ids ${ids13[1]} and ${ids13[N13A+1]} differ; each run's ${N13A} and $(( N13B - N13A )) lines carry one id"
+else
+    test_fail "H13 two back-to-back runs have different whole run ids" "${WHY13# }"
 fi
 
 print -r -- "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"
