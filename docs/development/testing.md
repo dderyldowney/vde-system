@@ -46,7 +46,11 @@ A flaky test is a test that both passes and fails on the same code.
 
 The specified behaviour is this. A suite that fails is rerun once (`FLAKE_RERUN_ON_FAIL`). A suite that passes on the rerun is reported as FLAKY, never as a plain pass, and the flake is recorded. A suite that flakes `FLAKE_FAIL_THRESHOLD` times within the last `FLAKE_WINDOW_RUNS` runs fails the run until the flake is fixed or the test is quarantined. A quarantine entry needs a reason, an owner, an issue number and an expiry date. An expired or stale quarantine entry is an error.
 
-Status: Planned (#779). The rerun, the recording, the threshold and the quarantine are not yet in the tooling. Until #779 lands, a flaky test is fixed when it is found, and the pull request says so.
+Status: the rerun and the FLAKY report are Implemented (#779, step A) in `tests/run-sovereign-tests.zsh`. A suite that fails is rerun once. A pass on the rerun is reported FLAKY, never as a plain pass: the flaky suite counts as passed, is listed in the summary with its first exit code, and the run still exits 0 with a warning. A failure on the rerun is a real failure. The rerun gets its own SUITE TIMING row named `<suite>[rerun]`. In the parallel pool the rerun happens inside the worker, and a worker that died is not rerun. `VDE_FLAKE_RERUN=0` switches the rerun off for debugging, `1` switches it on, and any other non-empty value exits 2 (an empty value counts as unset). The default is `FLAKE_RERUN_ON_FAIL`, held in the runner constant `VDE_FLAKE_RERUN_DEFAULT`, which `tests/unit/testing-policy-wiring.test.zsh` pins.
+
+Still Planned (#779, later steps): the run history record, the repeat-flake threshold (`FLAKE_FAIL_THRESHOLD` of `FLAKE_WINDOW_RUNS`), the quarantine list and the report command. Until those land, a flaky test is fixed when it is found, and the pull request says so.
+
+The Proof of Life is never rerun, never quarantined and never reported FLAKY: a Proof of Life that fails is a defect in the core, not a flake.
 
 ### Timing and budgets
 
@@ -95,7 +99,8 @@ An independent review must pass before a commit. The review checklist is Impleme
 | Timing printed every run and per-step gate timing | `tests/run-sovereign-tests.zsh`, `githooks/gate-tree.zsh` and `lib/vde-junit-timing` (per-scenario Proof of Life timing); per-step timing (PR #783) | Implemented |
 | Two-tier pre-push gate, stamps and no early release | `githooks/*`, `lib/vde-pol-stamp` and `lib/vde-gate-commits` (#770) | Implemented |
 | Policy numbers match the tooling defaults | `tests/unit/testing-policy-wiring.test.zsh` | Implemented |
-| Flake rerun, recording, threshold and quarantine; run history | Not yet in the tooling | Planned (#779) |
+| Flake rerun once and FLAKY report | `tests/run-sovereign-tests.zsh`, `tests/unit/runner-flaky.test.zsh` | Implemented |
+| Flake recording, threshold and quarantine; run history | Not yet in the tooling | Planned (#779) |
 | Timing budget enforcement | Not yet in the tooling | Planned (#779) |
 | Pinned test environment | Not yet in the tooling | Planned (#780) |
 | Mutation checks for the gate and the tooling | Not yet in the tooling | Planned (#781) |
@@ -116,7 +121,7 @@ The values below are the same as `tests/test-policy.conf`. The wiring test `test
 | `DOCKER_EVENTS_TIMEOUT_SECONDS` | `10` | Timeout for watching Docker events. Equals the default in `tests/run-sovereign-tests.zsh`. |
 | `TEST_PARALLEL_JOBS` | `4` | The maximum number of unit suites run at once; the measured maximum, never raised without a new measurement. |
 | `MAX_RUNNING_SPOKES` | `3` | Most Spokes that may run at once (Rule K). |
-| `FLAKE_RERUN_ON_FAIL` | `1` | Whether a failing suite is rerun once before it is reported (1 = yes, 0 = no). |
+| `FLAKE_RERUN_ON_FAIL` | `1` | Whether a failing suite is rerun once before it is reported (1 = yes, 0 = no). `VDE_FLAKE_RERUN` overrides it for one run. |
 | `FLAKE_WINDOW_RUNS` | `20` | How many recent runs are counted when judging flakes. |
 | `FLAKE_FAIL_THRESHOLD` | `3` | Flakes within the window that fail the run. |
 

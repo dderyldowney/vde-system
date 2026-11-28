@@ -31,6 +31,25 @@ zmodload zsh/zselect
 # TEST_PARALLEL_JOBS in tests/test-policy.conf; tests/unit/testing-policy-wiring.test.zsh pins that.
 typeset -ri VDE_MAX_TEST_JOBS=4
 typeset -i TEST_JOBS=1
+
+# --- Flake control (Signet #779, step A) ------------------------------------------------------
+# A suite that fails is rerun once. A pass on the rerun is reported FLAKY (never as a plain pass, listed in the
+# summary with its first exit code) and the run still passes, with a loud warning; a failure on the rerun is a real
+# failure. The default equals FLAKE_RERUN_ON_FAIL in tests/test-policy.conf (pinned by
+# tests/unit/testing-policy-wiring.test.zsh); VDE_FLAKE_RERUN=0 turns the rerun off for debugging, =1 turns it on.
+# The Proof of Life is not part of this runner and is never rerun, never quarantined, never reported FLAKY.
+typeset -ri VDE_FLAKE_RERUN_DEFAULT=1
+typeset -i FLAKE_RERUN=${VDE_FLAKE_RERUN_DEFAULT}
+if [[ -n "${VDE_FLAKE_RERUN:-}" ]]; then
+    if [[ "${VDE_FLAKE_RERUN}" == (0|1) ]]; then
+        FLAKE_RERUN=${VDE_FLAKE_RERUN}
+    else
+        print -u2 -r -- "ERROR: VDE_FLAKE_RERUN must be 0 or 1, not '${VDE_FLAKE_RERUN}'"
+        exit 2
+    fi
+fi
+# One line per suite that failed and then passed: "<suite> (first run: exit code N)".
+typeset -a FLAKY_TESTS=()
 # Running workers: suite file name -> pid. A finished worker is removed, so a reused pid is never signalled.
 typeset -A UNIT_PIDS=()
 
@@ -304,12 +323,22 @@ TOTAL_PASSED=0
 TOTAL_FAILED=0
 FAILED_TESTS=()
 
-# _vde_note_result <suite name> <exit code> <duration text>: the result line and the counters, shared by the serial
-# and the parallel path so a suite is reported the same way in both.
+# _vde_note_result <suite name> <exit code> <duration text> [<first exit code>]: the result line and the counters,
+# shared by the serial and the parallel path so a suite is reported the same way in both. The exit code is the
+# one of the LAST run; a first exit code is given only when the suite was rerun. A pass on the rerun is FLAKY: it
+# counts as passed, never prints as a plain pass, and is listed in the summary.
 _vde_note_result() {
-    if [[ ${2} -eq 0 ]]; then
+    if [[ ${2} -eq 0 && -n "${4:-}" ]]; then
+        echo -e "${YELLOW}⚠ ${1} FLAKY: failed (exit code: ${4}), then passed on the rerun (${3})${RESET}"
+        ((TOTAL_PASSED++))
+        FLAKY_TESTS+=("${1} (first run: exit code ${4})")
+    elif [[ ${2} -eq 0 ]]; then
         echo -e "${GREEN}✓ ${1} passed (${3})${RESET}"
         ((TOTAL_PASSED++))
+    elif [[ -n "${4:-}" ]]; then
+        echo -e "${RED}✗ ${1} failed (exit code: ${4}) and failed again on the rerun (exit code: ${2}) (${3})${RESET}"
+        ((TOTAL_FAILED++))
+        FAILED_TESTS+=("${1}")
     else
         echo -e "${RED}✗ ${1} failed (exit code: ${2}) (${3})${RESET}"
         ((TOTAL_FAILED++))
@@ -322,7 +351,7 @@ run_test_file() {
     local test_file="${1}"
     local test_name=$(basename "${test_file}")
     local -F t0 t1
-    local dur e0 e1
+    local dur e0 e1 first_rc=''
 
     echo -e "\n${YELLOW}${BOLD}➤ Running: ${test_name} [$(strftime '%H:%M:%S' ${EPOCHSECONDS})]${RESET}"
 
@@ -334,8 +363,20 @@ run_test_file() {
     t1=$(vde_test_now)
     e1="${EPOCHREALTIME}"
     _vde_record_timing "${test_name}" $(( t1 - t0 )) "${e0}" "${e1}"
+    if (( rc != 0 && FLAKE_RERUN )); then
+        # Signet #779: rerun once. The first run keeps its own timing row; the rerun gets a row of its own.
+        first_rc="${rc}"
+        echo -e "${YELLOW}↻ ${test_name} failed (exit code: ${first_rc}); rerunning once${RESET}"
+        t0=$(vde_test_now)
+        e0="${EPOCHREALTIME}"
+        zsh "${test_file}"
+        rc=$?
+        t1=$(vde_test_now)
+        e1="${EPOCHREALTIME}"
+        _vde_record_timing "${test_name}[rerun]" $(( t1 - t0 )) "${e0}" "${e1}"
+    fi
     dur="$(vde_test_fmt1 $(( t1 - t0 )))s"
-    _vde_note_result "${test_name}" "${rc}" "${dur}"
+    _vde_note_result "${test_name}" "${rc}" "${dur}" "${first_rc}"
 }
 
 # --- The parallel pool (Signet #774, step 2) --------------------------------------------------
@@ -344,20 +385,25 @@ typeset UNIT_JOBS_DIR=''
 # _vde_launch_suite <suite path>: starts one suite in the background and returns at once. The suite runs in a fresh
 # zsh with its own HOME, and its output goes to a log, so concurrent suites never write into the same place. The
 # wrapper subshell drops the runner's exit hooks and traps first: inherited, they would remove the shared scratch
-# base when the first worker ends. It reports "<exit code> <seconds> <start epoch>" in a meta file, written last
-# and moved into place in one step, so the meta file's existence means the suite has finished.
+# base when the first worker ends. It reports "<exit code> <seconds> <start epoch> <first exit code> <rerun seconds>"
+# in a meta file, written last and moved into place in one step, so the meta file's existence means the suite has
+# finished. A failing suite is rerun once INSIDE the worker (Signet #779), so the rerun never stalls the pool: the
+# exit code and seconds are those of the first run unless it was rerun, in which case the exit code is the
+# rerun's, the first exit code field holds the first run's, and the rerun seconds field holds the rerun's time
+# (the fields are "-" and 0 when there was no rerun). A worker that dies writes no meta file and is never rerun.
 _vde_launch_suite() {
     local f="$1" name="${1:t}"
     local home="${UNIT_JOBS_DIR}/jobhome.${name}"
     local log="${UNIT_JOBS_DIR}/log.${name}" meta="${UNIT_JOBS_DIR}/meta.${name}"
+    local rehome="${UNIT_JOBS_DIR}/jobhome.${name}.rerun" relog="${UNIT_JOBS_DIR}/log.${name}.rerun"
     mkdir -p "${home}" || return 1
     (
         trap - EXIT INT TERM
         unfunction TRAPINT TRAPTERM 2>/dev/null
         zshexit_functions=()
         _VDE_TENV_ACTIVE=0
-        local -F t0 t1
-        local e0 rc child
+        local -F t0 t1 r0 r1=0
+        local e0 rc child first_rc='-'
         t0=$(vde_test_now)
         e0="${EPOCHREALTIME}"
         HOME="${home}" zsh "${f}" >"${log}" 2>&1 </dev/null &
@@ -366,26 +412,44 @@ _vde_launch_suite() {
         wait "${child}"
         rc=$?
         t1=$(vde_test_now)
-        print -r -- "${rc} $(( t1 - t0 )) ${e0%.*}" >"${meta}.part" && mv -f -- "${meta}.part" "${meta}"
+        if (( rc != 0 && FLAKE_RERUN )) && mkdir -p "${rehome}"; then
+            first_rc="${rc}"
+            r0=$(vde_test_now)
+            HOME="${rehome}" zsh "${f}" >"${relog}" 2>&1 </dev/null &
+            child=$!
+            wait "${child}"
+            rc=$?
+            r1=$(( $(vde_test_now) - r0 ))
+        fi
+        print -r -- "${rc} $(( t1 - t0 )) ${e0%.*} ${first_rc} ${r1}" >"${meta}.part" && mv -f -- "${meta}.part" "${meta}"
     ) &!
     UNIT_PIDS[${name}]=$!
 }
 
-# _vde_report_parallel_suite <suite path> <exit code> <seconds> <start epoch>: prints one finished suite as an
-# unbroken block (header, its captured output, result line) and records its timing row.
+# _vde_report_parallel_suite <suite path> <exit code> <seconds> <start epoch> [<first exit code> <rerun seconds>]:
+# prints one finished suite as an unbroken block (header, its captured output, the rerun's output when there was
+# one, result line) and records its timing row, and one more for the rerun.
 _vde_report_parallel_suite() {
-    local f="$1" rc="$2" secs="$3" start="$4" name="${1:t}"
+    local f="$1" rc="$2" secs="$3" start="$4" first_rc="${5:--}" resecs="${6:-0}" name="${1:t}"
+    local show_secs="${secs}"
+    [[ "${first_rc}" == - ]] && first_rc=''
     echo -e "\n${YELLOW}${BOLD}➤ Running: ${name} [$(strftime '%H:%M:%S' ${start})]${RESET}"
     [[ -f "${UNIT_JOBS_DIR}/log.${name}" ]] && command cat -- "${UNIT_JOBS_DIR}/log.${name}"
     _vde_record_timing "${name}" "${secs}"
-    _vde_note_result "${name}" "${rc}" "$(vde_test_fmt1 "${secs}")s"
+    if [[ -n "${first_rc}" ]]; then
+        echo -e "${YELLOW}↻ ${name} failed (exit code: ${first_rc}); rerunning once${RESET}"
+        [[ -f "${UNIT_JOBS_DIR}/log.${name}.rerun" ]] && command cat -- "${UNIT_JOBS_DIR}/log.${name}.rerun"
+        _vde_record_timing "${name}[rerun]" "${resecs}"
+        show_secs="${resecs}"
+    fi
+    _vde_note_result "${name}" "${rc}" "$(vde_test_fmt1 "${show_secs}")s" "${first_rc}"
 }
 
 # run_unit_pool <suite path>...: runs the suites TEST_JOBS at a time and reports each as it finishes. A worker that
 # ends without writing its meta file is reported as a failed suite (exit code 255) with whatever it logged.
 run_unit_pool() {
     local -a queue=( "$@" ) running=()
-    local f name meta rc secs start
+    local f name meta rc secs start first_rc resecs
     local -F p0 p1 sum=0
     local e0
     local -i total=${#queue}
@@ -410,14 +474,14 @@ run_unit_pool() {
                 continue
             fi
             if [[ -f "${meta}" ]]; then
-                read -r rc secs start <"${meta}"
+                read -r rc secs start first_rc resecs <"${meta}"
             else
-                rc=255 secs=0 start="${EPOCHSECONDS}"
+                rc=255 secs=0 start="${EPOCHSECONDS}" first_rc='-' resecs=0
             fi
             unset "UNIT_PIDS[${name}]"
             running=( "${(@)running:#${f}}" )
-            (( sum += secs ))
-            _vde_report_parallel_suite "${f}" "${rc}" "${secs}" "${start}"
+            (( sum += secs + ${resecs:-0} ))
+            _vde_report_parallel_suite "${f}" "${rc}" "${secs}" "${start}" "${first_rc:--}" "${resecs:-0}"
         done
     done
     p1=$(vde_test_now)
@@ -523,6 +587,11 @@ _vde_write_timing_file || timing_rc=1
 echo -e "\n${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 echo -e "${BLUE}${BOLD}  VDE TEST SUMMARY${RESET}"
 echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+
+if (( ${#FLAKY_TESTS} )); then
+    echo -e "${YELLOW}${BOLD}WARNING: ${#FLAKY_TESTS} FLAKY suite(s): each failed, then passed on the rerun. A flaky test is a defect: fix it (docs/development/testing.md, Flake policy).${RESET}"
+    for flaky in "${FLAKY_TESTS[@]}"; do echo -e "${YELLOW}  FLAKY: ${flaky}${RESET}"; done
+fi
 
 if [[ ${TOTAL_FAILED} -eq 0 && ${timing_rc} -eq 0 ]]; then
     echo -e "${GREEN}${BOLD}PASS: ${TOTAL_PASSED} test suites completed successfully.${RESET}"
