@@ -50,6 +50,72 @@ if [[ -n "${VDE_FLAKE_RERUN:-}" ]]; then
 fi
 # One line per suite that failed and then passed: "<suite> (first run: exit code N)".
 typeset -a FLAKY_TESTS=()
+
+# --- Run history (Signet #779, step B) --------------------------------------------------------
+# Every run appends one JSON line per suite, the moment the suite is reported, to an append-only local file in the
+# git common directory (never tracked, never pushed): schema version, run id, UTC time, tree, dirty flag, suite,
+# seconds (all runs of the suite, a dot decimal in any locale), containers created ("n/a" and "256+" are strings),
+# result (pass, fail or flaky) and the flaky flag. One line per write keeps a killed run's earlier lines intact.
+# VDE_TEST_HISTORY_FILE names another file, or "off" for none. By default the history is kept only when this runner
+# is the one of the repository it sits in, so a fixture copy of the runner never writes into the real history.
+zmodload zsh/datetime
+typeset HISTORY_FILE='' HISTORY_RUN_ID='' HISTORY_TREE='' HISTORY_DIRTY=false
+typeset -i HISTORY_WARNED=0
+typeset -F HIST_SECS=0
+typeset HIST_CONTAINERS=''
+
+_vde_history_init() {
+    local top common
+    HISTORY_FILE=''
+    if [[ -n "${VDE_TEST_HISTORY_FILE:-}" ]]; then
+        [[ "${VDE_TEST_HISTORY_FILE}" == off ]] && return 0
+        HISTORY_FILE="${VDE_TEST_HISTORY_FILE}"
+    else
+        command -v git >/dev/null 2>&1 || return 0
+        top="$(cd "${VDE_ROOT_DIR}" && git rev-parse --show-toplevel 2>/dev/null)" || return 0
+        [[ "${top:A}" == "${VDE_ROOT_DIR:A}" ]] || return 0
+        common="$(cd "${VDE_ROOT_DIR}" && git rev-parse --git-common-dir 2>/dev/null)" || return 0
+        [[ "${common}" == /* ]] || common="${VDE_ROOT_DIR}/${common}"
+        HISTORY_FILE="${common:A}/vde-test-history.jsonl"
+    fi
+    HISTORY_TREE="$(cd "${VDE_ROOT_DIR}" && git rev-parse 'HEAD^{tree}' 2>/dev/null)" || HISTORY_TREE=unknown
+    # Dirty = any change the suites would see: tracked edits AND untracked, non-ignored files. A status that fails is
+    # not "clean": the state is unknown, so it is recorded as dirty.
+    local status_out
+    if ! status_out="$(cd "${VDE_ROOT_DIR}" && git status --porcelain 2>/dev/null)" || [[ -n "${status_out}" ]]; then
+        HISTORY_DIRTY=true
+    fi
+    # The run id: UTC start, pid and a nonce, so a reused pid in the same second cannot merge two runs.
+    HISTORY_RUN_ID="$(TZ=UTC strftime '%Y%m%dT%H%M%SZ' ${EPOCHSECONDS})-$$-${(l:5::0:)RANDOM}"
+}
+
+# _vde_history_note <suite> <pass|fail|flaky>: appends the suite's line and clears the accumulators.
+_vde_history_note() {
+    local name="${1//\\/\\\\}" flaky=false line
+    name="${name//\"/\\\"}"
+    # JSON allows no raw control character in a string: each one (a tab or a newline in a file name) becomes \u00XX,
+    # so a suite is always exactly one physical line.
+    if [[ "${name}" == *[[:cntrl:]]* ]]; then
+        local -i cc
+        for (( cc = 1; cc < 32; cc++ )); do
+            [[ "${name}" == *"${(#)cc}"* ]] && name="${name//${(#)cc}/$(printf '\\u%04x' ${cc})}"
+        done
+        name="${name//${(#)127}/\\u007f}"
+    fi
+    [[ "$2" == flaky ]] && flaky=true
+    if [[ -n "${HISTORY_FILE}" ]]; then
+        line="{\"v\":1,\"run\":\"${HISTORY_RUN_ID}\",\"ts\":\"$(TZ=UTC strftime '%Y-%m-%dT%H:%M:%SZ' ${EPOCHSECONDS})\",\"tree\":\"${HISTORY_TREE}\",\"dirty\":${HISTORY_DIRTY},\"suite\":\"${name}\",\"seconds\":$(vde_test_fmt1 "${HIST_SECS}"),\"containers\":\"${HIST_CONTAINERS:-n/a}\",\"result\":\"$2\",\"flaky\":${flaky}}"
+        if ! { mkdir -p -- "${HISTORY_FILE:h}" && print -r -- "${line}" >> "${HISTORY_FILE}"; } 2>/dev/null; then
+            if (( ! HISTORY_WARNED )); then
+                HISTORY_WARNED=1
+                print -u2 -r -- "WARNING: cannot append to the run history ${HISTORY_FILE}; this run is not recorded"
+            fi
+        fi
+    fi
+    HIST_SECS=0
+    HIST_CONTAINERS=''
+}
+_vde_history_init
 # Running workers: suite file name -> pid. A finished worker is removed, so a reused pid is never signalled.
 typeset -A UNIT_PIDS=()
 
@@ -243,6 +309,16 @@ _vde_record_timing() {
     fi
     TIMING_ROWS+=( "${secs}|${1}|${VDE_CONTAINERS_RESULT}" )
     (( TIMING_TOTAL += $2 ))
+    # The history keeps one line per suite: a rerun adds its seconds and its container creates to the suite's.
+    (( HIST_SECS += $2 ))
+    if [[ -z "${HIST_CONTAINERS}" || "${HIST_CONTAINERS}" == n/a ]]; then
+        HIST_CONTAINERS="${VDE_CONTAINERS_RESULT}"
+    elif [[ "${HIST_CONTAINERS}" == <-> && "${VDE_CONTAINERS_RESULT}" == <-> ]]; then
+        HIST_CONTAINERS=$(( HIST_CONTAINERS + VDE_CONTAINERS_RESULT ))
+        (( HIST_CONTAINERS >= 256 )) && HIST_CONTAINERS="256+"
+    elif [[ "${VDE_CONTAINERS_RESULT}" == 256+ ]]; then
+        HIST_CONTAINERS="256+"
+    fi
 }
 
 # _vde_sort_timing_rows: TIMING_SORTED holds the rows slowest first.
@@ -312,6 +388,7 @@ typeset -i audit_rc=0
 "${VDE_ROOT_DIR}/bin/vde-enforce-uap.zsh" || audit_rc=$?
 typeset -F AUDIT_T1=$(vde_test_now)
 _vde_record_timing "sovereign-audit" $(( AUDIT_T1 - AUDIT_T0 )) "${AUDIT_E0}" "${EPOCHREALTIME}"
+if (( audit_rc == 0 )); then _vde_history_note "sovereign-audit" pass; else _vde_history_note "sovereign-audit" fail; fi
 if (( audit_rc != 0 )); then
     _vde_print_timing
     _vde_write_timing_file
@@ -332,17 +409,21 @@ _vde_note_result() {
         echo -e "${YELLOW}⚠ ${1} FLAKY: failed (exit code: ${4}), then passed on the rerun (${3})${RESET}"
         ((TOTAL_PASSED++))
         FLAKY_TESTS+=("${1} (first run: exit code ${4})")
+        _vde_history_note "${1}" flaky
     elif [[ ${2} -eq 0 ]]; then
         echo -e "${GREEN}✓ ${1} passed (${3})${RESET}"
         ((TOTAL_PASSED++))
+        _vde_history_note "${1}" pass
     elif [[ -n "${4:-}" ]]; then
         echo -e "${RED}✗ ${1} failed (exit code: ${4}) and failed again on the rerun (exit code: ${2}) (${3})${RESET}"
         ((TOTAL_FAILED++))
         FAILED_TESTS+=("${1}")
+        _vde_history_note "${1}" fail
     else
         echo -e "${RED}✗ ${1} failed (exit code: ${2}) (${3})${RESET}"
         ((TOTAL_FAILED++))
         FAILED_TESTS+=("${1}")
+        _vde_history_note "${1}" fail
     fi
 }
 
@@ -535,6 +616,7 @@ for test in "${SERIAL_TESTS[@]}"; do
         echo -e "${RED}⚠ Missing test file: ${test}${RESET}"
         ((TOTAL_FAILED++))
         FAILED_TESTS+=("$(basename ${test}) [MISSING]")
+        _vde_history_note "${test:t}[MISSING]" fail
     fi
 done
 
@@ -567,6 +649,7 @@ echo -e "${BLUE}${BOLD}  PHASE 3: BDD Feature Verification (Metadata)${RESET}"
 echo -e "${BLUE}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
 
 # Verify all feature files follow the standard
+typeset -F BDD_T0=$(vde_test_now)
 if command -v grep &>/dev/null; then
     MISSING_TAGS=$(grep -L "@" tests/features/core-infrastructure/*.feature)
     if [[ -n "${MISSING_TAGS}" ]]; then
@@ -574,9 +657,13 @@ if command -v grep &>/dev/null; then
         echo "${MISSING_TAGS}"
         ((TOTAL_FAILED++))
         FAILED_TESTS+=("BDD-Metadata")
+        HIST_SECS=$(( $(vde_test_now) - BDD_T0 ))
+        _vde_history_note "BDD-Metadata" fail
     else
         echo -e "${GREEN}✓ All core features are properly tagged.${RESET}"
         ((TOTAL_PASSED++))
+        HIST_SECS=$(( $(vde_test_now) - BDD_T0 ))
+        _vde_history_note "BDD-Metadata" pass
     fi
 fi
 

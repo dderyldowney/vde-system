@@ -48,7 +48,9 @@ The specified behaviour is this. A suite that fails is rerun once (`FLAKE_RERUN_
 
 Status: the rerun and the FLAKY report are Implemented (#779, step A) in `tests/run-sovereign-tests.zsh`. A suite that fails is rerun once. A pass on the rerun is reported FLAKY, never as a plain pass: the flaky suite counts as passed, is listed in the summary with its first exit code, and the run still exits 0 with a warning. A failure on the rerun is a real failure. The rerun gets its own SUITE TIMING row named `<suite>[rerun]`. In the parallel pool the rerun happens inside the worker, and a worker that died is not rerun. `VDE_FLAKE_RERUN=0` switches the rerun off for debugging, `1` switches it on, and any other non-empty value exits 2 (an empty value counts as unset). The default is `FLAKE_RERUN_ON_FAIL`, held in the runner constant `VDE_FLAKE_RERUN_DEFAULT`, which `tests/unit/testing-policy-wiring.test.zsh` pins.
 
-Still Planned (#779, later steps): the run history record, the repeat-flake threshold (`FLAKE_FAIL_THRESHOLD` of `FLAKE_WINDOW_RUNS`), the quarantine list and the report command. Until those land, a flaky test is fixed when it is found, and the pull request says so.
+Run history: Implemented (#779, step B) in `tests/run-sovereign-tests.zsh`. After each suite is reported, the runner appends one JSON line to `vde-test-history.jsonl` in the git common directory. The file is local, untracked, never pushed and append-only, with one line per write, so a killed run keeps the lines it had already written. Each line has the fields `v`, `run`, `ts` (UTC), `tree`, `dirty`, `suite`, `seconds`, `containers`, `result` (`pass`, `fail` or `flaky`) and `flaky`. The sovereign-audit and BDD-Metadata rows are recorded too, and a failed audit still records its line. A rerun's seconds fold into the suite's single line. `VDE_TEST_HISTORY_FILE` names another file, and `off` disables the record. A copy of the runner that is not the top level of its repository writes nothing by default. A history that cannot be written prints one warning and does not change the result.
+
+Still Planned (#779, later steps): the repeat-flake threshold (`FLAKE_FAIL_THRESHOLD` of `FLAKE_WINDOW_RUNS`), the quarantine list and the history report. Until those land, a flaky test is fixed when it is found, and the pull request says so.
 
 The Proof of Life is never rerun, never quarantined and never reported FLAKY: a Proof of Life that fails is a defect in the core, not a flake.
 
@@ -100,7 +102,8 @@ An independent review must pass before a commit. The review checklist is Impleme
 | Two-tier pre-push gate, stamps and no early release | `githooks/*`, `lib/vde-pol-stamp` and `lib/vde-gate-commits` (#770) | Implemented |
 | Policy numbers match the tooling defaults | `tests/unit/testing-policy-wiring.test.zsh` | Implemented |
 | Flake rerun once and FLAKY report | `tests/run-sovereign-tests.zsh`, `tests/unit/runner-flaky.test.zsh` | Implemented |
-| Flake recording, threshold and quarantine; run history | Not yet in the tooling | Planned (#779) |
+| Run history (one JSON line per suite per run) | `tests/run-sovereign-tests.zsh`, `tests/unit/runner-history.test.zsh` | Implemented |
+| Flake threshold, quarantine and the history report | Not yet in the tooling | Planned (#779) |
 | Timing budget enforcement | Not yet in the tooling | Planned (#779) |
 | Pinned test environment | Not yet in the tooling | Planned (#780) |
 | Mutation checks for the gate and the tooling | Not yet in the tooling | Planned (#781) |
