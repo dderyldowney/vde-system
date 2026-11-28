@@ -43,6 +43,7 @@ typeset -r LEGACY_EXEC='## 4. EXECUTION PROTOCOLS'
 typeset -r LEGACY_MANDATES='## 5. HARDENED MANDATES'
 typeset -r STAMP_FILE='lib/vde-pol-stamp'
 typeset -r SOVEREIGN_FILE='tests/run-sovereign-tests.zsh'
+typeset -r SERIAL_FILE='tests/serial-unit-suites.txt'
 typeset -r INSTRUCTIONS='.gemini/instructions.md'
 typeset -r RULE_K_LINE='K. The 3-VM Concurrent Limit'
 typeset -r AGENTS_FILE='AGENTS.md'
@@ -52,8 +53,8 @@ typeset -a PREAMBLE_FILES=("${RULE}" "${PREAMBLE}" "${AGENTS_FILE}" "${CLAUDE_FI
 
 # The exact key set of tests/test-policy.conf (check 2).
 typeset -a POLICY_KEYS=(UNIT_SUITE_BUDGET_SECONDS FULL_TIER_BUDGET_SECONDS STAMP_TTL_SECONDS
-    DOCKER_EVENTS_TIMEOUT_SECONDS MAX_RUNNING_SPOKES FLAKE_RERUN_ON_FAIL FLAKE_WINDOW_RUNS
-    FLAKE_FAIL_THRESHOLD)
+    DOCKER_EVENTS_TIMEOUT_SECONDS MAX_RUNNING_SPOKES TEST_PARALLEL_JOBS FLAKE_RERUN_ON_FAIL
+    FLAKE_WINDOW_RUNS FLAKE_FAIL_THRESHOLD)
 # Parsed conf: CONF[KEY]=value. Filled once by load_conf before the checks run.
 typeset -A CONF=()
 typeset -a CONF_MALFORMED=() CONF_DUPLICATE=()
@@ -395,6 +396,43 @@ test_tooling_defaults() {
                 "${wrong} line(s) state a different number than the conf"
         fi
     done
+}
+
+test_parallel_jobs() {
+    test_start "4b: the runner's VDE_MAX_TEST_JOBS equals TEST_PARALLEL_JOBS in the conf and in the Policy numbers table; the serial suite list is tracked and non-empty"
+    local -a occ=() rows cells=()
+    local line rn="" dv=""
+    occ=("${(@f)$(grep -oE -- 'VDE_MAX_TEST_JOBS=[0-9]+' "${VDE_ROOT_DIR}/${SOVEREIGN_FILE}" 2>/dev/null)}")
+    occ=("${(@)occ:#}")
+    if (( ${#occ[@]} == 1 )); then
+        rn="${occ[1]##*=}"
+        test_pass "${SOVEREIGN_FILE} declares VDE_MAX_TEST_JOBS once (${rn})"
+    else
+        test_fail "${SOVEREIGN_FILE} declares VDE_MAX_TEST_JOBS once" "found ${#occ[@]} declaration(s) of VDE_MAX_TEST_JOBS=<n>"
+    fi
+    if [[ -n "${rn}" && "${rn}" == "${CONF[TEST_PARALLEL_JOBS]:-}" ]]; then
+        test_pass "VDE_MAX_TEST_JOBS equals TEST_PARALLEL_JOBS in ${CONF_FILE} (${rn})"
+    else
+        test_fail "VDE_MAX_TEST_JOBS equals TEST_PARALLEL_JOBS in ${CONF_FILE}" \
+            "runner [${rn:-<absent>}], conf [${CONF[TEST_PARALLEL_JOBS]:-<absent>}]"
+    fi
+    rows=("${(@f)$(block "${NUMBERS_HEADING}" "${DOC}")}")
+    for line in "${rows[@]}"; do
+        [[ "${line}" == '| `TEST_PARALLEL_JOBS`'* ]] || continue
+        cells=("${(@s:|:)line}")
+        dv="$(cell_trim "${cells[3]}")"
+    done
+    if [[ -n "${rn}" && "${rn}" == "${dv}" ]]; then
+        test_pass "VDE_MAX_TEST_JOBS equals the TEST_PARALLEL_JOBS row in ${DOC} (${rn})"
+    else
+        test_fail "VDE_MAX_TEST_JOBS equals the TEST_PARALLEL_JOBS row in ${DOC}" \
+            "runner [${rn:-<absent>}], doc [${dv:-<no row>}]"
+    fi
+    if tracked "${SERIAL_FILE}"; then
+        test_pass "${SERIAL_FILE} is tracked and non-empty"
+    else
+        test_fail "${SERIAL_FILE} is tracked and non-empty" "not tracked, missing or empty"
+    fi
 }
 
 test_pointers() {
@@ -1014,6 +1052,7 @@ test_policy_section
 test_conf_keys
 test_numbers_table
 test_tooling_defaults
+test_parallel_jobs
 test_pointers
 test_links
 test_layers_table

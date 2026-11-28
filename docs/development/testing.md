@@ -61,6 +61,8 @@ Budgets:
 
 Measured baseline, 2026-11-26, one gate run: the full tier took 1398.0 s, made up of the audit at 7.5 s, the suite at 452.7 s, the Proof of Life at 937.7 s and the documentation audit (`bin/vde-gospel-audit.zsh`) at 0.1 s. The slowest unit suite took 129.2 s. The number of containers each suite creates is measured and printed.
 
+Unit suites run in parallel. `tests/run-sovereign-tests.zsh` runs up to `VDE_TEST_JOBS` unit suites at once, by default the lower of 4 and the number of online CPUs. Each parallel suite has its own scratch `HOME`, and its output is printed as one block, so blocks do not interleave. The runner does not start Spokes. A suite that creates a container of any kind is listed in `tests/serial-unit-suites.txt` and runs alone after the parallel pool has drained, so its container count stays per-suite. Today that is two suites, `vde-agent-sock.test.zsh` and `spine-git-env-isolation.test.zsh` (through the spine check), each of which starts a throwaway `docker run --rm` alpine container that exits at once. Measured, all 72 unit and integration suites took 145 s at 4 at a time against 456 s serially, with no failures in two runs. Values above 4 were not measured, so 4 is the tested maximum, and a larger value is clamped to 4. `VDE_TEST_JOBS=1` is the old serial behavior. A suite in the pool shows `n/a` in the containers column, because the daemon-wide count cannot be attributed to one suite while others run. The Proof of Life is never run in parallel and is never shortened or replaced.
+
 Status of enforcement: budgets are not yet enforced by the tooling. Planned (#779).
 
 ### Coverage
@@ -88,6 +90,7 @@ An independent review must pass before a commit. The review checklist is Impleme
 | Rule | Enforced by | Status |
 |------|-------------|--------|
 | Suite discovery and exclusions with a reason | `tests/run-sovereign-tests.zsh` and `tests/unit/test-runner-coverage.test.zsh` | Implemented |
+| Parallel unit suites (Sovereign runner, VDE_TEST_JOBS, tests/serial-unit-suites.txt) | `tests/run-sovereign-tests.zsh` and `tests/serial-unit-suites.txt` | Implemented |
 | Test-size and determinism rule checks (a unit suite that starts a container, uses the network or sleeps is detected) | Not yet in the tooling | Planned (#778) |
 | Timing printed every run and per-step gate timing | `tests/run-sovereign-tests.zsh`, `githooks/gate-tree.zsh` and `lib/vde-junit-timing` (per-scenario Proof of Life timing); per-step timing (PR #783) | Implemented |
 | Two-tier pre-push gate, stamps and no early release | `githooks/*`, `lib/vde-pol-stamp` and `lib/vde-gate-commits` (#770) | Implemented |
@@ -111,6 +114,7 @@ The values below are the same as `tests/test-policy.conf`. The wiring test `test
 | `FULL_TIER_BUDGET_SECONDS` | `1500` | Time budget for the full certification of a tip. |
 | `STAMP_TTL_SECONDS` | `1800` | How long a passed certification stamp stays valid for a push. Equals the default in `lib/vde-pol-stamp`. |
 | `DOCKER_EVENTS_TIMEOUT_SECONDS` | `10` | Timeout for watching Docker events. Equals the default in `tests/run-sovereign-tests.zsh`. |
+| `TEST_PARALLEL_JOBS` | `4` | The maximum number of unit suites run at once; the measured maximum, never raised without a new measurement. |
 | `MAX_RUNNING_SPOKES` | `3` | Most Spokes that may run at once (Rule K). |
 | `FLAKE_RERUN_ON_FAIL` | `1` | Whether a failing suite is rerun once before it is reported (1 = yes, 0 = no). |
 | `FLAKE_WINDOW_RUNS` | `20` | How many recent runs are counted when judging flakes. |

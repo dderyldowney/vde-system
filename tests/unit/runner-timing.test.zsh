@@ -152,7 +152,8 @@ hang_docker_stub() {  # hang_docker_stub FIXTURE: stubs/docker whose events subc
 run_in() {  # run_in FIXTURE PATHVALUE [NAME=value ...] -> OUT (colour codes removed) and RC (the runner's exit status)
     local fix="$1" p="$2" raw
     shift 2
-    raw="$(cd "${fix}" && timeout 120 env -i HOME="${fix}/callerhome" PATH="${p}" \
+    # VDE_TEST_JOBS=1 (serial): per-suite container counts exist only in serial mode; a later NAME=value argument overrides it.
+    raw="$(cd "${fix}" && timeout 120 env -i HOME="${fix}/callerhome" PATH="${p}" VDE_TEST_JOBS=1 \
         DOCKER_LOG="${fix}/docker.log" DOCKER_EVENTS="${fix}/docker.events" \
         "$@" zsh tests/run-sovereign-tests.zsh 2>&1; print -r -- "RC=$?")"
     RC="${raw##*RC=}"
@@ -813,6 +814,24 @@ EOF
             test_fail "6j under the +3600s jump: every row and the total under 10s, b at least 0.9s, rc=0" "rows: ${ROW_NAMES[*]} over-10s:${j_bad} total: ${j_total:-none} b: ${j_b:-none} rc=${RC} out: ${OUT[1,300]//$'\n'/ | }"
         fi
     fi
+fi
+
+# ---------------------------------------------------------------------------
+# Case 7: the default is parallel-aware: with VDE_TEST_JOBS=2 a suite's containers cell is n/a and a "Unit phase:" line is printed
+# ---------------------------------------------------------------------------
+
+test_start "7a with VDE_TEST_JOBS=2 the containers cell of a fixture suite is n/a (not a number) and the output has a line starting 'Unit phase:'"
+new_fixture parallel || exit 1
+typeset FIX_P="${SCRATCH}/parallel"
+run_in "${FIX_P}" "${FIX_P}/stubs:${PATH}" VDE_TEST_JOBS=2
+timing_section
+row_names
+typeset p_cell="$(containers_of "$(row_of b.test.zsh)")"
+typeset p_phase="$(line_matching '^Unit phase:')"
+if [[ "${p_cell}" == 'n/a' && -n "${p_phase}" ]]; then
+    test_pass "7a containers n/a for b.test.zsh and phase line: ${p_phase}"
+else
+    test_fail "7a VDE_TEST_JOBS=2: containers n/a for b.test.zsh and a 'Unit phase:' line" "containers=${p_cell:-none} phase line: ${p_phase:-none}"
 fi
 
 print -r -- "Passed: ${TESTS_PASSED}  Failed: ${TESTS_FAILED}"

@@ -1,0 +1,22 @@
+# Unit suites that must NOT run at the same time as any other suite (Signet #774).
+# @forge (Governance Sentinel)
+#
+# The CI runner (tests/run-sovereign-tests.zsh) runs the unit suites in parallel, up to
+# VDE_TEST_JOBS at a time. A suite listed here runs by itself, one at a time, after the parallel
+# pool has drained. One entry per line:
+#     <suite file name><whitespace><reason>
+# The suite file name ends in .test.zsh and names a file directly under tests/unit/ (no path).
+# A reason is mandatory. An entry naming a suite that does not exist, a suite listed twice, a
+# path, a name that does not end in .test.zsh, or a suite that is also named in
+# tests/ci-unit-exclusions.txt is an error: the runner refuses to start, so this list cannot rot
+# silently. Blank lines and # comments are ignored.
+#
+# List a suite here only when it cannot share the machine with another suite:
+#     - it uses shared mutable state outside its own scratch directory;
+#     - it creates a container of any kind (the daemon-wide container count cannot be attributed to one suite while others run);
+#     - it makes a timing assumption that fails when other work loads the machine.
+# Prefer making the suite safe to run in parallel (its own scratch HOME, its own state) over an
+# entry here. An entry here is for a suite that genuinely cannot share the machine.
+#
+vde-agent-sock.test.zsh runs a throwaway alpine container (docker run --rm) that exits at once, so it runs alone and its container count stays attributable to it
+spine-git-env-isolation.test.zsh runs the spine check, which runs a throwaway alpine container (docker run --rm) that exits at once, so it runs alone and its container count stays attributable to it
