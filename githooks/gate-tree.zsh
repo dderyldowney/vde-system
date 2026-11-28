@@ -164,7 +164,8 @@ _gate_behave() {
         return 4
     }
     python3 -m behave "${VDE_ROOT_DIR}/tests/features/core-infrastructure/proof-of-life-the-contract.feature" --quiet --no-summary --junit --junit-directory "${_junit_dir}" || _behave_rc=$?
-    vde_junit_timing_report "${_junit_dir}"
+    # The gate shows every scenario, not just the library's default top 10.
+    vde_junit_timing_report "${_junit_dir}" 100000
     rm -rf -- "${_junit_dir}"
     if (( _behave_rc != 0 )); then
         echo -e "${RED}[ERROR] Mandate L Violation: Proof of Life Contract Failed.${RESET}"

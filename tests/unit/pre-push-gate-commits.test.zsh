@@ -697,6 +697,7 @@ if (( _j > 0 )) && [[ -f "@STATE@/junit.xml" ]]; then
     cp "@STATE@/junit.xml" "${_a[_j+1]}/TESTS-stub.xml"
 fi
 print -r -- "junit=${_j}" >> "@STATE@/junit.log"
+if (( _j > 0 )); then print -r -- "dir=${_a[_j+1]}" >> "@STATE@/junit.log"; fi
 print -r -- "behave=${LC_ALL-unset}" >> "@STATE@/env.log"
 typeset rc=0
 [[ -f "@STATE@/behave.rc" ]] && rc="$(<"@STATE@/behave.rc")"
@@ -900,6 +901,45 @@ print -r -- '<testsuite name="s"><testcase classname="s" name="failing scenario"
 gt_run full
 (( GATE_RC == 2 )); verdict "a failing Proof of Life still exits 2" $? "rc ${GATE_RC}: ${GATE_OUT[1,300]}"
 [[ "${GATE_OUT}" == *"PROOF OF LIFE TIMING: 1 scenarios"* && "${GATE_OUT}" == *"failing scenario"* ]]; verdict "the table is printed on failure too" $? "output: ${GATE_OUT[1,500]}"
+
+# junit_dir_of_last_run: the --junit-directory path the python3 stub logged for the last run, or nothing.
+junit_dir_of_last_run() {
+    typeset _line
+    [[ -f "${GSTATE}/junit.log" ]] || return 0
+    for _line in "${(@f)$(<"${GSTATE}/junit.log")}"; do
+        [[ "${_line}" == dir=* ]] && print -r -- "${_line#dir=}"
+    done
+    return 0
+}
+
+test_start "gate-tree full: the timing table covers all 12 scenarios, not only the library's default 10 (Signet #774)"
+gt_reset
+typeset -i _n
+typeset _xml='<testsuite name="s">'
+for (( _n = 1; _n <= 12; _n++ )); do
+    _xml+='<testcase classname="s" name="scenario '"${(l:2::0:)_n}"'" status="passed" time="'"${_n}"'.0"></testcase>'
+done
+print -r -- "${_xml}</testsuite>" > "${GSTATE}/junit.xml"
+gt_run full
+[[ "${GATE_OUT}" == *"PROOF OF LIFE TIMING: 12 scenarios"* && "${GATE_OUT}" == *"slowest 12 shown"* ]]; verdict "the header says 12 scenarios and slowest 12 shown" $? "output: ${GATE_OUT[1,600]}"
+typeset _missing=""
+for (( _n = 1; _n <= 12; _n++ )); do
+    [[ "${GATE_OUT}" == *"scenario ${(l:2::0:)_n}"* ]] || _missing+=" ${(l:2::0:)_n}"
+done
+[[ -z "${_missing}" ]]; verdict "all 12 scenario names are listed" $? "missing scenario numbers:${_missing}; output: ${GATE_OUT[1,600]}"
+
+test_start "gate-tree full: the Proof of Life junit directory is removed after a pass and after a failure (Signet #774)"
+gt_reset
+gt_run full
+_jd="$(junit_dir_of_last_run)"
+[[ -n "${_jd}" && "${_jd}" == *pol-junit* ]]; verdict "after a pass the stub was given a pol-junit directory" $? "dir=[${_jd}]"
+[[ ! -e "${_jd}" ]]; verdict "after a pass the junit directory no longer exists" $? "still exists: ${_jd}"
+gt_reset
+print -r -- 1 > "${GSTATE}/behave.rc"
+gt_run full
+_jd="$(junit_dir_of_last_run)"
+[[ -n "${_jd}" && "${_jd}" == *pol-junit* ]]; verdict "after a failure the stub was given a pol-junit directory" $? "dir=[${_jd}]"
+[[ ! -e "${_jd}" ]]; verdict "after a failure the junit directory no longer exists" $? "still exists: ${_jd}"
 
 test_start "gate-tree full: a Gospel failure exits 5 after the Proof of Life"
 gt_reset

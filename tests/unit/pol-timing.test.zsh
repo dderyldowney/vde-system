@@ -290,17 +290,24 @@ mkdir -p "${d9}" || exit 1
 xml_write "${d9}/pol.xml" "$(tc Alpha 3.0 passed)" "$(tc Beta 4.0 failed)"
 
 test_start "R9 the function is defined, two calls print identical output, and no parameter is leaked"
-report_capture "${d9}"
-out9a="${REP_OUT}"
-SNAP_BEFORE=("${(@ko)parameters}")
-report_capture "${d9}"
-out9b="${REP_OUT}"
-SNAP_AFTER=("${(@ko)parameters}")
-if (( $+functions[vde_junit_timing_report] )) && [[ -n "${out9a}" && "${out9a}" == "${out9b}" ]] \
-    && [[ "${(j:,:)SNAP_BEFORE}" == "${(j:,:)SNAP_AFTER}" ]]; then
+# The library runs in THIS shell (a redirect, not a command substitution), so a parameter it leaks stays visible here.
+typeset d9out1="${SCRATCH}/r9a.out" d9out2="${SCRATCH}/r9b.out"
+typeset r9_defined=0 r9_same=0 r9_nonempty=0 r9_noleak=0
+if (( $+functions[vde_junit_timing_report] )); then
+    r9_defined=1
+    SNAP_BEFORE=("${(@ko)parameters}")
+    vde_junit_timing_report "${d9}" > "${d9out1}"
+    vde_junit_timing_report "${d9}" > "${d9out2}"
+    SNAP_AFTER=("${(@ko)parameters}")
+    cmp -s "${d9out1}" "${d9out2}" && r9_same=1
+    [[ -s "${d9out1}" ]] && r9_nonempty=1
+    [[ "${(j:,:)SNAP_BEFORE}" == "${(j:,:)SNAP_AFTER}" ]] && r9_noleak=1
+fi
+if (( r9_defined && r9_same && r9_nonempty && r9_noleak )); then
     test_pass "R9 defined, repeatable, no new parameters"
 else
-    test_fail "R9 function defined, identical output on repeat, no leaked parameters" "defined=${+functions[vde_junit_timing_report]} first: ${out9a[1,200]//$'\n'/ | }"
+    typeset r9_first="$(<"${d9out1}" 2>/dev/null)"
+    test_fail "R9 function defined, identical output on repeat, no leaked parameters" "defined=${r9_defined} same=${r9_same} nonempty=${r9_nonempty} noleak=${r9_noleak} first: ${r9_first[1,200]//$'\n'/ | }"
 fi
 
 # ---------------------------------------------------------------------------
