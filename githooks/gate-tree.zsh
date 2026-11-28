@@ -64,6 +64,7 @@ source "${0:A:h:h}/lib/vde-gate-commits" || { echo "[ERROR] cannot load lib/vde-
 
 # The gate runs against its own scratch Projects base, never the caller's.
 source "${0:A:h:h}/lib/vde-test-env" || { echo "[ERROR] cannot load lib/vde-test-env"; exit 4; }
+source "${0:A:h:h}/lib/vde-junit-timing" || { echo "[ERROR] cannot load lib/vde-junit-timing"; exit 4; }
 vde_test_env_enter || { echo "[ERROR] cannot create a scratch Projects base"; exit 4; }
 
 # The suites run under a throwaway HOME inside the gate's scratch directory, never the caller's HOME.
@@ -152,7 +153,20 @@ _gate_behave() {
         echo -e "${RED}[ERROR] python3 with behave is unavailable. The gate could not run. Push blocked.${RESET}"
         return 4
     fi
-    if ! python3 -m behave "${VDE_ROOT_DIR}/tests/features/core-infrastructure/proof-of-life-the-contract.feature" --quiet --no-summary; then
+    # Per-scenario timing (Signet #774): behave writes its JUnit XML into a scratch directory, which is
+    # reported after the run (pass or fail) and removed. The behave status is kept for the return value.
+    typeset _junit_base _junit_dir
+    typeset -i _behave_rc=0
+    _junit_base="$(vde_test_env_dir)"
+    [[ -n "${_junit_base}" ]] || _junit_base="${TMPDIR:-/tmp}"
+    _junit_dir="$(mktemp -d "${_junit_base}/pol-junit.XXXXXX")" || {
+        echo -e "${RED}[ERROR] cannot create the JUnit directory for the timing report. The gate could not run. Push blocked.${RESET}"
+        return 4
+    }
+    python3 -m behave "${VDE_ROOT_DIR}/tests/features/core-infrastructure/proof-of-life-the-contract.feature" --quiet --no-summary --junit --junit-directory "${_junit_dir}" || _behave_rc=$?
+    vde_junit_timing_report "${_junit_dir}"
+    rm -rf -- "${_junit_dir}"
+    if (( _behave_rc != 0 )); then
         echo -e "${RED}[ERROR] Mandate L Violation: Proof of Life Contract Failed.${RESET}"
         echo -e "  The core VM lifecycle is broken. Push blocked."
         echo -e "  Run 'python3 -m behave tests/features/core-infrastructure/proof-of-life-the-contract.feature' for details."

@@ -67,6 +67,7 @@ mkdir -p "${fix}/githooks" "${fix}/lib" "${fix}/bin" "${fix}/tests/features/core
 cp "${GATE}" "${fix}/githooks/"
 cp "${VDE_ROOT_DIR}/lib/vde-test-env" "${fix}/lib/"
 cp "${VDE_ROOT_DIR}/lib/vde-gate-commits" "${fix}/lib/"
+cp "${VDE_ROOT_DIR}/lib/vde-junit-timing" "${fix}/lib/"
 print -r -- 'feature stub' > "${fix}/tests/features/core-infrastructure/proof-of-life-the-contract.feature"
 # The audit passes.
 print -r -- '#!/usr/bin/env zsh

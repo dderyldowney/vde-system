@@ -50,7 +50,7 @@ Status: Planned (#779). The rerun, the recording, the threshold and the quaranti
 
 ### Timing and budgets
 
-Every run is timed. The runner prints a start time and a duration for each suite and a SUITE TIMING table. The pre-push gate prints the time of each step. The per-suite and per-step timing is step 1 of issue #774 (PR #783) and is Implemented. Each run also reports how many containers each suite created, read from the container runtime's event stream for the suite's time window (the count is daemon-wide, and a window that reaches the runtime's event-history cap shows `256+`).
+Every run is timed. The runner prints a start time and a duration for each suite and a SUITE TIMING table. The pre-push gate prints the time of each step. After the Proof of Life, pass or fail, the gate also prints a PROOF OF LIFE TIMING table with every scenario's time, slowest first; this is step 1b of issue #774, and the numbers decide what steps 2 and 3 build. The per-suite and per-step timing is step 1 of issue #774 (PR #783) and is Implemented. Each run also reports how many containers each suite created, read from the container runtime's event stream for the suite's time window (the count is daemon-wide, and a window that reaches the runtime's event-history cap shows `256+`).
 
 Budgets:
 
@@ -89,7 +89,7 @@ An independent review must pass before a commit. The review checklist is Impleme
 |------|-------------|--------|
 | Suite discovery and exclusions with a reason | `tests/run-sovereign-tests.zsh` and `tests/unit/test-runner-coverage.test.zsh` | Implemented |
 | Test-size and determinism rule checks (a unit suite that starts a container, uses the network or sleeps is detected) | Not yet in the tooling | Planned (#778) |
-| Timing printed every run and per-step gate timing | `tests/run-sovereign-tests.zsh` and `githooks/gate-tree.zsh`; per-step timing (PR #783), Implemented once PR #783 is merged | Implemented |
+| Timing printed every run and per-step gate timing | `tests/run-sovereign-tests.zsh`, `githooks/gate-tree.zsh` and `lib/vde-junit-timing` (per-scenario Proof of Life timing); per-step timing (PR #783) | Implemented |
 | Two-tier pre-push gate, stamps and no early release | `githooks/*`, `lib/vde-pol-stamp` and `lib/vde-gate-commits` (#770) | Implemented |
 | Policy numbers match the tooling defaults | `tests/unit/testing-policy-wiring.test.zsh` | Implemented |
 | Flake rerun, recording, threshold and quarantine; run history | Not yet in the tooling | Planned (#779) |
